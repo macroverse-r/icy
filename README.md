@@ -17,27 +17,23 @@
 
 ## Installation
 
-### From GitHub (SSH)
-
+Be sure that devtools is installed in your system:
 ```r
 # Install devtools if not already installed
 if (!requireNamespace("devtools", quietly = TRUE)) {
   install.packages("devtools")
 }
+```
 
-# Install the package from GitHub using SSH
+### From GitHub
+
+Install the package from GitHub using SSH
+```r
 devtools::install_git("git@github.com:benjaminpeeters/yml2renv.git")
 ```
 
-### From GitHub (HTTPS)
-
+Install the package from GitHub using HTTPS:
 ```r
-# Install devtools if not already installed
-if (!requireNamespace("devtools", quietly = TRUE)) {
-  install.packages("devtools")
-}
-
-# Install the package from GitHub using HTTPS
 devtools::install_github("benjaminpeeters/yml2renv")
 ```
 
