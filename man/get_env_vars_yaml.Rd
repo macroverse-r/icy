@@ -13,8 +13,8 @@ get_env_vars_yaml(package, case_format = "snake_case")
 Options are:
 \itemize{
 \item "snake_case" (default): Searches for files like "package_env_vars.yml" or "*_env_vars.yml"
-\item "camelCase" or "PascalCase": Searches for files like "packageEnvVars.yml" or "\emph{EnvVars.yml"
-\item "kebab-case": Searches for files like "package-env-vars.yml" or "}-env-vars.yml"
+\item "camelCase" or "PascalCase": Searches for files like "packageEnvVars.yml" or "*EnvVars.yml"
+\item "kebab-case": Searches for files like "package-env-vars.yml" or "*-env-vars.yml"
 }}
 }
 \value{

@@ -11,6 +11,7 @@ Description: Provides utilities to manage .Renviron configuration variables
     adjust and rely on .Renviron variables for configuration, allowing for a more
     robust and standardized approach to environment variable management.
 License: AGPL (>= 3.0)
+License_is_FOSS: yes
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
