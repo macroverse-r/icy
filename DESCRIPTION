@@ -1,6 +1,6 @@
 Package: yml2renv
 Title: YAML to .Renviron Variable Management
-Version: 0.1.0
+Version: 0.1.11
 Authors@R: 
     person("Benjamin", "Peeters", 
            email = "benjamin.peeters@pik-potsdam.de", 

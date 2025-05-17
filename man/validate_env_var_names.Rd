@@ -4,10 +4,12 @@
 \alias{validate_env_var_names}
 \title{Validate Environment Variable Names}
 \usage{
-validate_env_var_names(var_names, warn = TRUE, allowed_vars = NULL)
+validate_env_var_names(var_names, package, warn = TRUE, allowed_vars = NULL)
 }
 \arguments{
 \item{var_names}{Character vector of variable names to validate.}
+
+\item{package}{Character string with the package name.}
 
 \item{warn}{Logical; if TRUE, issues a warning for unknown variables instead of an error.}
 
@@ -21,3 +23,4 @@ Logical; TRUE if all variables are valid, otherwise issues a warning or error.
 Checks that all provided environment variable names are in the allowed list
 defined in the YAML configuration file.
 }
+\keyword{internal}

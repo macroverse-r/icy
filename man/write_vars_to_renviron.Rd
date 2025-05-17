@@ -6,6 +6,7 @@
 \usage{
 write_vars_to_renviron(
   var_list,
+  package = NULL,
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
   validate = TRUE,

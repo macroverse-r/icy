@@ -4,20 +4,21 @@
 #' If the YAML file name is not provided, it will search for a file using the
 #' `get_env_vars_yaml` function with the specified case format.
 #'
-#' @param yaml_file Character string with the name of the YAML file. If NULL,
-#'   the function will search for a file using `get_env_vars_yaml`.
 #' @param package Character string with the package name. If NULL (default),
 #'   the function will attempt to determine the current package name automatically.
+#' @param yaml_file Character string with the name of the YAML file. If NULL,
+#'   the function will search for a file using `get_env_vars_yaml`.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #'
 #' @return Character vector of environment variable names.
 #' @export
-get_env_var_names <- function(yaml_file = NULL, package = NULL, case_format = "snake_case") {
+get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "snake_case") {
   # Determine package name automatically if not provided
   if (is.null(package)) {
     package <- get_package_name()
+    print(paste0("package = ", package))
   }
   
   # Find the YAML file

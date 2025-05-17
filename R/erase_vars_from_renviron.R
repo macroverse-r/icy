@@ -13,12 +13,13 @@
 #' @return Invisibly returns a character vector of the variables that were erased.
 #' @export
 erase_vars_from_renviron <- function(var_names,
-                                   renviron_path = get_renviron_path(),
-                                   validate = TRUE,
-                                   allowed_vars = NULL) {
+                                     package = NULL,
+                                     renviron_path = get_renviron_path(),
+                                     validate = TRUE,
+                                     allowed_vars = NULL) {
   
   # Validate variable names if requested
-  if (validate) {
+  if (validate && !is.null(package)) {
     validate_env_var_names(var_names, warn = FALSE, allowed_vars = allowed_vars)
   }
   

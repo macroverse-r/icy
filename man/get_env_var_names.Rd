@@ -4,14 +4,14 @@
 \alias{get_env_var_names}
 \title{Get Environment Variable Names}
 \usage{
-get_env_var_names(yaml_file = NULL, package = NULL, case_format = "snake_case")
+get_env_var_names(package = NULL, yaml_file = NULL, case_format = "snake_case")
 }
 \arguments{
-\item{yaml_file}{Character string with the name of the YAML file. If NULL,
-the function will search for a file using \code{get_env_vars_yaml}.}
-
 \item{package}{Character string with the package name. If NULL (default),
 the function will attempt to determine the current package name automatically.}
+
+\item{yaml_file}{Character string with the name of the YAML file. If NULL,
+the function will search for a file using \code{get_env_vars_yaml}.}
 
 \item{case_format}{Character string indicating the case format to use for
 searching the YAML file if \code{yaml_file} is NULL. Options are:

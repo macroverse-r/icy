@@ -15,14 +15,18 @@
 #' @return Invisibly returns a character vector of the variables that were written.
 #' @export
 write_vars_to_renviron <- function(var_list,
-                                 renviron_path = get_renviron_path(),
-                                 overwrite = TRUE,
-                                 validate = TRUE,
-                                 allowed_vars = NULL) {
+                                   package = NULL,
+                                   renviron_path = get_renviron_path(),
+                                   overwrite = TRUE,
+                                   validate = TRUE,
+                                   allowed_vars = NULL) {
 
   # Validate variable names if requested
-  if (validate) {
-    validate_env_var_names(names(var_list), warn = FALSE, allowed_vars = allowed_vars)
+  if (validate && !is.null(package)) {
+    validate_env_var_names(var_names = names(var_list),
+                           package = package,
+                           warn = FALSE,
+                           allowed_vars = allowed_vars)
   }
 
   # Checks if the .Renviron file exists and creates it if it doesn't

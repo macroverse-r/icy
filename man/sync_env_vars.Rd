@@ -4,11 +4,10 @@
 \alias{sync_env_vars}
 \title{Sync Variables from .Renviron to Current Session}
 \usage{
-sync_env_vars(var_names = NULL, verbose = TRUE)
+sync_env_vars(var_names, verbose = TRUE)
 }
 \arguments{
-\item{var_names}{Character vector of variable names to sync.
-If NULL (default), uses all variables from the YAML config.}
+\item{var_names}{Character vector of variable names to sync.}
 
 \item{verbose}{Whether to display status messages and current values.}
 }
