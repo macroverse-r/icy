@@ -2,7 +2,7 @@
 % Please edit documentation in R/write_vars_to_renviron.R
 \name{write_vars_to_renviron}
 \alias{write_vars_to_renviron}
-\title{Write Package Environment Variables to .Renviron File}
+\title{Write Environment Variables to .Renviron File}
 \usage{
 write_vars_to_renviron(
   var_list,
@@ -17,8 +17,9 @@ write_vars_to_renviron(
 \item{var_list}{Named list of environment variables to write. Names should be the
 environment variable names and values should be the values to set.}
 
-\item{package}{Character string with the package name. Used both for validation
-and for grouping related variables together in the .Renviron file.}
+\item{package}{Character string with the package name. If provided, enables validation
+and grouping related variables together in the .Renviron file. If NULL (default),
+performs a simple write without validation or grouping.}
 
 \item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 
@@ -26,25 +27,30 @@ and for grouping related variables together in the .Renviron file.}
 If FALSE, existing variables are left unchanged.}
 
 \item{validate}{Logical; if TRUE (default), validates variable names against the package's
-YAML configuration. Set to FALSE to skip validation.}
+YAML configuration. Only applies when a package name is provided.}
 
 \item{allowed_vars}{Optional character vector of allowed variable names for validation.
-If NULL (default), the function will use the names from the package's YAML configuration.}
+If NULL (default), the function will use the names from the package's YAML configuration.
+Only applies when a package name is provided and validate=TRUE.}
 }
 \value{
 Returns TRUE invisibly on success.
 }
 \description{
 This function writes or updates environment variables in the user's .Renviron file.
-It is designed to be used within R packages to help manage package-specific
-environment variables in a consistent and user-friendly way.
+It can be used in two different ways:
 }
 \details{
+\enumerate{
+\item With a package name (for package developers) - Groups related variables, validates names
+\item Without a package name (for general use) - Simple writing of variables
+}
+
 Key features:
 \itemize{
 \item Updates existing variables in-place, preserving their position in the .Renviron file
-\item Groups related variables from the same package together in the file
-\item Validates variable names against the package's YAML configuration
+\item When a package name is provided, groups related variables together in the file
+\item When a package name is provided, validates variable names against the package's YAML configuration
 \item Provides informative messages about the changes made
 }
 
@@ -60,6 +66,14 @@ write_vars_to_renviron(
     MY_PACKAGE_API_KEY = "secret-key"
   ),
   package = "mypackage"
+)
+
+# For general use: Setting environment variables without a package
+write_vars_to_renviron(
+  var_list = list(
+    R_MAX_VSIZE = "4GB",
+    API_KEY = "my-api-key"
+  )
 )
 
 # Using this function in a configuration utility for your package
