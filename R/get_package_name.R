@@ -3,7 +3,8 @@
 #' Determines the name of the package from which the current function is being called.
 #'
 #' @return Character string with the package name, or NULL if it cannot be determined.
-#' @keywords internal
+#'
+#' export
 get_package_name <- function() {
   # First try determining if the code is part of a package
   # being loaded via library(), require(), etc.

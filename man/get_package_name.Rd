@@ -8,8 +8,9 @@ get_package_name()
 }
 \value{
 Character string with the package name, or NULL if it cannot be determined.
+
+export
 }
 \description{
 Determines the name of the package from which the current function is being called.
 }
-\keyword{internal}
