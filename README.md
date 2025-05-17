@@ -17,6 +17,22 @@
 - Validate environment variable names against a predefined list
 - Support for different YAML file naming conventions (snake_case, camelCase, etc.)
 
+## Main Functions
+
+| Function | Description |
+|----------|-------------|
+| `get_env_var_names()` | Extract environment variable names from a package's YAML configuration |
+| `get_env_vars_yaml()` | Find a package's environment variables YAML configuration file |
+| `write_to_renviron()` | Write environment variables to the .Renviron file |
+| `erase_from_renviron()` | Remove environment variables from the .Renviron file |
+| `sync_env_vars()` | Update current R session with variables from .Renviron |
+| `display_env_vars()` | Display values of specified environment variables |
+| `validate_env_var_names()` | Check if variable names are defined in package's configuration |
+| `get_renviron_path()` | Get path to user's .Renviron file |
+| `get_package_name()` | Get the name of the current package |
+| `get_package_dir()` | Get the directory of a package |
+| `clean_dir_path()` | Clean and normalize directory paths |
+
 ## Installation
 
 Be sure that devtools is installed in your system:
@@ -47,10 +63,10 @@ devtools::install_github("benjaminpeeters/yml2renv")
 library(yml2renv)
 
 # Get all environment variable names defined in your package's YAML config
-var_names <- get_env_var_names()
+var_names <- get_env_var_names(package = "mypackage")
 
 # Display current values of environment variables
-display_env_var_values()
+display_env_vars(var_names)
 
 # Write variables to .Renviron
 write_to_renviron(list(
@@ -59,7 +75,7 @@ write_to_renviron(list(
 ))
 
 # Sync variables from .Renviron to current R session
-sync_env_vars()
+sync_env_vars(var_names)
 ```
 
 ### Using in Your Package
