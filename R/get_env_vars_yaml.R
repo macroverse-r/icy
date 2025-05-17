@@ -1,15 +1,41 @@
-#' Find Environment Variables YAML File
+#' Find Environment Variables YAML Configuration File
 #'
-#' Searches for YAML files that match the pattern "*env_vars.yml" or similar
-#' based on the requested case format. The function searches within the package
-#' installation directory, including all subdirectories.
+#' Locates the YAML configuration file that contains environment variable definitions
+#' for a specified package. The function searches within the package's installation directory
+#' (or development directory for packages loaded with devtools), including all subdirectories.
+#'
+#' This function is primarily designed for package developers who want to define and manage
+#' environment variables for their package in a structured way. It supports different naming
+#' conventions for the YAML files to accommodate various coding styles.
+#'
+#' The function automatically handles the difference between installed packages and packages
+#' loaded via devtools during development.
 #'
 #' @param package Character string with the package name to search within.
-#' @param case_format Character string indicating the case format to use.
-#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-#'   the function will attempt to determine the current package name automatically.
+#' @param case_format Character string indicating the case format to use for the filename search.
+#'   Options are: 
+#'   \itemize{
+#'     \item "snake_case" (default): Searches for files like "package_env_vars.yml" or "*_env_vars.yml"
+#'     \item "camelCase" or "PascalCase": Searches for files like "packageEnvVars.yml" or "*EnvVars.yml"
+#'     \item "kebab-case": Searches for files like "package-env-vars.yml" or "*-env-vars.yml"
+#'   }
 #'
 #' @return Character string with the full path to the found YAML file.
+#' @examples
+#' \dontrun{
+#' # Find the environment variables YAML file for a package
+#' yaml_path <- get_env_vars_yaml("mypackage")
+#' 
+#' # Read and process the YAML file
+#' if (file.exists(yaml_path)) {
+#'   yaml_content <- yaml::read_yaml(yaml_path)
+#'   print(yaml_content$environment_variables)
+#' }
+#' 
+#' # Using a different naming convention
+#' yaml_path <- get_env_vars_yaml("mypackage", case_format = "camelCase")
+#' }
+#' 
 #' @export
 get_env_vars_yaml <- function(package, case_format = "snake_case") {
   

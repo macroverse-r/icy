@@ -1,14 +1,45 @@
-#' Erase Variables from .Renviron File
+#' Erase Environment Variables from .Renviron File
 #'
-#' Removes specified environment variables from the user's .Renviron file.
-#' Note: This only affects the .Renviron file, not the current R session.
-#' Use sync_env_vars() after this to update the session.
+#' Removes specified environment variables from the user's .Renviron file. This function
+#' is useful when you want to unset previously configured environment variables, allowing 
+#' the package to fall back to runtime defaults or when cleaning up package configuration.
 #'
-#' @param var_names Character vector of variable names to erase.
-#' @param renviron_path Path to the .Renviron file.
-#' @param validate Logical; if TRUE, validates variable names against the list from YAML.
-#' @param allowed_vars Character vector of allowed variable names for validation.
-#'   Only used if validate is TRUE.
+#' Note: This function only modifies the .Renviron file, not the current R session.
+#' To also remove these variables from the current session, use `sync_env_vars()` after 
+#' calling this function.
+#'
+#' @param var_names Character vector of variable names to erase from the .Renviron file.
+#' @param package Character string with the package name. Used for validation if provided.
+#' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
+#' @param validate Logical; if TRUE (default), validates variable names against the
+#'   package's YAML configuration. Only applies if package is provided.
+#' @param allowed_vars Optional character vector of allowed variable names for validation.
+#'   If NULL (default), the function will use the names from the package's YAML configuration.
+#'
+#' @return Invisibly returns NULL.
+#'
+#' @examples
+#' \dontrun{
+#' # Remove specific environment variables
+#' erase_vars_from_renviron(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"),
+#'                         package = "mypackage")
+#' 
+#' # Remove all package variables at once
+#' var_names <- get_env_var_names(package = "mypackage")
+#' erase_vars_from_renviron(var_names, package = "mypackage")
+#' 
+#' # After erasing, sync the current session to reflect changes
+#' sync_env_vars(var_names)
+#' 
+#' # Using in a package configuration reset function
+#' reset_package_config <- function() {
+#'   pkg <- "mypackage"
+#'   var_names <- get_env_var_names(package = pkg)
+#'   erase_vars_from_renviron(var_names, package = pkg)
+#'   sync_env_vars(var_names)
+#'   cat("Package configuration has been reset. Runtime defaults will be used.\n")
+#' }
+#' }
 #'   
 #' @export
 erase_vars_from_renviron <- function(var_names,

@@ -2,14 +2,53 @@
 % Please edit documentation in R/get_package_name.R
 \name{get_package_name}
 \alias{get_package_name}
-\title{Get the name of the currently executing package}
+\title{Get the Name of the Currently Executing Package}
 \usage{
 get_package_name()
 }
 \value{
-Character string with the package name, or NULL if it cannot be determined.
+Character string with the package name. If it cannot be determined, this
+function will raise an error rather than returning NULL.
 }
 \description{
-Determines the name of the package from which the current function is being called.
-The function must be called inside a function in another package.
+Intelligently determines the name of the package from which the current function is being called.
+This utility function is essential for creating context-aware package functions that need to
+know which package they're operating within.
+}
+\details{
+The function uses several methods to identify the calling package:
+\enumerate{
+\item Checks parent environments for \code{.packageName}
+\item Examines the current namespace
+\item Analyzes the environment name
+\item Inspects the call stack for namespace qualifiers (::)
+}
+
+This function is particularly useful in supporting functions that need to automatically detect
+their package context without requiring explicit package name parameters.
+}
+\examples{
+\dontrun{
+# Inside a package function, get the package name automatically
+my_package_function <- function() {
+  pkg_name <- get_package_name()
+  cat("This function is running from the", pkg_name, "package\n")
+  
+  # Use the package name for other operations
+  config_file <- system.file("config.yml", package = pkg_name)
+  return(config_file)
+}
+
+# Using in a configuration function
+get_package_config <- function() {
+  # Automatically determine which package is calling this function
+  pkg <- get_package_name()
+  
+  # Use the package name to find configuration
+  var_names <- get_env_var_names(package = pkg)
+  cat("Configuration for package", pkg, ":\n")
+  display_env_vars(var_names)
+}
+}
+
 }

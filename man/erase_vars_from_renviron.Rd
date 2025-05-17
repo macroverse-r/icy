@@ -2,7 +2,7 @@
 % Please edit documentation in R/erase_vars_from_renviron.R
 \name{erase_vars_from_renviron}
 \alias{erase_vars_from_renviron}
-\title{Erase Variables from .Renviron File}
+\title{Erase Environment Variables from .Renviron File}
 \usage{
 erase_vars_from_renviron(
   var_names,
@@ -13,17 +13,52 @@ erase_vars_from_renviron(
 )
 }
 \arguments{
-\item{var_names}{Character vector of variable names to erase.}
+\item{var_names}{Character vector of variable names to erase from the .Renviron file.}
 
-\item{renviron_path}{Path to the .Renviron file.}
+\item{package}{Character string with the package name. Used for validation if provided.}
 
-\item{validate}{Logical; if TRUE, validates variable names against the list from YAML.}
+\item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 
-\item{allowed_vars}{Character vector of allowed variable names for validation.
-Only used if validate is TRUE.}
+\item{validate}{Logical; if TRUE (default), validates variable names against the
+package's YAML configuration. Only applies if package is provided.}
+
+\item{allowed_vars}{Optional character vector of allowed variable names for validation.
+If NULL (default), the function will use the names from the package's YAML configuration.}
+}
+\value{
+Invisibly returns NULL.
 }
 \description{
-Removes specified environment variables from the user's .Renviron file.
-Note: This only affects the .Renviron file, not the current R session.
-Use sync_env_vars() after this to update the session.
+Removes specified environment variables from the user's .Renviron file. This function
+is useful when you want to unset previously configured environment variables, allowing
+the package to fall back to runtime defaults or when cleaning up package configuration.
+}
+\details{
+Note: This function only modifies the .Renviron file, not the current R session.
+To also remove these variables from the current session, use \code{sync_env_vars()} after
+calling this function.
+}
+\examples{
+\dontrun{
+# Remove specific environment variables
+erase_vars_from_renviron(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"),
+                        package = "mypackage")
+
+# Remove all package variables at once
+var_names <- get_env_var_names(package = "mypackage")
+erase_vars_from_renviron(var_names, package = "mypackage")
+
+# After erasing, sync the current session to reflect changes
+sync_env_vars(var_names)
+
+# Using in a package configuration reset function
+reset_package_config <- function() {
+  pkg <- "mypackage"
+  var_names <- get_env_var_names(package = pkg)
+  erase_vars_from_renviron(var_names, package = pkg)
+  sync_env_vars(var_names)
+  cat("Package configuration has been reset. Runtime defaults will be used.\n")
+}
+}
+  
 }

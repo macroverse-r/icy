@@ -2,11 +2,11 @@
 % Please edit documentation in R/write_vars_to_renviron.R
 \name{write_vars_to_renviron}
 \alias{write_vars_to_renviron}
-\title{Write Variables to .Renviron File}
+\title{Write Package Environment Variables to .Renviron File}
 \usage{
 write_vars_to_renviron(
   var_list,
-  package,
+  package = NULL,
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
   validate = TRUE,
@@ -14,29 +14,75 @@ write_vars_to_renviron(
 )
 }
 \arguments{
-\item{var_list}{Named list of environment variables to write.}
+\item{var_list}{Named list of environment variables to write. Names should be the
+environment variable names and values should be the values to set.}
 
-\item{package}{Character string with the package name. Used for validation
+\item{package}{Character string with the package name. Used both for validation
 and for grouping related variables together in the .Renviron file.}
 
-\item{renviron_path}{Path to the .Renviron file.}
+\item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 
-\item{overwrite}{Logical; if TRUE, overwrites existing variables. Default is TRUE.}
+\item{overwrite}{Logical; if TRUE (default), overwrites existing variables.
+If FALSE, existing variables are left unchanged.}
 
-\item{validate}{Logical; if TRUE, validates variable names against the list from YAML.}
+\item{validate}{Logical; if TRUE (default), validates variable names against the package's
+YAML configuration. Set to FALSE to skip validation.}
 
-\item{allowed_vars}{Character vector of allowed variable names for validation.
-Only used if validate is TRUE.}
+\item{allowed_vars}{Optional character vector of allowed variable names for validation.
+If NULL (default), the function will use the names from the package's YAML configuration.}
+}
+\value{
+Returns TRUE invisibly on success.
 }
 \description{
-Writes environment variables to the user's .Renviron file.
-By default, overwrites variables that already exist in-place.
-Note: This only affects the .Renviron file, not the current R session.
-Use sync_env_vars() after this to update the session.
+This function writes or updates environment variables in the user's .Renviron file.
+It is designed to be used within R packages to help manage package-specific
+environment variables in a consistent and user-friendly way.
 }
 \details{
-For existing variables, this function updates their values in-place,
-preserving their position in the file. For new variables, it attempts to
-group them with other variables from the same package, by adding them
-after the last existing variable from that package.
+Key features:
+\itemize{
+\item Updates existing variables in-place, preserving their position in the .Renviron file
+\item Groups related variables from the same package together in the file
+\item Validates variable names against the package's YAML configuration
+\item Provides informative messages about the changes made
+}
+
+Note: This function only modifies the .Renviron file, not the current R session.
+Use \code{sync_env_vars()} after calling this function to update the current session.
+}
+\examples{
+\dontrun{
+# For package developers: Writing package variables to .Renviron
+write_vars_to_renviron(
+  var_list = list(
+    MY_PACKAGE_DATA_DIR = "/path/to/data",
+    MY_PACKAGE_API_KEY = "secret-key"
+  ),
+  package = "mypackage"
+)
+
+# Using this function in a configuration utility for your package
+configure_my_package <- function() {
+  # Get user input for configuration variables
+  data_dir <- readline("Enter data directory path: ")
+  api_key <- readline("Enter API key: ")
+  
+  # Write to .Renviron
+  write_vars_to_renviron(
+    var_list = list(
+      MY_PACKAGE_DATA_DIR = data_dir,
+      MY_PACKAGE_API_KEY = api_key
+    ),
+    package = "mypackage"
+  )
+  
+  # Update current session
+  sync_env_vars(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"))
+  
+  # Confirm to user
+  cat("Configuration complete. Settings will be loaded in future R sessions.\n")
+}
+}
+  
 }

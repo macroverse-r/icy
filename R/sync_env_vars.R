@@ -1,12 +1,38 @@
-#' Sync Variables from .Renviron to Current Session
+#' Sync Environment Variables from .Renviron to Current Session
 #'
-#' Makes the environment variables in the current R session match exactly
-#' what's in the .Renviron file. This is the main function for ensuring consistency
-#' between the .Renviron file and the active session.
+#' Makes the environment variables in the current R session match exactly what's in the 
+#' .Renviron file. This function ensures consistency between the persistent environment 
+#' configuration and the active R session.
 #'
-#' @param var_names Character vector of variable names to sync.
-#' @param verbose Whether to display status messages and current values.
-#' @return Invisibly returns TRUE if successful, FALSE otherwise.
+#' This function is essential when making changes to the .Renviron file during an R session,
+#' as changes to this file are normally only loaded when R starts. It's typically called
+#' after using `write_vars_to_renviron()` to make the newly written variables immediately 
+#' available without restarting R.
+#'
+#' @param var_names Character vector of environment variable names to sync. These should
+#'   be the names of the variables that you want to be updated from the .Renviron file.
+#' @param verbose Logical; whether to display status messages and current values.
+#'   Default is TRUE.
+#' 
+#' @return Invisibly returns NULL.
+#'
+#' @examples
+#' \dontrun{
+#' # After writing variables to .Renviron, sync them to the current session
+#' write_vars_to_renviron(
+#'   var_list = list(MY_PACKAGE_DIR = "/path/to/data"),
+#'   package = "mypackage"
+#' )
+#' sync_env_vars("MY_PACKAGE_DIR")
+#' 
+#' # Get environment variable list from a package's YAML config and sync all
+#' pkg_vars <- get_env_var_names(package = "mypackage")
+#' sync_env_vars(pkg_vars)
+#' 
+#' # Sync without printing status messages
+#' sync_env_vars(c("MY_PACKAGE_DIR", "MY_PACKAGE_CONFIG"), verbose = FALSE)
+#' }
+#' 
 #' @export
 sync_env_vars <- function(var_names, verbose = TRUE) {
   

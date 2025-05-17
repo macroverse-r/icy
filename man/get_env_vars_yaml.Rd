@@ -2,22 +2,50 @@
 % Please edit documentation in R/get_env_vars_yaml.R
 \name{get_env_vars_yaml}
 \alias{get_env_vars_yaml}
-\title{Find Environment Variables YAML File}
+\title{Find Environment Variables YAML Configuration File}
 \usage{
 get_env_vars_yaml(package, case_format = "snake_case")
 }
 \arguments{
 \item{package}{Character string with the package name to search within.}
 
-\item{case_format}{Character string indicating the case format to use.
-Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-the function will attempt to determine the current package name automatically.}
+\item{case_format}{Character string indicating the case format to use for the filename search.
+Options are:
+\itemize{
+\item "snake_case" (default): Searches for files like "package_env_vars.yml" or "*_env_vars.yml"
+\item "camelCase" or "PascalCase": Searches for files like "packageEnvVars.yml" or "\emph{EnvVars.yml"
+\item "kebab-case": Searches for files like "package-env-vars.yml" or "}-env-vars.yml"
+}}
 }
 \value{
 Character string with the full path to the found YAML file.
 }
 \description{
-Searches for YAML files that match the pattern "*env_vars.yml" or similar
-based on the requested case format. The function searches within the package
-installation directory, including all subdirectories.
+Locates the YAML configuration file that contains environment variable definitions
+for a specified package. The function searches within the package's installation directory
+(or development directory for packages loaded with devtools), including all subdirectories.
+}
+\details{
+This function is primarily designed for package developers who want to define and manage
+environment variables for their package in a structured way. It supports different naming
+conventions for the YAML files to accommodate various coding styles.
+
+The function automatically handles the difference between installed packages and packages
+loaded via devtools during development.
+}
+\examples{
+\dontrun{
+# Find the environment variables YAML file for a package
+yaml_path <- get_env_vars_yaml("mypackage")
+
+# Read and process the YAML file
+if (file.exists(yaml_path)) {
+  yaml_content <- yaml::read_yaml(yaml_path)
+  print(yaml_content$environment_variables)
+}
+
+# Using a different naming convention
+yaml_path <- get_env_vars_yaml("mypackage", case_format = "camelCase")
+}
+
 }

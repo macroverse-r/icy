@@ -1,26 +1,44 @@
-#' Get Environment Variable Names
+#' Get Environment Variable Names from YAML Config
 #'
-#' Reads the list of environment variable names from the YAML config file.
-#' If the YAML file name is not provided, it will search for a file using the
-#' `get_env_vars_yaml` function with the specified case format.
+#' Reads the list of environment variable names from a package's YAML configuration file.
+#' This function is typically used within an R package to retrieve the list of environment
+#' variables the package uses, as defined in a YAML configuration file.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   the function will attempt to determine the current package name automatically.
+#' If the YAML file name is not provided, the function will search for a file using the
+#' `get_env_vars_yaml` function with the specified case format. The YAML file should 
+#' contain an `environment_variables` list with the names of the environment variables.
+#'
+#' @param package Character string with the package name.
 #' @param yaml_file Character string with the name of the YAML file. If NULL,
-#'   the function will search for a file using `get_env_vars_yaml`.
+#'   the function will search for a YAML file ending with `env_vars.yml` using `get_env_vars_yaml`.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #'
 #' @return Character vector of environment variable names.
+#' 
+#' @examples
+#' \dontrun{
+#' # Inside a package named "mypackage" with a YAML file at inst/mypackage_env_vars.yml:
+#' # Get all environment variables defined for the package
+#' var_names <- get_env_var_names(package = "mypackage")
+#' 
+#' # Use these names for validation or to retrieve current values
+#' current_values <- lapply(var_names, Sys.getenv, unset = NA)
+#' names(current_values) <- var_names
+#' 
+#' # With (or without) a custom-named YAML file
+#' var_names <- get_env_var_names(
+#'   yaml_file = "inst/environment.yml"
+#' )
+#' }
+#' 
 #' @export
 get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "snake_case") {
-  # Determine package name automatically if not provided
-  if (is.null(package)) {
-    package <- get_package_name()
-    print(paste0("package = ", package))
-  }
   
+  # @CLAUDE: add here to test that either package or yaml_file is provided (one or the other, or both). If none, provide an informative error. Adjust documentation accordingly
+  # adjust the rest of the function to make sure it work if package is provided only and if yaml_file is provided only.
+
   # Find the YAML file
   if (is.null(yaml_file)) {
     # Try to find the YAML file using get_env_vars_yaml
@@ -36,7 +54,7 @@ get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "s
           stop("Could not find environment variables YAML file. Error: ", e$message)
         }
       }
-      yaml_file <<- fallback_file
+      yaml_file <- fallback_file
     })
   } else {
     # If yaml_file is provided, check if it's a file path or just a file name

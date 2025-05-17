@@ -1,34 +1,77 @@
-#' Write Variables to .Renviron File
+#' Write Package Environment Variables to .Renviron File
 #'
-#' Writes environment variables to the user's .Renviron file.
-#' By default, overwrites variables that already exist in-place.
-#' Note: This only affects the .Renviron file, not the current R session.
-#' Use sync_env_vars() after this to update the session.
+#' This function writes or updates environment variables in the user's .Renviron file.
+#' It is designed to be used within R packages to help manage package-specific 
+#' environment variables in a consistent and user-friendly way.
 #'
-#' For existing variables, this function updates their values in-place,
-#' preserving their position in the file. For new variables, it attempts to
-#' group them with other variables from the same package, by adding them
-#' after the last existing variable from that package.
+#' Key features:
+#' 
+#' * Updates existing variables in-place, preserving their position in the .Renviron file
+#' * Groups related variables from the same package together in the file
+#' * Validates variable names against the package's YAML configuration
+#' * Provides informative messages about the changes made
 #'
-#' @param var_list Named list of environment variables to write.
-#' @param package Character string with the package name. Used for validation
+#' Note: This function only modifies the .Renviron file, not the current R session.
+#' Use `sync_env_vars()` after calling this function to update the current session.
+#'
+#' @param var_list Named list of environment variables to write. Names should be the
+#'   environment variable names and values should be the values to set.
+#' @param package Character string with the package name. Used both for validation
 #'   and for grouping related variables together in the .Renviron file.
-#' @param renviron_path Path to the .Renviron file.
-#' @param overwrite Logical; if TRUE, overwrites existing variables. Default is TRUE.
-#' @param validate Logical; if TRUE, validates variable names against the list from YAML.
-#' @param allowed_vars Character vector of allowed variable names for validation.
-#'   Only used if validate is TRUE.
+#' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
+#' @param overwrite Logical; if TRUE (default), overwrites existing variables.
+#'   If FALSE, existing variables are left unchanged.
+#' @param validate Logical; if TRUE (default), validates variable names against the package's
+#'   YAML configuration. Set to FALSE to skip validation.
+#' @param allowed_vars Optional character vector of allowed variable names for validation.
+#'   If NULL (default), the function will use the names from the package's YAML configuration.
+#'   
+#' @return Returns TRUE invisibly on success.
+#'
+#' @examples
+#' \dontrun{
+#' # For package developers: Writing package variables to .Renviron
+#' write_vars_to_renviron(
+#'   var_list = list(
+#'     MY_PACKAGE_DATA_DIR = "/path/to/data",
+#'     MY_PACKAGE_API_KEY = "secret-key"
+#'   ),
+#'   package = "mypackage"
+#' )
+#' 
+#' # Using this function in a configuration utility for your package
+#' configure_my_package <- function() {
+#'   # Get user input for configuration variables
+#'   data_dir <- readline("Enter data directory path: ")
+#'   api_key <- readline("Enter API key: ")
+#'   
+#'   # Write to .Renviron
+#'   write_vars_to_renviron(
+#'     var_list = list(
+#'       MY_PACKAGE_DATA_DIR = data_dir,
+#'       MY_PACKAGE_API_KEY = api_key
+#'     ),
+#'     package = "mypackage"
+#'   )
+#'   
+#'   # Update current session
+#'   sync_env_vars(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"))
+#'   
+#'   # Confirm to user
+#'   cat("Configuration complete. Settings will be loaded in future R sessions.\n")
+#' }
+#' }
 #'   
 #' @export
 write_vars_to_renviron <- function(var_list,
-                                   package,
+                                   package = NULL,
                                    renviron_path = get_renviron_path(),
                                    overwrite = TRUE,
                                    validate = TRUE,
                                    allowed_vars = NULL) {
 
   # Validate variable names if requested
-  if (validate) {
+  if (validate && !is.null(package)) {
     validate_env_var_names(var_names = names(var_list),
                            package = package,
                            warn = FALSE,
@@ -134,3 +177,13 @@ write_vars_to_renviron <- function(var_list,
   
   return(invisible(TRUE))
 }
+
+
+
+# @CLAUDE: make it so htat it is also possible to use it like: yml2renv::write_vars_to_renviron(list(API_KEY = "MY_API_KEY")) to the .Renviron independently of any package.
+# Keep a clear yet concise explanation of the implication of additional the package name
+# To make things clearer, make two subfunctions in this file, one for the case with package provided and one for the case without package provided. These two sub functions are only internal functions
+# If the package is provided, it should act like now.
+# if pacjage is not provided, it should check if the env variable already exist. If it does not exist, add it at the end of the .Renviron (new line). If is exist, overwrite it at the same location in the .Renviron if overwrite is TRUE
+
+

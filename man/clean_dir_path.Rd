@@ -2,20 +2,74 @@
 % Please edit documentation in R/clean_dir_path.R
 \name{clean_dir_path}
 \alias{clean_dir_path}
-\title{Clean a Directory Path}
+\title{Clean and Normalize a Directory Path}
 \usage{
 clean_dir_path(path, check_exists = TRUE, create_if_missing = FALSE)
 }
 \arguments{
-\item{path}{The path to clean}
+\item{path}{Character string with the directory path to clean and normalize.}
 
-\item{check_exists}{Whether to check if the directory exists}
+\item{check_exists}{Logical; whether to check if the directory exists.
+Default is TRUE.}
 
-\item{create_if_missing}{Whether to try to create the directory if it doesn't exist}
+\item{create_if_missing}{Logical; whether to create the directory if it
+doesn't exist and \code{check_exists} is TRUE. Default is FALSE.}
 }
 \value{
-A normalized path or NULL if invalid
+A normalized path string, or NULL if the path is invalid
+(e.g., if check_exists is TRUE and the directory doesn't exist).
 }
 \description{
-Helper function to ensure a directory path is properly formatted.
+Standardizes directory paths across platforms and optionally verifies or creates
+directories. This utility function helps ensure consistent handling of file paths
+across different operating systems and environments.
+}
+\details{
+The function performs the following operations:
+\itemize{
+\item Removes trailing slashes
+\item Normalizes path separators (converts backslashes to forward slashes on Windows)
+\item Optionally checks if the directory exists
+\item Optionally creates the directory if it does not exist
+}
+
+This function is particularly useful when processing user-provided paths or when
+writing cross-platform code that needs to handle paths consistently.
+}
+\examples{
+\dontrun{
+# Basic path normalization
+clean_dir_path("/path/to/directory/")
+# Returns: "/path/to/directory"
+
+# Path with Windows-style separators
+clean_dir_path("C:\\\\Users\\\\username\\\\Documents\\\\")
+# Returns: "C:/Users/username/Documents"
+
+# Check if directory exists without creating it
+clean_dir_path("/path/that/might/not/exist", check_exists = TRUE)
+# Returns: NULL if the directory doesn't exist
+
+# Clean path and create directory if it doesn't exist
+clean_dir_path("/path/to/new/directory", 
+              check_exists = TRUE, 
+              create_if_missing = TRUE)
+# Creates the directory if needed and returns the normalized path
+
+# Using in a configuration function
+save_user_preferences <- function(data_dir) {
+  # Clean and validate the path, creating it if needed
+  clean_dir <- clean_dir_path(data_dir, 
+                             check_exists = TRUE, 
+                             create_if_missing = TRUE)
+  if (is.null(clean_dir)) {
+    stop("Invalid directory path")
+  }
+  
+  # Now use the clean path for file operations
+  config_file <- file.path(clean_dir, "preferences.json")
+  # ... save preferences to file
+}
+}
+
 }

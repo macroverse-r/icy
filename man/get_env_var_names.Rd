@@ -2,16 +2,15 @@
 % Please edit documentation in R/get_env_var_names.R
 \name{get_env_var_names}
 \alias{get_env_var_names}
-\title{Get Environment Variable Names}
+\title{Get Environment Variable Names from YAML Config}
 \usage{
 get_env_var_names(package = NULL, yaml_file = NULL, case_format = "snake_case")
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-the function will attempt to determine the current package name automatically.}
+\item{package}{Character string with the package name.}
 
 \item{yaml_file}{Character string with the name of the YAML file. If NULL,
-the function will search for a file using \code{get_env_vars_yaml}.}
+the function will search for a YAML file ending with \code{env_vars.yml} using \code{get_env_vars_yaml}.}
 
 \item{case_format}{Character string indicating the case format to use for
 searching the YAML file if \code{yaml_file} is NULL. Options are:
@@ -21,7 +20,29 @@ searching the YAML file if \code{yaml_file} is NULL. Options are:
 Character vector of environment variable names.
 }
 \description{
-Reads the list of environment variable names from the YAML config file.
-If the YAML file name is not provided, it will search for a file using the
-\code{get_env_vars_yaml} function with the specified case format.
+Reads the list of environment variable names from a package's YAML configuration file.
+This function is typically used within an R package to retrieve the list of environment
+variables the package uses, as defined in a YAML configuration file.
+}
+\details{
+If the YAML file name is not provided, the function will search for a file using the
+\code{get_env_vars_yaml} function with the specified case format. The YAML file should
+contain an \code{environment_variables} list with the names of the environment variables.
+}
+\examples{
+\dontrun{
+# Inside a package named "mypackage" with a YAML file at inst/mypackage_env_vars.yml:
+# Get all environment variables defined for the package
+var_names <- get_env_var_names(package = "mypackage")
+
+# Use these names for validation or to retrieve current values
+current_values <- lapply(var_names, Sys.getenv, unset = NA)
+names(current_values) <- var_names
+
+# With (or without) a custom-named YAML file
+var_names <- get_env_var_names(
+  yaml_file = "inst/environment.yml"
+)
+}
+
 }
