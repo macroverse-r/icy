@@ -35,7 +35,7 @@
 #' @examples
 #' \dontrun{
 #' # For package developers: Writing package variables to .Renviron
-#' write_vars_to_renviron(
+#' write_to_renviron(
 #'   var_list = list(
 #'     MY_PACKAGE_DATA_DIR = "/path/to/data",
 #'     MY_PACKAGE_API_KEY = "secret-key"
@@ -44,7 +44,7 @@
 #' )
 #' 
 #' # For general use: Setting environment variables without a package
-#' write_vars_to_renviron(
+#' write_to_renviron(
 #'   var_list = list(
 #'     R_MAX_VSIZE = "4GB",
 #'     API_KEY = "my-api-key"
@@ -58,7 +58,7 @@
 #'   api_key <- readline("Enter API key: ")
 #'   
 #'   # Write to .Renviron
-#'   write_vars_to_renviron(
+#'   write_to_renviron(
 #'     var_list = list(
 #'       MY_PACKAGE_DATA_DIR = data_dir,
 #'       MY_PACKAGE_API_KEY = api_key
@@ -75,12 +75,12 @@
 #' }
 #'   
 #' @export
-write_vars_to_renviron <- function(var_list,
-                                   package = NULL,
-                                   renviron_path = get_renviron_path(),
-                                   overwrite = TRUE,
-                                   validate = TRUE,
-                                   allowed_vars = NULL) {
+write_to_renviron <- function(var_list,
+                              package = NULL,
+                              renviron_path = get_renviron_path(),
+                              overwrite = TRUE,
+                              validate = TRUE,
+                              allowed_vars = NULL) {
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
@@ -94,14 +94,14 @@ write_vars_to_renviron <- function(var_list,
   # Delegate to the appropriate internal function based on whether a package is provided
   if (is.null(package)) {
     # Use the simple version for non-package variables
-    .write_simple_vars_to_renviron(
+    .write_simple_to_renviron(
       var_list = var_list,
       renviron_path = renviron_path,
       overwrite = overwrite
     )
   } else {
     # Use the package-specific version with validation and grouping
-    .write_pkg_vars_to_renviron(
+    .write_pkg_to_renviron(
       var_list = var_list,
       package = package,
       renviron_path = renviron_path,
@@ -118,7 +118,7 @@ write_vars_to_renviron <- function(var_list,
 
 # Internal function for writing variables not associated with a package
 # Simply updates existing variables in-place or adds new ones at the end
-.write_simple_vars_to_renviron <- function(var_list, renviron_path, overwrite) {
+.write_simple_to_renviron <- function(var_list, renviron_path, overwrite) {
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
@@ -178,13 +178,13 @@ write_vars_to_renviron <- function(var_list,
 
 # Internal function for writing variables associated with a package
 # Handles validation and groups variables together by package
-.write_pkg_vars_to_renviron <- function(var_list, package, renviron_path, overwrite, validate, allowed_vars) {
+.write_pkg_to_renviron <- function(var_list, package, renviron_path, overwrite, validate, allowed_vars) {
   # Validate variable names if requested
   if (validate) {
     validate_env_var_names(var_names = names(var_list),
-                           package = package,
-                           warn = FALSE,
-                           allowed_vars = allowed_vars)
+                         package = package,
+                         warn = FALSE,
+                         allowed_vars = allowed_vars)
   }
   
   # Ensure the .Renviron file exists
@@ -288,4 +288,3 @@ write_vars_to_renviron <- function(var_list,
     existing = existing_vars
   ))
 }
-

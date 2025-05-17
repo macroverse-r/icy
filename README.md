@@ -53,7 +53,7 @@ var_names <- get_env_var_names()
 display_env_var_values()
 
 # Write variables to .Renviron
-write_vars_to_renviron(list(
+write_to_renviron(list(
   MY_API_KEY = "secret-key-value",
   MY_DATA_DIR = "/path/to/data"
 ))

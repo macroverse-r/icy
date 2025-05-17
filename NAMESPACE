@@ -2,11 +2,11 @@
 
 export(clean_dir_path)
 export(display_env_vars)
-export(erase_vars_from_renviron)
+export(erase_from_renviron)
 export(get_env_var_names)
 export(get_env_vars_yaml)
 export(get_package_dir)
 export(get_package_name)
 export(get_renviron_path)
 export(sync_env_vars)
-export(write_vars_to_renviron)
+export(write_to_renviron)

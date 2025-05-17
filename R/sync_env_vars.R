@@ -6,7 +6,7 @@
 #'
 #' This function is essential when making changes to the .Renviron file during an R session,
 #' as changes to this file are normally only loaded when R starts. It's typically called
-#' after using `write_vars_to_renviron()` to make the newly written variables immediately 
+#' after using `write_to_renviron()` to make the newly written variables immediately 
 #' available without restarting R.
 #'
 #' @param var_names Character vector of environment variable names to sync. These should
@@ -19,7 +19,7 @@
 #' @examples
 #' \dontrun{
 #' # After writing variables to .Renviron, sync them to the current session
-#' write_vars_to_renviron(
+#' write_to_renviron(
 #'   var_list = list(MY_PACKAGE_DIR = "/path/to/data"),
 #'   package = "mypackage"
 #' )
