@@ -52,14 +52,6 @@
 #' @keywords internal
 validate_env_var_names <- function(var_names, package, warn = TRUE, allowed_vars = NULL) {
 
-  green_start <- "\033[32m"
-  color_end <- "\033[0m"
-  
-  # Create and print the message
-  message <- paste0(green_start, "-- validation process for ", var_names, " --", color_end)
-  cat(message, "\n")
-
-
   if (is.null(allowed_vars)) {
     allowed_vars <- get_env_var_names(package = package)
   }
