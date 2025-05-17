@@ -2,6 +2,8 @@
 
 [![R-CMD-check](https://github.com/benjaminpeeters/yml2renv/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/yml2renv/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/yml2renv)](https://CRAN.R-project.org/package=yml2renv)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License:AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
 
