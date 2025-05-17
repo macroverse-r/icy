@@ -1,0 +1,11 @@
+^renv$
+^renv\.lock$
+^.*\.Rproj$
+^\.Rproj\.user$
+^.*\.Rprofile$
+^.*\.Renviron$
+^README\.Rmd$
+^\.lintr$
+tmp*/
+results*/
+excl*/

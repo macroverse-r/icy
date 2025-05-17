@@ -22,9 +22,6 @@ erase_vars_from_renviron(
 \item{allowed_vars}{Character vector of allowed variable names for validation.
 Only used if validate is TRUE.}
 }
-\value{
-Invisibly returns a character vector of the variables that were erased.
-}
 \description{
 Removes specified environment variables from the user's .Renviron file.
 Note: This only affects the .Renviron file, not the current R session.
