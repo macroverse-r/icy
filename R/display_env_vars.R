@@ -7,7 +7,7 @@
 #'   
 #' @return Invisibly returns a named list of the displayed variables and their values.
 #' @export
-display_env_var_values <- function(var_names = NULL) {
+display_env_vars <- function(var_names = NULL) {
   if (is.null(var_names)) {
     var_names <- get_env_var_names()
   }

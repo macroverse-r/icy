@@ -42,7 +42,7 @@ sync_env_vars <- function(var_names = NULL, verbose = TRUE) {
   if (verbose) cli::cli_alert_success("Synced environment variables from {.file {renviron_path}}")
   
   # Show current values of variables
-  if (verbose) display_env_var_values(var_names)
+  if (verbose) display_env_vars(var_names)
   
   invisible(TRUE)
 }

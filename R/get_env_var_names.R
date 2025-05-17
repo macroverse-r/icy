@@ -17,7 +17,7 @@
 get_env_var_names <- function(yaml_file = NULL, package = NULL, case_format = "snake_case") {
   # Determine package name automatically if not provided
   if (is.null(package)) {
-    package <- get_current_package_name()
+    package <- get_package_name()
   }
   
   # Find the YAML file

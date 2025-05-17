@@ -4,11 +4,20 @@
 #'
 #' @return Character string with the package name, or NULL if it cannot be determined.
 #' @keywords internal
-get_current_package_name <- function() {
-  # First try using packageName() which works if the code is part of a package
+get_package_name <- function() {
+  # First try determining if the code is part of a package
   # being loaded via library(), require(), etc.
   current_pkg <- tryCatch({
-    base::packageName()
+    # Get environmentName of parent env
+    pkg_env <- parent.frame()
+    env_name <- environmentName(topenv(pkg_env))
+    
+    # If the environment name starts with "package:", extract the package name
+    if (startsWith(env_name, "package:")) {
+      substring(env_name, 9)
+    } else {
+      NULL
+    }
   }, error = function(e) {
     return(NULL)
   })

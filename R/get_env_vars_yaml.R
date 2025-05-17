@@ -12,14 +12,9 @@
 #' @return Character string with the full path to the found YAML file.
 #' @export
 get_env_vars_yaml <- function(case_format = "snake_case", package = NULL) {
-  # Ensure fs package is available
-  if (!requireNamespace("fs", quietly = TRUE)) {
-    stop("The fs package is required but not available. Please install it with: install.packages('fs')")
-  }
-  
   # Determine package name automatically if not provided
   if (is.null(package)) {
-    package <- get_current_package_name()
+    package <- get_package_name()
   }
   
   # Define search patterns based on case format
@@ -33,7 +28,7 @@ get_env_vars_yaml <- function(case_format = "snake_case", package = NULL) {
   
   # Get the package path
   tryCatch({
-    pkg_path <- fs::path_package(package)
+    pkg_path <- system.file(package = package)
     
     # Special handling for devtools loaded packages
     if (endsWith(pkg_path, "/inst")) {
@@ -45,15 +40,13 @@ get_env_vars_yaml <- function(case_format = "snake_case", package = NULL) {
     }
     
     # Find all .yml or .yaml files in the package
-    files <- character(0)
-    
-    # Handle potential errors in dir_ls
     tryCatch({
-      yaml_files <- fs::dir_ls(
-        search_path,
-        recurse = TRUE,
-        type = "file",
-        regexp = "\\.ya?ml$"
+      # Use list.files to recursively find yaml files
+      yaml_files <- list.files(
+        path = search_path,
+        pattern = "\\.ya?ml$",
+        recursive = TRUE,
+        full.names = TRUE
       )
       
       # Filter for files matching our pattern
@@ -73,7 +66,7 @@ get_env_vars_yaml <- function(case_format = "snake_case", package = NULL) {
       return(as.character(matching_files))
       
     }, error = function(e) {
-      if (grepl("does not exist", e$message)) {
+      if (grepl("cannot open|no such file", e$message, ignore.case = TRUE)) {
         stop("Directory not found: ", search_path)
       } else {
         stop("Error searching for YAML files: ", e$message)
