@@ -1,0 +1,23 @@
+Package: yml2renv
+Title: YAML to .Renviron Variable Management
+Version: 0.1.0
+Authors@R: 
+    person("Benjamin", "Peeters", 
+           email = "benjamin.peeters@pik-potsdam.de", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = ""))
+Description: Provides utilities to manage .Renviron configuration variables
+    from YAML configuration files. This package enables R packages to automatically
+    adjust and rely on .Renviron variables for configuration, allowing for a more
+    robust and standardized approach to environment variable management.
+License: AGPL-3.0
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    cli,
+    yaml,
+    fs
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
