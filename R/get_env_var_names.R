@@ -8,9 +8,11 @@
 #' `get_env_vars_yaml` function with the specified case format. The YAML file should 
 #' contain an `environment_variables` list with the names of the environment variables.
 #'
-#' @param package Character string with the package name.
-#' @param yaml_file Character string with the name of the YAML file. If NULL,
+#' @param package Character string with the package name. Either this or `yaml_file` 
+#'   must be provided.
+#' @param yaml_file Character string with the name or path to the YAML file. If NULL,
 #'   the function will search for a YAML file ending with `env_vars.yml` using `get_env_vars_yaml`.
+#'   Either this or `package` must be provided.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
@@ -36,50 +38,68 @@
 #' @export
 get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "snake_case") {
   
-  # @CLAUDE: add here to test that either package or yaml_file is provided (one or the other, or both). If none, provide an informative error. Adjust documentation accordingly
-  # adjust the rest of the function to make sure it work if package is provided only and if yaml_file is provided only.
+  # Check that at least one of package or yaml_file is provided
+  if (is.null(package) && is.null(yaml_file)) {
+    stop("At least one of 'package' or 'yaml_file' must be provided")
+  }
 
   # Find the YAML file
   if (is.null(yaml_file)) {
     # Try to find the YAML file using get_env_vars_yaml
+    # Try primary method first (get_env_vars_yaml)
+    yaml_file_found <- FALSE
+    
+    # Try using get_env_vars_yaml
     tryCatch({
       yaml_file <- get_env_vars_yaml(package, case_format)
+      yaml_file_found <- TRUE
     }, error = function(e) {
-      # Fall back to the original method if the search fails
-      fallback_file <- system.file(paste0(package, "_env_vars.yml"), package = package)
-      if (fallback_file == "") {
-        # Try a generic env_vars.yml
-        fallback_file <- system.file("env_vars.yml", package = package)
-        if (fallback_file == "") {
-          stop("Could not find environment variables YAML file. Error: ", e$message)
+      # Error will be handled in the following fallback methods
+    })
+    
+    # If primary method failed, try fallback methods
+    if (!yaml_file_found) {
+      # Fallback 1: Try [package]_env_vars.yml
+      potential_file <- system.file(paste0(package, "_env_vars.yml"), package = package)
+      if (potential_file != "") {
+        yaml_file <- potential_file
+      } else {
+        # Fallback 2: Try generic env_vars.yml
+        potential_file <- system.file("env_vars.yml", package = package)
+        if (potential_file != "") {
+          yaml_file <- potential_file
+        } else {
+          # All methods failed
+          stop("Could not find environment variables YAML file for package '", package, "'")
         }
       }
-      yaml_file <- fallback_file
-    })
+    }
   } else {
     # If yaml_file is provided, check if it's a file path or just a file name
     if (!file.exists(yaml_file)) {
-      # Try to find it in the package
-      yaml_file <- system.file(yaml_file, package = package)
-      if (yaml_file == "") {
-        stop("YAML file '", yaml_file, "' not found in package '", package, "'")
+      if (!is.null(package)) {
+        # Try to find it in the package
+        yaml_file <- system.file(yaml_file, package = package)
+        if (yaml_file == "") {
+          stop("YAML file '", yaml_file, "' not found in package '", package, "'")
+        }
+      } else {
+        stop("YAML file '", yaml_file, "' does not exist")
       }
     }
   }
   
   # Read the YAML file
-  if (!requireNamespace("yaml", quietly = TRUE)) {
-    stop("The yaml package is required but not available. Please install it with: install.packages('yaml')")
-  }
-  
   tryCatch({
     # Use the yaml package's read function
     env_vars <- yaml::read_yaml(yaml_file)$environment_variables
     if (is.null(env_vars) || length(env_vars) == 0) {
       stop("No environment variables found in YAML file at ", yaml_file)
     }
-    return(env_vars)
   }, error = function(e) {
     stop("Error reading YAML file: ", e$message)
   })
+
+  return(env_vars)
+
 }
