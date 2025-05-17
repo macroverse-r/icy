@@ -7,8 +7,9 @@
 #' @export
 get_renviron_path <- function() {
   if (.Platform$OS.type == "windows") {
-    file.path(Sys.getenv("USERPROFILE"), ".Renviron")
+    path <- file.path(Sys.getenv("USERPROFILE"), ".Renviron")
   } else {
-    file.path(Sys.getenv("HOME"), ".Renviron")
+    path <- file.path(Sys.getenv("HOME"), ".Renviron")
   }
+  return(path)
 }

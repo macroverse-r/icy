@@ -14,8 +14,7 @@ sync_env_vars <- function(var_names, verbose = TRUE) {
   renviron_path <- get_renviron_path()
   # Check file exists
   if (!file.exists(renviron_path)) {
-    cli::cli_warn("No .Renviron file found at {.file {renviron_path}}")
-    return(invisible(FALSE))
+    cli::cli_abort("No .Renviron file found at {.file {renviron_path}}")
   }
   
   # Clear specified variables from current session
@@ -33,5 +32,5 @@ sync_env_vars <- function(var_names, verbose = TRUE) {
   # Show current values of variables
   if (verbose) display_env_vars(var_names)
   
-  return(invisible(TRUE))
+  return(invisible(NULL))
 }

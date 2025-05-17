@@ -1,14 +1,14 @@
-#' Validate and Normalize a Directory Path
+#' Clean a Directory Path
 #'
-#' Helper function to validate a directory path and ensure it's properly formatted.
+#' Helper function to ensure a directory path is properly formatted.
 #'
-#' @param path The path to validate
+#' @param path The path to clean
 #' @param check_exists Whether to check if the directory exists
 #' @param create_if_missing Whether to try to create the directory if it doesn't exist
 #'
 #' @return A normalized path or NULL if invalid
 #' @export
-validate_directory_path <- function(path, check_exists = TRUE, create_if_missing = FALSE) {
+clean_dir_path <- function(path, check_exists = TRUE, create_if_missing = FALSE) {
   # Remove trailing slashes and normalize path separators
   clean_path <- sub("/*$", "", path)
   

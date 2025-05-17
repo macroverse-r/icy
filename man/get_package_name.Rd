@@ -4,11 +4,12 @@
 \alias{get_package_name}
 \title{Get the name of the currently executing package}
 \usage{
-get_package_name(method = 1)
+get_package_name()
 }
 \value{
 Character string with the package name, or NULL if it cannot be determined.
 }
 \description{
 Determines the name of the package from which the current function is being called.
+The function must be called inside a function in another package.
 }

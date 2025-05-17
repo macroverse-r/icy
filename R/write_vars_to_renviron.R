@@ -6,13 +6,13 @@
 #' Use sync_env_vars() after this to update the session.
 #'
 #' @param var_list Named list of environment variables to write.
+#' @param package Character string with the package name. 
 #' @param renviron_path Path to the .Renviron file.
 #' @param overwrite Logical; if TRUE, overwrites existing variables. Default is TRUE.
-#' @param validate Logical; if TRUE, validates variable names against the list from YAML.
+#' @param validate Logical; if TRUE and package provided, validates variable names against the list from YAML.
 #' @param allowed_vars Character vector of allowed variable names for validation.
 #'   Only used if validate is TRUE.
 #'   
-#' @return Invisibly returns a character vector of the variables that were written.
 #' @export
 write_vars_to_renviron <- function(var_list,
                                    package = NULL,
@@ -74,5 +74,5 @@ write_vars_to_renviron <- function(var_list,
     cli::cli_alert_info("Skipped (overwrite=FALSE): {.val {existing_vars}}")
   }
   
-  invisible(written_vars)
+  return(invisible(TRUE))
 }

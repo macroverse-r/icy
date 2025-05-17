@@ -4,13 +4,13 @@
 \alias{get_env_vars_yaml}
 \title{Find Environment Variables YAML File}
 \usage{
-get_env_vars_yaml(case_format = "snake_case", package = NULL)
+get_env_vars_yaml(package, case_format = "snake_case")
 }
 \arguments{
-\item{case_format}{Character string indicating the case format to use.
-Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+\item{package}{Character string with the package name to search within.}
 
-\item{package}{Character string with the package name to search within. If NULL (default),
+\item{case_format}{Character string indicating the case format to use.
+Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 the function will attempt to determine the current package name automatically.}
 }
 \value{

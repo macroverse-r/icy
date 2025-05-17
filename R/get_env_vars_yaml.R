@@ -4,18 +4,14 @@
 #' based on the requested case format. The function searches within the package
 #' installation directory, including all subdirectories.
 #'
+#' @param package Character string with the package name to search within.
 #' @param case_format Character string indicating the case format to use.
 #'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-#' @param package Character string with the package name to search within. If NULL (default),
 #'   the function will attempt to determine the current package name automatically.
 #'
 #' @return Character string with the full path to the found YAML file.
 #' @export
-get_env_vars_yaml <- function(case_format = "snake_case", package = NULL) {
-  # Determine package name automatically if not provided
-  if (is.null(package)) {
-    package <- get_package_name()
-  }
+get_env_vars_yaml <- function(package, case_format = "snake_case") {
   
   # Define search patterns based on case format
   pattern <- switch(case_format,

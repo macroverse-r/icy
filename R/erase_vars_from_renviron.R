@@ -10,7 +10,6 @@
 #' @param allowed_vars Character vector of allowed variable names for validation.
 #'   Only used if validate is TRUE.
 #'   
-#' @return Invisibly returns a character vector of the variables that were erased.
 #' @export
 erase_vars_from_renviron <- function(var_names,
                                      package = NULL,
@@ -25,8 +24,7 @@ erase_vars_from_renviron <- function(var_names,
   
   # Make sure the file exists, but don't create it if it doesn't
   if (!file.exists(renviron_path)) {
-    cli::cli_warn(".Renviron file not found at {.file {renviron_path}}")
-    return(invisible(character(0)))
+    cli::cli_abort(".Renviron file not found at {.file {renviron_path}}")
   }
   
   # Read existing content
@@ -54,5 +52,5 @@ erase_vars_from_renviron <- function(var_names,
     cli::cli_alert_success("Erased variables from .Renviron: {.val {erased_vars}}")
   }
   
-  invisible(erased_vars)
+  return(invisible(NULL))
 }

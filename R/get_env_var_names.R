@@ -25,7 +25,7 @@ get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "s
   if (is.null(yaml_file)) {
     # Try to find the YAML file using get_env_vars_yaml
     tryCatch({
-      yaml_file <- get_env_vars_yaml(case_format, package)
+      yaml_file <- get_env_vars_yaml(package, case_format)
     }, error = function(e) {
       # Fall back to the original method if the search fails
       fallback_file <- system.file(paste0(package, "_env_vars.yml"), package = package)
