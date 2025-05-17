@@ -6,7 +6,7 @@
 \usage{
 write_vars_to_renviron(
   var_list,
-  package = NULL,
+  package,
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
   validate = TRUE,
@@ -15,6 +15,9 @@ write_vars_to_renviron(
 }
 \arguments{
 \item{var_list}{Named list of environment variables to write.}
+
+\item{package}{Character string with the package name. Used for validation
+and for grouping related variables together in the .Renviron file.}
 
 \item{renviron_path}{Path to the .Renviron file.}
 
@@ -25,12 +28,15 @@ write_vars_to_renviron(
 \item{allowed_vars}{Character vector of allowed variable names for validation.
 Only used if validate is TRUE.}
 }
-\value{
-Invisibly returns a character vector of the variables that were written.
-}
 \description{
 Writes environment variables to the user's .Renviron file.
-By default, overwrites variables that already exist.
+By default, overwrites variables that already exist in-place.
 Note: This only affects the .Renviron file, not the current R session.
 Use sync_env_vars() after this to update the session.
+}
+\details{
+For existing variables, this function updates their values in-place,
+preserving their position in the file. For new variables, it attempts to
+group them with other variables from the same package, by adding them
+after the last existing variable from that package.
 }
