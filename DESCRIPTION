@@ -1,4 +1,4 @@
-Package: yml2renv
+Package: yml2env
 Title: YAML to .Renviron Variable Management
 Version: 0.1.20
 Authors@R: 

@@ -1,3 +1,5 @@
+# original name: get_config_yaml_path_renviron
+
 #' Find Environment Variables YAML Configuration File
 #'
 #' Locates the YAML configuration file that contains environment variable definitions
@@ -24,7 +26,7 @@
 #' @examples
 #' \dontrun{
 #' # Find the environment variables YAML file for a package
-#' yaml_path <- get_env_vars_yaml("mypackage")
+#' yaml_path <- get_config_yaml_path_renviron("mypackage")
 #' 
 #' # Read and process the YAML file
 #' if (file.exists(yaml_path)) {
@@ -33,33 +35,25 @@
 #' }
 #' 
 #' # Using a different naming convention
-#' yaml_path <- get_env_vars_yaml("mypackage", case_format = "camelCase")
+#' yaml_path <- get_config_yaml_path_renviron("mypackage", case_format = "camelCase")
 #' }
 #' 
 #' @export
-get_env_vars_yaml <- function(package, case_format = "snake_case") {
+get_config_yaml_path_renviron <- function(package,
+                                          case_format = "snake_case") {
   
   # Define search patterns based on case format
   pattern <- switch(case_format,
-                    "snake_case" = "_env_vars\\.ya?ml$",
-                    "camelCase" = "EnvVars\\.ya?ml$",
-                    "PascalCase" = "EnvVars\\.ya?ml$",
-                    "kebab-case" = "-env-vars\\.ya?ml$",
+                    "snake_case" = "_config_renviron\\.ya?ml$",
+                    "camelCase" = "ConfigRenviron\\.ya?ml$",
+                    "PascalCase" = "ConfigRenviron\\.ya?ml$",
+                    "kebab-case" = "-config-renviron\\.ya?ml$",
                     # Default to snake_case if unknown format
-                    "_env_vars\\.ya?ml$")
+                    "_config_renviron\\.ya?ml$")
   
   # Get the package path
   tryCatch({
-    pkg_path <- system.file(package = package)
-    
-    # Special handling for devtools loaded packages
-    if (endsWith(pkg_path, "/inst")) {
-      # For development mode, search from parent directory
-      search_path <- dirname(pkg_path)
-    } else {
-      # For installed packages, start with the package directory
-      search_path <- pkg_path
-    }
+    search_path <- get_package_dir(package = package)
     
     # Find all .yml or .yaml files in the package
     tryCatch({

@@ -1,13 +1,13 @@
-# yml2renv
+# yml2env
 
-[![R-CMD-check](https://github.com/benjaminpeeters/yml2renv/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/yml2renv/actions)
-[![CRAN status](https://www.r-pkg.org/badges/version/yml2renv)](https://CRAN.R-project.org/package=yml2renv)
+[![R-CMD-check](https://github.com/benjaminpeeters/yml2env/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/yml2env/actions)
+[![CRAN status](https://www.r-pkg.org/badges/version/yml2env)](https://CRAN.R-project.org/package=yml2env)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![License:AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
 
-`yml2renv` is an R package designed to manage environment variables in `.Renviron` files using YAML configuration. This package makes it easier for other R packages to configure and rely on environment variables in a consistent way.
+`yml2env` is an R package designed to manage environment variables in `.Renviron` files using YAML configuration. This package makes it easier for other R packages to configure and rely on environment variables in a consistent way.
 
 ### Key Features
 
@@ -47,12 +47,12 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 
 Install the package from GitHub using SSH
 ```r
-devtools::install_git("git@github.com:benjaminpeeters/yml2renv.git")
+devtools::install_git("git@github.com:benjaminpeeters/yml2env.git")
 ```
 
 Install the package from GitHub using HTTPS:
 ```r
-devtools::install_github("benjaminpeeters/yml2renv")
+devtools::install_github("benjaminpeeters/yml2env")
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ devtools::install_github("benjaminpeeters/yml2renv")
 ### Basic Example
 
 ```r
-library(yml2renv)
+library(yml2env)
 
 # Get all environment variable names defined in your package's YAML config
 var_names <- get_env_var_names(package = "mypackage")
@@ -89,7 +89,7 @@ environment_variables:
   - PACKAGE_DEBUG_MODE
 ```
 
-2. Use the yml2renv functions in your package to manage these variables:
+2. Use the yml2env functions in your package to manage these variables:
 
 ```r
 #' Configure Your Package
@@ -97,13 +97,13 @@ environment_variables:
 #' @export
 configure_my_package <- function() {
   # Get environment variable names
-  vars <- yml2renv::get_env_var_names(package = "mypackage")
+  vars <- yml2env::get_env_var_names(package = "mypackage")
   
   # Prompt user for values and write to .Renviron
   # (Implementation depends on your package's needs)
   
   # Sync variables to make them available in the current session
-  yml2renv::sync_env_vars(vars)
+  yml2env::sync_env_vars(vars)
 }
 ```
 

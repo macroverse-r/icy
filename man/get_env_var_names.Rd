@@ -11,7 +11,7 @@ get_env_var_names(package = NULL, yaml_file = NULL, case_format = "snake_case")
 must be provided.}
 
 \item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
-the function will search for a YAML file ending with \code{env_vars.yml} using \code{get_env_vars_yaml}.
+the function will search for a YAML file ending with \code{env_vars.yml} using \code{get_config_yaml_path_renviron}.
 Either this or \code{package} must be provided.}
 
 \item{case_format}{Character string indicating the case format to use for
@@ -28,7 +28,7 @@ variables the package uses, as defined in a YAML configuration file.
 }
 \details{
 If the YAML file name is not provided, the function will search for a file using the
-\code{get_env_vars_yaml} function with the specified case format. The YAML file should
+\code{get_config_yaml_path_renviron} function with the specified case format. The YAML file should
 contain an \code{environment_variables} list with the names of the environment variables.
 }
 \examples{

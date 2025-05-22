@@ -5,13 +5,13 @@
 #' variables the package uses, as defined in a YAML configuration file.
 #'
 #' If the YAML file name is not provided, the function will search for a file using the
-#' `get_env_vars_yaml` function with the specified case format. The YAML file should 
+#' `get_config_yaml_path_renviron` function with the specified case format. The YAML file should 
 #' contain an `environment_variables` list with the names of the environment variables.
 #'
 #' @param package Character string with the package name. Either this or `yaml_file` 
 #'   must be provided.
 #' @param yaml_file Character string with the name or path to the YAML file. If NULL,
-#'   the function will search for a YAML file ending with `env_vars.yml` using `get_env_vars_yaml`.
+#'   the function will search for a YAML file ending with `env_vars.yml` using `get_config_yaml_path_renviron`.
 #'   Either this or `package` must be provided.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
@@ -45,13 +45,13 @@ get_env_var_names <- function(package = NULL, yaml_file = NULL, case_format = "s
 
   # Find the YAML file
   if (is.null(yaml_file)) {
-    # Try to find the YAML file using get_env_vars_yaml
-    # Try primary method first (get_env_vars_yaml)
+    # Try to find the YAML file using get_config_yaml_path_renviron
+    # Try primary method first (get_config_yaml_path_renviron)
     yaml_file_found <- FALSE
     
-    # Try using get_env_vars_yaml
+    # Try using get_config_yaml_path_renviron
     tryCatch({
-      yaml_file <- get_env_vars_yaml(package, case_format)
+      yaml_file <- get_config_yaml_path_renviron(package, case_format)
       yaml_file_found <- TRUE
     }, error = function(e) {
       # Error will be handled in the following fallback methods

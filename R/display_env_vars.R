@@ -68,3 +68,36 @@ display_env_vars <- function(var_names = NULL) {
   
   invisible(values_list)
 }
+
+
+
+
+
+#' Display Current Environment Variables
+#'
+#' Shows the current values of the MSGM environment variables.
+#'
+#' @param var_names Character vector of environment variable names to display
+#' @return Invisibly returns NULL
+#' @keywords internal
+.display_env_vars_from_local <- function(var_names = NULL) {
+
+  if (is.null(var_names)) {
+    pkg <- yml2env::get_package_name()
+    template_config_file <- system.file("msgm_config_template.yml", package = pkg)
+    template_config <- yaml::read_yaml(template_config_file)
+    var_names <- names(template_config$default)
+  }
+
+  
+  for (var_name in var_names) {
+    value <- Sys.getenv(var_name, unset = "(not set)")
+    if (value == "(not set)") {
+      cli::cli_text("{.var {var_name}}: {.emph (using runtime defaults)}")
+    } else {
+      cli::cli_text("{.var {var_name}}: {.file {value}}")
+    }
+  }
+  
+  invisible(NULL)
+}

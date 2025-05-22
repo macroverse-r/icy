@@ -40,7 +40,7 @@
 get_package_dir <- function(package) {
   # First try: use current working directory if it seems to be a msgm directory
   current_dir <- getwd()
-  if (basename(current_dir) == package || file.exists(file.path(current_dir, "DESCRIPTION"))) {
+  if (basename(current_dir) == package && file.exists(file.path(current_dir, "DESCRIPTION"))) {
     return(current_dir)
   }
   
