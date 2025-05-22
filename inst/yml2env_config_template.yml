@@ -13,6 +13,7 @@ default:
 
 # Configuration variable descriptions
 descriptions:
-  YML2ENV_VERBOSE: "When set to TRUE, enables more detailed output for MSGM functions. Shows additional information about model operations, timing, and progress updates. Useful for understanding what the model is doing during execution."
-  YML2ENV_DEBUG: "When set to TRUE, enables maximum diagnostic information: (i) runs gams code in debug mode; and (2) isplays detailed internal state, variable values, and step-by-step execution data. Use this when troubleshooting problems or developing new features."
+  YML2ENV_VERBOSE: "Boolean variable. When set to TRUE, enables more detailed output for `yml2renv` functions. Shows additional information about model operations, timing, and progress updates. Useful for understanding what the functions are doing during execution. Default value: FALSE"
+  YML2ENV_DEBUG: "Boolean variable. When set to TRUE, enables maximum diagnostic information: displays detailed internal state, variable values, and step-by-step execution data. Use this when troubleshooting problems or developing new features. Default value: FALSE"
+  YML2ENV_KING: "Character string. Set what is the main reference to use as source of information to set the environment variables. Can take to values: `Renviron` or `config_local`. Default value: `Renviron`"
 

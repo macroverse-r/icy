@@ -44,7 +44,7 @@
 #' @export
 erase_from_renviron <- function(var_names,
                                 package = NULL,
-                                renviron_path = get_renviron_path(),
+                                renviron_path = .get_renviron_path(),
                                 validate = TRUE,
                                 allowed_vars = NULL) {
   

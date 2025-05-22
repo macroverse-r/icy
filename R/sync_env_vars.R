@@ -37,7 +37,7 @@
 sync_env_vars <- function(var_names, verbose = TRUE) {
   
   # Get path to .Renviron file
-  renviron_path <- get_renviron_path()
+  renviron_path <- .get_renviron_path()
   # Check file exists
   if (!file.exists(renviron_path)) {
     cli::cli_abort("No .Renviron file found at {.file {renviron_path}}")

@@ -77,7 +77,7 @@
 #' @export
 write_to_renviron <- function(var_list,
                               package = NULL,
-                              renviron_path = get_renviron_path(),
+                              renviron_path = .get_renviron_path(),
                               overwrite = TRUE,
                               validate = TRUE,
                               allowed_vars = NULL) {

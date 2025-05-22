@@ -7,7 +7,7 @@
 erase_from_renviron(
   var_names,
   package = NULL,
-  renviron_path = get_renviron_path(),
+  renviron_path = .get_renviron_path(),
   validate = TRUE,
   allowed_vars = NULL
 )

@@ -1,0 +1,4 @@
+default:
+  YML2ENV_VERBOSE: no
+  YML2ENV_DEBUG: no
+  YML2ENV_KING: Renviron

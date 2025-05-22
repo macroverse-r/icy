@@ -17,7 +17,7 @@
 #' @examples
 #' \dontrun{
 #' # Get the path to the .Renviron file
-#' renviron_path <- get_renviron_path()
+#' renviron_path <- .get_renviron_path()
 #' cat("Your .Renviron file is located at:", renviron_path, "\n")
 #' 
 #' # Check if the file exists
@@ -29,7 +29,7 @@
 #' 
 #' # Use in functions that need to access the .Renviron file
 #' backup_renviron <- function() {
-#'   renviron <- get_renviron_path()
+#'   renviron <- .get_renviron_path()
 #'   if (file.exists(renviron)) {
 #'     backup_file <- paste0(renviron, ".backup")
 #'     file.copy(renviron, backup_file)
@@ -38,8 +38,8 @@
 #' }
 #' }
 #'
-#' @export
-get_renviron_path <- function() {
+#' @keywords internal
+.get_renviron_path <- function() {
   if (.Platform$OS.type == "windows") {
     path <- file.path(Sys.getenv("USERPROFILE"), ".Renviron")
   } else {
