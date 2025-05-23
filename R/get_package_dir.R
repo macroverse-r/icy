@@ -8,7 +8,7 @@
 #' The function uses a multi-step strategy:
 #' 
 #' 1. Checks if the current working directory appears to be the package directory
-#' 2. Uses `system.file()` to locate an installed package
+#' 2. Uses `tools::R_user_dir()` or `system.file()` to locate an installed package
 #' 3. Falls back to the current directory if all else fails
 #'
 #' This function is especially helpful for accessing package resources in a way that works
@@ -37,15 +37,29 @@
 #' }
 #'
 #' @export
-get_package_dir <- function(package) {
-  # First try: use current working directory if it seems to be a msgm directory
-  current_dir <- getwd()
-  if (basename(current_dir) == package && file.exists(file.path(current_dir, "DESCRIPTION"))) {
-    return(current_dir)
+get_package_dir <- function(package, user_dir = TRUE, pkg_loc_first = TRUE) {
+  # First try: use current working directory if it seems to be a R package directory
+  if (pkg_loc_first) {
+    current_dir <- getwd()
+    desc_file <- file.path(current_dir, "DESCRIPTION")
+    r_dir <- file.path(current_dir, "R")
+
+    if (basename(current_dir) == package &&
+          file.exists(desc_file) &&
+          dir.exists(r_dir)) {
+      return(current_dir)
+    }
   }
   
-  # Second try: for installed package, use system.file
-  path <- suppressWarnings(system.file(package = package))
+  # Second try: for installed package
+  # use tools::R_user_dir() if user_dir is TRUE (default)
+  if (user_dir) {
+    path <- suppressWarnings(tools::R_user_dir(package = package, "config"))
+  } else {
+    # use system.file if not referring to user_dir
+    path <- suppressWarnings(system.file(package = package))
+  }
+
   if (path != "") {
     # Remove any trailing "/"
     path <- sub("/$", "", path)

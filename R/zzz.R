@@ -1,7 +1,7 @@
 
 .onLoad <- function(libname, pkgname) {
   # Get paths to the template and local config files
-  # local_config_file <- get_config_yaml_path(package = pkgname,
+  # local_config_file <- get_config_path(package = pkgname,
   #                                           tmpl2local_comp = "default")
   # print(local_config_file)
 

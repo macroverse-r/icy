@@ -22,7 +22,7 @@
 | Function | Description |
 |----------|-------------|
 | `get_env_var_names()` | Extract environment variable names from a package's YAML configuration |
-| `get_env_vars_yaml()` | Find a package's environment variables YAML configuration file |
+| `get_config_path()` | Find a package's environment variables YAML configuration file |
 | `write_to_renviron()` | Write environment variables to the .Renviron file |
 | `erase_from_renviron()` | Remove environment variables from the .Renviron file |
 | `sync_env_vars()` | Update current R session with variables from .Renviron |

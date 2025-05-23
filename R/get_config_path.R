@@ -1,5 +1,3 @@
-# original name: get_config_yaml_path_renviron
-
 #' Find Environment Variables YAML Configuration File
 #'
 #' Locates the YAML configuration file that contains environment variable definitions
@@ -27,7 +25,7 @@
 #' @examples
 #' \dontrun{
 #' # Find the environment variables YAML file for a package
-#' yaml_path <- get_config_yaml_path_renviron("mypackage")
+#' yaml_path <- get_config_path("mypackage")
 #'
 #' # Read and process the YAML file
 #' if (file.exists(yaml_path)) {
@@ -36,34 +34,53 @@
 #' }
 #'
 #' # Using a different naming convention
-#' yaml_path <- get_config_yaml_path_renviron("mypackage", case_format = "camelCase")
+#' yaml_path <- get_config_path("mypackage", case_format = "camelCase")
 #' }
 #'
 #' @export
-get_config_yaml_path <- function(package = NULL,
-                                 fn_local = NULL,
-                                 fn_tmpl = NULL,
-                                 tmpl2local_comp = NULL,
-                                 case_format = "snake_case",
-                                 force = FALSE) {
+get_config_path <- function(package = NULL,
+                            fn_local = NULL,
+                            fn_tmpl = NULL,
+                            tmpl2local_comp = NULL,
+                            case_format = "snake_case",
+                            debug = FALSE,
+                            force = FALSE) {
+
+  # current function
+  fun <- .cur_fun()
+
   # Use this package name (yml2env) if not provided
   if (is.null(package)) {
     package <- get_package_name()
-    cat(paste0("pkgname = ", package, "\n"))
   }
 
+  if (debug) {
+    cli::cli_text("From {.strong {fun}}: pkgname = {.path {package}}")
+  }
 
   # Get paths to the template and local config files
   if (is.null(fn_local)) {
-    fn_local <- .pattern(package = package, case_format = case_format, file = "local")
-    cat(paste0("fn_local = ", fn_local, "\n"))
+    fn_local_pattern <- .pattern(package = package, case_format = case_format, file = "local")
+  } else {
+    fn_local_pattern <- fn_local
+  }
+
+  if (debug) {
+    cli::cli_text("From {.strong {fun}}: fn_local_pattern = {.path {fn_local_pattern}}")
   }
 
   # Find all .yml or .yaml files matching the pattern
   matching_file <- .find_matching_pattern(
     package = package,
-    fn_pattern = fn_local
+    fn_pattern = fn_local_pattern,
+    user_dir = TRUE,
+    verbose = TRUE
   )
+
+  if (debug) {
+    cli::cli_text("From {.strong {fun}}: length(matching_file) = {length(matching_file)}")
+  }
+
 
   # Create local config file if it doesn't exist
   if (length(matching_file) == 0) {
@@ -72,8 +89,8 @@ get_config_yaml_path <- function(package = NULL,
                                   fn_local = fn_local,
                                   fn_tmpl = fn_tmpl,
                                   tmpl2local_comp = tmpl2local_comp,
-                                  case_format = case_format
-      )
+                                  case_format = case_format,
+                                  debug = debug)
     } else {
       cli::cli_abort("No local config YAML file could be found and force is FALSE.")
     }
@@ -90,7 +107,11 @@ get_config_yaml_path <- function(package = NULL,
                           fn_local = NULL,
                           fn_tmpl = NULL,
                           tmpl2local_comp = NULL,
-                          case_format = "snake_case") {
+                          case_format = "snake_case",
+                          debug = FALSE) {
+
+  # current function
+  fun <- .cur_fun()
 
   # Use default naming convention if fn_local is not specified
   if (is.null(fn_local)) {
@@ -102,39 +123,45 @@ get_config_yaml_path <- function(package = NULL,
     )
   }
 
-  existing <- .find_matching_pattern(package = package, fn_pattern = fn_local)
+  existing <- .find_matching_pattern(package = package,
+                                     fn_pattern = fn_local,
+                                     user_dir = TRUE,
+                                     verbose = FALSE)
+
   if (length(existing) > 0) {
     cli::cli_abort("Local config YAML file already exist.")
   }
 
-
   if (!is.null(fn_tmpl)) {
     # Add path to template if not provided
     if (!grepl("[/\\\\]", fn_tmpl)) {
-      fn_tmpl_path <- .find_matching_pattern(package = package, fn_pattern = fn_tmpl)
+      fn_tmpl_path <- .find_matching_pattern(package = package,
+                                             fn_pattern = fn_tmpl,
+                                             user_dir = FALSE)
     } else {
       fn_tmpl_path <- fn_tmpl
     }
   } else {
     # Read template if not provided
     tmpl_pattern <- .pattern(package = package, case_format = case_format, file = "template")
-    fn_tmpl_path <- .find_matching_pattern(package = package, fn_pattern = tmpl_pattern)
+    fn_tmpl_path <- .find_matching_pattern(package = package,
+                                           fn_pattern = tmpl_pattern,
+                                           user_dir = FALSE)
 
-    print(fn_tmpl_path)
-    cli::cli_inform("length(fn_tmpl_path) = {length(fn_tmpl_path)}")
     if (length(fn_tmpl_path) != 1) {
       cli::cli_abort("No local YAML file found and no clear and unique template config YAML found.")
     } else {
       cli::cli_inform("Use {.file {fn_tmpl_path}} to create local config file.")
     }
+
+  }
+
+  if (debug) {
+    cli::cli_text("From {.strong {fun}}: fn_tmpl_path = {.path {fn_tmpl_path}}")
   }
 
   # Read template and extract the relevant section
   template_config <- yaml::read_yaml(fn_tmpl_path)
-  # print(" -- ")
-  # print("template_config:")
-  # print(template_config)
-  print(" -- ")
   if (!is.null(tmpl2local_comp)) {
     local_config <- template_config[[tmpl2local_comp]]
   } else {
@@ -143,20 +170,27 @@ get_config_yaml_path <- function(package = NULL,
     local_config$default <- template_config$default
   }
 
-
-
   # Add path to template if not provided
   if (!grepl("[/\\\\]", fn_local)) {
-    fn_local_path <- file.path(system.file(package = package), fn_local)
+    fn_local_path <- file.path(get_package_dir(package = package), fn_local)
   } else {
     fn_local_path <- fn_tmpl
   }
 
-  cli::cli_inform("fn_local_path = {fn_local_path}")
+  if (debug) {
+    cli::cli_text("From {.strong {fun}}:")
+    cli::cli_inform(" - fn_local = {fn_local}")
+    cli::cli_inform(" - get_package_dir = {get_package_dir(package = package)}")
+    cli::cli_inform(" - fn_local_path = {fn_local_path}")
+  }
 
+  # Create the directory if it doesn't exist
+  if (!dir.exists(dirname(fn_local_path))) {
+    dir.create(dirname(fn_local_path),
+               recursive = TRUE,
+               showWarnings = FALSE)
+  }
 
-  print("local_config:")
-  print(local_config)
   # Write just the default section to the local config file
   yaml::write_yaml(local_config, fn_local_path)
 
@@ -167,11 +201,14 @@ get_config_yaml_path <- function(package = NULL,
 # filename <- gsub("\\\\\\.|ya\\?ml|\\$", c(".", "yml", ""), pattern)
 
 .find_matching_pattern <- function(package,
-                                   fn_pattern) {
+                                   fn_pattern,
+                                   user_dir = TRUE,
+                                   verbose = FALSE) {
   # Get the package path
   tryCatch(
     {
-      package_dir <- get_package_dir(package = package)
+      package_dir <- get_package_dir(package = package,
+                                     user_dir = user_dir)
     },
     error = function(e) {
       stop("Error locating package path: ", e$message)
@@ -189,12 +226,12 @@ get_config_yaml_path <- function(package = NULL,
   # Filter for files matching our pattern
   matching_files <- yaml_files[grepl(fn_pattern, yaml_files, ignore.case = TRUE)]
 
-  # print(matching_files)
-
-  if (length(matching_files) == 0) {
-    cli::cli_alert_warning("No YAML file found in {.file {package_dir}} \n matching pattern {.var {fn_pattern}}")
-  } else if (length(matching_files) > 1) {
-    cli::cli_alert_warning("Multiple config YAML files found: {.file {basename(matching_files)}}. \nPlease ensure only one file is present.")
+  if (verbose) {
+    if (length(matching_files) == 0) {
+      cli::cli_alert_warning("No YAML file in {.file {package_dir}} matching {.var {fn_pattern}}")
+    } else if (length(matching_files) > 1) {
+      cli::cli_alert_warning("Multiple config YAML files found: {.file {basename(matching_files)}}. \nPlease ensure only one file is present.")
+    }
   }
 
   return(as.character(matching_files))

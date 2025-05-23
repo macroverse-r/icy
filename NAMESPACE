@@ -3,7 +3,7 @@
 export(clean_dir_path)
 export(display_env_vars)
 export(erase_from_renviron)
-export(get_config_yaml_path)
+export(get_config_path)
 export(get_env_var_names)
 export(get_package_dir)
 export(get_package_name)

@@ -4,7 +4,7 @@
 \alias{get_package_dir}
 \title{Get the Root Directory of a Package}
 \usage{
-get_package_dir(package)
+get_package_dir(package, user_dir = TRUE, pkg_loc_first = TRUE)
 }
 \arguments{
 \item{package}{Character string with the package name to locate.}
@@ -22,7 +22,7 @@ is being used.
 The function uses a multi-step strategy:
 \enumerate{
 \item Checks if the current working directory appears to be the package directory
-\item Uses \code{system.file()} to locate an installed package
+\item Uses \code{tools::R_user_dir()} or \code{system.file()} to locate an installed package
 \item Falls back to the current directory if all else fails
 }
 

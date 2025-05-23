@@ -3,10 +3,10 @@
 #' @description
 #' Toggles the verbose mode setting for the specified package by modifying the 
 #' `PKGNAME_VERBOSE` variable in the package's environment variables YAML file.
-#' If the variable doesn't exist, it will be created with the specified default value.
+#' If the variable doesn't exist, it will be created with the specified initial value.
 #'
 #' @param pkgname Character string. The name of the package to toggle verbose mode for.
-#' @param default Logical. The default value to use when initializing a 
+#' @param initial Logical. The default value to use when initializing a 
 #'   non-existent verbose variable. Defaults to TRUE.
 #' @param verbose Logical. Controls whether to display a message about the change.
 #'   Defaults to TRUE.
@@ -28,36 +28,39 @@
 #' # Toggle verbose mode for a specific package
 #' toggle_verbose(pkgname = "mypackage")
 #'
-#' # Initialize verbose mode with default FALSE
-#' toggle_verbose(pkgname = "mypackage", default = FALSE)
+#' # Initialize verbose mode with initial FALSE
+#' toggle_verbose(pkgname = "mypackage", initial = FALSE)
 #'
 #' # Toggle without displaying a message
 #' toggle_verbose(pkgname = "mypackage", verbose = FALSE)
 #'
 #' @seealso
 #' \code{\link{toggle_debug}} for toggling debug mode.
-#' \code{\link{get_config_yaml_path_local}} for retrieving the config file path.
+#' \code{\link{get_config_path}} for retrieving the config file path.
 #'
 #' @export
-toggle_verbose <- function(pkgname, default = TRUE, verbose = TRUE) {
+toggle_verbose <- function(pkgname,
+                           user = "default",
+                           initial = TRUE,
+                           verbose = TRUE) {
   
   # Create dynamic variable names based on package
   pkg_upper <- toupper(pkgname)
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
   
   # Get config file path
-  path <- get_config_yaml_path_local(pkgname)
+  path <- get_config_path(pkgname)
   
   # Read config
   config <- yaml::read_yaml(file = path)
-  
+ 
   # Check if verbose variable exists, create if it doesn't
-  if (is.null(config[[verbose_var]])) {
-    config[[verbose_var]] <- default
+  if (is.null(config[[user]][[verbose_var]])) {
+    config[[user]][[verbose_var]] <- initial
     msg <- " - initialized"
   } else {
     # Toggle existing value
-    config[[verbose_var]] <- !config[[verbose_var]]
+    config[[user]][[verbose_var]] <- !config[[user]][[verbose_var]]
     msg <- ""
   }
   
@@ -67,7 +70,7 @@ toggle_verbose <- function(pkgname, default = TRUE, verbose = TRUE) {
   # Show message if verbose parameter is TRUE
   if (verbose) {
     # Prepare status message with colored output
-    verbose_status <- if (config[[verbose_var]]) 
+    verbose_status <- if (config[[user]][[verbose_var]]) 
       cli::col_green("enabled") 
     else 
       cli::col_red("disabled")
@@ -77,12 +80,12 @@ toggle_verbose <- function(pkgname, default = TRUE, verbose = TRUE) {
       paste0(
         "Verbose mode for ", pkgname, " ", 
         verbose_status, 
-        " (", verbose_var, " = {.val ", config[[verbose_var]], "})",
+        " (", verbose_var, " = {.val ", config[[user]][[verbose_var]], "})",
         msg
       )
     )
   }
   
   # Return invisibly for potential chaining
-  return(invisible(config[[verbose_var]]))
+  return(invisible(config[[user]][[verbose_var]]))
 }

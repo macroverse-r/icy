@@ -4,11 +4,7 @@
 \alias{.pattern}
 \title{Define search patterns based on case format}
 \usage{
-.pattern(
-  package = get_package_name(),
-  case_format = "snake_case",
-  file = "local"
-)
+.pattern(package, case_format = "snake_case", file = "local", yml = FALSE)
 }
 \arguments{
 \item{case_format}{Character string specifying the case format}

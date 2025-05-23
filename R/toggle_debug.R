@@ -3,10 +3,10 @@
 #' @description
 #' Toggles the debug mode setting for the specified package by modifying the 
 #' `PKGNAME_DEBUG` variable in the package's environment variables YAML file.
-#' If the variable doesn't exist, it will be created with the specified default value.
+#' If the variable doesn't exist, it will be created with the specified initial value.
 #'
 #' @param pkgname Character string. The name of the package to toggle debug mode for.
-#' @param default Logical. The default value to use when initializing a 
+#' @param initial Logical. The initial value to use when initializing a 
 #'   non-existent debug variable. Defaults to TRUE.
 #' @param verbose Logical. Controls whether to display a message about the change.
 #'   Defaults to TRUE. 
@@ -27,14 +27,17 @@
 #' # Toggle debug mode for a specific package
 #' toggle_debug(pkgname = "mypackage")
 #'
-#' # Initialize debug mode with default FALSE
-#' toggle_debug(pkgname = "otherpackage", default = FALSE)
+#' # Initialize debug mode with initial FALSE
+#' toggle_debug(pkgname = "otherpackage", initial = FALSE)
 #'
 #' @seealso
-#' \code{\link{get_config_yaml_path_local}} for retrieving the config file path.
+#' \code{\link{get_config_path}} for retrieving the config file path.
 #'
 #' @export
-toggle_debug <- function(pkgname, default = TRUE, verbose = TRUE) {
+toggle_debug <- function(pkgname,
+                         user = "default",
+                         initial = TRUE,
+                         verbose = TRUE) {
   
   # Create dynamic variable names based on package
   pkg_upper <- toupper(pkgname)
@@ -42,18 +45,18 @@ toggle_debug <- function(pkgname, default = TRUE, verbose = TRUE) {
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
   
   # Get config file path
-  path <- get_config_yaml_path_local(pkgname)
+  path <- get_config_path(pkgname)
   
   # Read config
   config <- yaml::read_yaml(file = path)
   
   # Check if debug variable exists, create if it doesn't
-  if (is.null(config[[debug_var]])) {
-    config[[debug_var]] <- default
+  if (is.null(config[[user]][[debug_var]])) {
+    config[[user]][[debug_var]] <- initial
     msg <- " - initialized"
   } else {
     # Toggle existing value
-    config[[debug_var]] <- !config[[debug_var]]
+    config[[user]][[debug_var]] <- !config[[user]][[debug_var]]
     msg <- ""
   }
   
@@ -64,11 +67,11 @@ toggle_debug <- function(pkgname, default = TRUE, verbose = TRUE) {
   if (verbose) {
     # Always show message (ignore verbose setting if it doesn't exist)
     # Check verbose setting only if it explicitly exists and is FALSE
-    should_print <- !(!is.null(config[[verbose_var]]) && !config[[verbose_var]])
+    should_print <- !(!is.null(config[[user]][[verbose_var]]) && !config[[user]][[verbose_var]])
     
     if (should_print) {
       # Prepare status message with colored output
-      debug_status <- if (config[[debug_var]]) 
+      debug_status <- if (config[[user]][[debug_var]]) 
         cli::col_green("enabled") 
       else 
         cli::col_red("disabled")
@@ -78,7 +81,7 @@ toggle_debug <- function(pkgname, default = TRUE, verbose = TRUE) {
         paste0(
           "Debug mode for ", pkgname, " ", 
           debug_status, 
-          " (", debug_var, " = {.val ", config[[debug_var]], "})",
+          " (", debug_var, " = {.val ", config[[user]][[debug_var]], "})",
           msg
         )
       )
@@ -86,5 +89,5 @@ toggle_debug <- function(pkgname, default = TRUE, verbose = TRUE) {
   }
   
   # Return invisibly for potential chaining
-  return(invisible(config[[debug_var]]))
+  return(invisible(config[[user]][[debug_var]]))
 }

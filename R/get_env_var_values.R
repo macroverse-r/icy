@@ -6,7 +6,7 @@ get_env_var_values <- function(package,
                                tmpl2local_comp = NULL,
                                case_format = "snake_case") {
 
-  fn_local_path <- get_config_yaml_path(package = package,
+  fn_local_path <- get_config_path(package = package,
                                         fn_local = fn_local,
                                         fn_tmpl = fn_tmpl,
                                         tmpl2local_comp = tmpl2local_comp,
