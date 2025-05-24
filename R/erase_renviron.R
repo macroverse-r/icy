@@ -21,36 +21,36 @@
 #' @examples
 #' \dontrun{
 #' # Remove specific environment variables
-#' erase_from_renviron(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"),
-#'                   package = "mypackage")
+#' erase_renviron(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"),
+#'                package = "mypackage")
 #' 
 #' # Remove all package variables at once
-#' var_names <- get_env_var_names(package = "mypackage")
-#' erase_from_renviron(var_names, package = "mypackage")
+#' var_names <- get_var_names(package = "mypackage")
+#' erase_renviron(var_names, package = "mypackage")
 #' 
 #' # After erasing, sync the current session to reflect changes
-#' sync_env_vars(var_names)
+#' sync(var_names)
 #' 
 #' # Using in a package configuration reset function
 #' reset_package_config <- function() {
 #'   pkg <- "mypackage"
-#'   var_names <- get_env_var_names(package = pkg)
-#'   erase_from_renviron(var_names, package = pkg)
-#'   sync_env_vars(var_names)
+#'   var_names <- get_var_names(package = pkg)
+#'   erase_renviron(var_names, package = pkg)
+#'   sync(var_names)
 #'   cat("Package configuration has been reset. Runtime defaults will be used.\n")
 #' }
 #' }
 #'   
 #' @export
-erase_from_renviron <- function(var_names,
-                                package = NULL,
-                                renviron_path = .get_renviron_path(),
-                                validate = TRUE,
-                                allowed_vars = NULL) {
+erase_renviron <- function(var_names,
+                           package = NULL,
+                           renviron_path = get_renviron_path(),
+                           validate = TRUE,
+                           allowed_vars = NULL) {
   
   # Validate variable names if requested
   if (validate && !is.null(package)) {
-    validate_env_var_names(var_names, warn = FALSE, allowed_vars = allowed_vars)
+    validate(package = package, var_names = var_names, warn = FALSE, allowed_vars = allowed_vars)
   }
   
   # Make sure the file exists, but don't create it if it doesn't

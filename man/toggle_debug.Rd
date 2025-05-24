@@ -4,12 +4,12 @@
 \alias{toggle_debug}
 \title{Toggle or Initialize Debug Mode for Package}
 \usage{
-toggle_debug(pkgname, default = TRUE, verbose = TRUE)
+toggle_debug(pkgname, user = "default", initial = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{pkgname}{Character string. The name of the package to toggle debug mode for.}
 
-\item{default}{Logical. The default value to use when initializing a
+\item{initial}{Logical. The initial value to use when initializing a
 non-existent debug variable. Defaults to TRUE.}
 
 \item{verbose}{Logical. Controls whether to display a message about the change.
@@ -21,7 +21,7 @@ Invisibly returns the new value of the debug variable.
 \description{
 Toggles the debug mode setting for the specified package by modifying the
 \code{PKGNAME_DEBUG} variable in the package's environment variables YAML file.
-If the variable doesn't exist, it will be created with the specified default value.
+If the variable doesn't exist, it will be created with the specified initial value.
 }
 \details{
 The function uses the provided package name (or determines it dynamically)
@@ -37,10 +37,10 @@ exists and is set to FALSE.
 # Toggle debug mode for a specific package
 toggle_debug(pkgname = "mypackage")
 
-# Initialize debug mode with default FALSE
-toggle_debug(pkgname = "otherpackage", default = FALSE)
+# Initialize debug mode with initial FALSE
+toggle_debug(pkgname = "otherpackage", initial = FALSE)
 
 }
 \seealso{
-\code{\link{get_config_yaml_path_local}} for retrieving the config file path.
+\code{\link{get_config_path}} for retrieving the config file path.
 }

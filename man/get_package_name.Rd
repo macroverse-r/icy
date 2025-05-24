@@ -45,9 +45,9 @@ get_package_config <- function() {
   pkg <- get_package_name()
   
   # Use the package name to find configuration
-  var_names <- get_env_var_names(package = pkg)
+  var_names <- get_var_names(package = pkg)
   cat("Configuration for package", pkg, ":\n")
-  display_env_vars(var_names)
+  show(package = pkg, var_names = var_names)
 }
 }
 

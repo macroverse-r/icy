@@ -35,7 +35,7 @@
 #' @examples
 #' \dontrun{
 #' # For package developers: Writing package variables to .Renviron
-#' write_to_renviron(
+#' write_renviron(
 #'   var_list = list(
 #'     MY_PACKAGE_DATA_DIR = "/path/to/data",
 #'     MY_PACKAGE_API_KEY = "secret-key"
@@ -44,7 +44,7 @@
 #' )
 #' 
 #' # For general use: Setting environment variables without a package
-#' write_to_renviron(
+#' write_renviron(
 #'   var_list = list(
 #'     R_MAX_VSIZE = "4GB",
 #'     API_KEY = "my-api-key"
@@ -58,7 +58,7 @@
 #'   api_key <- readline("Enter API key: ")
 #'   
 #'   # Write to .Renviron
-#'   write_to_renviron(
+#'   write_renviron(
 #'     var_list = list(
 #'       MY_PACKAGE_DATA_DIR = data_dir,
 #'       MY_PACKAGE_API_KEY = api_key
@@ -67,7 +67,7 @@
 #'   )
 #'   
 #'   # Update current session
-#'   sync_env_vars(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"))
+#'   sync(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"))
 #'   
 #'   # Confirm to user
 #'   cat("Configuration complete. Settings will be loaded in future R sessions.\n")
@@ -75,12 +75,13 @@
 #' }
 #'   
 #' @export
-write_to_renviron <- function(var_list,
-                              package = NULL,
-                              renviron_path = .get_renviron_path(),
-                              overwrite = TRUE,
-                              validate = TRUE,
-                              allowed_vars = NULL) {
+write_renviron <- function(var_list,
+                           package = NULL,
+                           user = "default",
+                           renviron_path = get_renviron_path(),
+                           overwrite = TRUE,
+                           validate = TRUE,
+                           allowed_vars = NULL) {
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
@@ -104,6 +105,7 @@ write_to_renviron <- function(var_list,
     .write_pkg_to_renviron(
       var_list = var_list,
       package = package,
+      user = user,
       renviron_path = renviron_path,
       overwrite = overwrite,
       validate = validate, 
@@ -178,13 +180,20 @@ write_to_renviron <- function(var_list,
 
 # Internal function for writing variables associated with a package
 # Handles validation and groups variables together by package
-.write_pkg_to_renviron <- function(var_list, package, renviron_path, overwrite, validate, allowed_vars) {
+.write_pkg_to_renviron <- function(var_list,
+                                   package,
+                                   user,
+                                   renviron_path,
+                                   overwrite,
+                                   validate,
+                                   allowed_vars) {
+
   # Validate variable names if requested
   if (validate) {
-    validate_env_var_names(var_names = names(var_list),
-                         package = package,
-                         warn = FALSE,
-                         allowed_vars = allowed_vars)
+    validate(package = package,
+             var_names = names(var_list),
+             warn = FALSE,
+             allowed_vars = allowed_vars)
   }
   
   # Ensure the .Renviron file exists
@@ -204,7 +213,7 @@ write_to_renviron <- function(var_list,
   # Get all environment variables for this package
   package_var_names <- character(0)
   tryCatch({
-    package_var_names <- get_env_var_names(package = package)
+    package_var_names <- get_var_names(package = package, user = user)
   }, error = function(e) {
     # If we can't get the package var names, continue without grouping
     cli::cli_warn("Could not retrieve full list of package variables: {e$message}")

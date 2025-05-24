@@ -44,34 +44,40 @@ toggle_debug <- function(pkgname,
   debug_var <- paste0(pkg_upper, "_DEBUG")
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
   
-  # Get config file path
-  path <- get_config_path(pkgname)
+  # Read current config
+  current_config <- tryCatch({
+    get_config(package = pkgname, user = user, origin = "local")
+  }, error = function(e) {
+    list()
+  })
   
-  # Read config
-  config <- yaml::read_yaml(file = path)
-  
-  # Check if debug variable exists, create if it doesn't
-  if (is.null(config[[user]][[debug_var]])) {
-    config[[user]][[debug_var]] <- initial
+  # Check if debug variable exists
+  if (is.null(current_config[[debug_var]])) {
+    new_value <- initial
     msg <- " - initialized"
   } else {
     # Toggle existing value
-    config[[user]][[debug_var]] <- !config[[user]][[debug_var]]
+    current_value <- as.logical(current_config[[debug_var]])
+    new_value <- !current_value
     msg <- ""
   }
   
-  # Write updated config back to file
-  yaml::write_yaml(config, path)
+  # Write updated value to local config
+  write_local(
+    var_list = setNames(list(new_value), debug_var),
+    package = pkgname,
+    user = user
+  )
   
   # Show message if verbose parameter is TRUE
   if (verbose) {
     # Always show message (ignore verbose setting if it doesn't exist)
     # Check verbose setting only if it explicitly exists and is FALSE
-    should_print <- !(!is.null(config[[user]][[verbose_var]]) && !config[[user]][[verbose_var]])
+    should_print <- !(!is.null(current_config[[verbose_var]]) && !as.logical(current_config[[verbose_var]]))
     
     if (should_print) {
       # Prepare status message with colored output
-      debug_status <- if (config[[user]][[debug_var]]) 
+      debug_status <- if (new_value) 
         cli::col_green("enabled") 
       else 
         cli::col_red("disabled")
@@ -81,7 +87,7 @@ toggle_debug <- function(pkgname,
         paste0(
           "Debug mode for ", pkgname, " ", 
           debug_status, 
-          " (", debug_var, " = {.val ", config[[user]][[debug_var]], "})",
+          " (", debug_var, " = {.val ", new_value, "})",
           msg
         )
       )
@@ -89,5 +95,5 @@ toggle_debug <- function(pkgname,
   }
   
   # Return invisibly for potential chaining
-  return(invisible(config[[user]][[debug_var]]))
+  return(invisible(new_value))
 }

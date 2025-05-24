@@ -48,29 +48,35 @@ toggle_verbose <- function(pkgname,
   pkg_upper <- toupper(pkgname)
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
   
-  # Get config file path
-  path <- get_config_path(pkgname)
+  # Read current config
+  current_config <- tryCatch({
+    get_config(package = pkgname, user = user, origin = "local")
+  }, error = function(e) {
+    list()
+  })
   
-  # Read config
-  config <- yaml::read_yaml(file = path)
- 
-  # Check if verbose variable exists, create if it doesn't
-  if (is.null(config[[user]][[verbose_var]])) {
-    config[[user]][[verbose_var]] <- initial
+  # Check if verbose variable exists
+  if (is.null(current_config[[verbose_var]])) {
+    new_value <- initial
     msg <- " - initialized"
   } else {
     # Toggle existing value
-    config[[user]][[verbose_var]] <- !config[[user]][[verbose_var]]
+    current_value <- as.logical(current_config[[verbose_var]])
+    new_value <- !current_value
     msg <- ""
   }
   
-  # Write updated config back to file
-  yaml::write_yaml(config, path)
+  # Write updated value to local config
+  write_local(
+    var_list = setNames(list(new_value), verbose_var),
+    package = pkgname,
+    user = user
+  )
   
   # Show message if verbose parameter is TRUE
   if (verbose) {
     # Prepare status message with colored output
-    verbose_status <- if (config[[user]][[verbose_var]]) 
+    verbose_status <- if (new_value) 
       cli::col_green("enabled") 
     else 
       cli::col_red("disabled")
@@ -80,12 +86,12 @@ toggle_verbose <- function(pkgname,
       paste0(
         "Verbose mode for ", pkgname, " ", 
         verbose_status, 
-        " (", verbose_var, " = {.val ", config[[user]][[verbose_var]], "})",
+        " (", verbose_var, " = {.val ", new_value, "})",
         msg
       )
     )
   }
   
   # Return invisibly for potential chaining
-  return(invisible(config[[user]][[verbose_var]]))
+  return(invisible(new_value))
 }

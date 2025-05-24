@@ -4,12 +4,12 @@
 \alias{toggle_verbose}
 \title{Toggle or Initialize Verbose Mode for Package}
 \usage{
-toggle_verbose(pkgname, default = TRUE, verbose = TRUE)
+toggle_verbose(pkgname, user = "default", initial = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{pkgname}{Character string. The name of the package to toggle verbose mode for.}
 
-\item{default}{Logical. The default value to use when initializing a
+\item{initial}{Logical. The default value to use when initializing a
 non-existent verbose variable. Defaults to TRUE.}
 
 \item{verbose}{Logical. Controls whether to display a message about the change.
@@ -21,7 +21,7 @@ Invisibly returns the new value of the verbose variable.
 \description{
 Toggles the verbose mode setting for the specified package by modifying the
 \code{PKGNAME_VERBOSE} variable in the package's environment variables YAML file.
-If the variable doesn't exist, it will be created with the specified default value.
+If the variable doesn't exist, it will be created with the specified initial value.
 }
 \details{
 The function uses the provided package name (or determines it dynamically)
@@ -38,8 +38,8 @@ in the configuration.
 # Toggle verbose mode for a specific package
 toggle_verbose(pkgname = "mypackage")
 
-# Initialize verbose mode with default FALSE
-toggle_verbose(pkgname = "mypackage", default = FALSE)
+# Initialize verbose mode with initial FALSE
+toggle_verbose(pkgname = "mypackage", initial = FALSE)
 
 # Toggle without displaying a message
 toggle_verbose(pkgname = "mypackage", verbose = FALSE)
@@ -47,5 +47,5 @@ toggle_verbose(pkgname = "mypackage", verbose = FALSE)
 }
 \seealso{
 \code{\link{toggle_debug}} for toggling debug mode.
-\code{\link{get_config_yaml_path_local}} for retrieving the config file path.
+\code{\link{get_config_path}} for retrieving the config file path.
 }

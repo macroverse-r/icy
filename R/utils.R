@@ -1,34 +1,21 @@
 
 .verbose <- function() {
-  pkgname <- get_package_name()
-  pkg_upper <- toupper(pkgname)
-  verbose_var <- paste0(pkg_upper, "_VERBOSE")
-  
-  tryCatch({
-    verbose <- get_env_var_values(pkgname, verbose_var)
-    return(verbose)
-  }, error = function(e) {
-    cli::cli_alert_danger("Error in {.fun get_env_var_values}: {e$message}")
-    return(TRUE)
-  })
+  # yml2env must read its own settings directly from environment variables
+  # to avoid circular dependency
+  verbose_val <- Sys.getenv("YML2ENV_VERBOSE", "FALSE")
+  return(as.logical(verbose_val))
 }
 
 
 .debug <- function() {
-  pkgname <- get_package_name()
-  pkg_upper <- toupper(pkgname)
-  debug_var <- paste0(pkg_upper, "_DEBUG")
-  
-  tryCatch({
-    debug <- get_env_var_values(pkgname, debug_var)
-    return(debug)
-  }, error = function(e) {
-    cli::cli_alert_danger("Error in {.fun get_env_var_values}: {e$message}")
-    return(TRUE)
-  })
+  # yml2env must read its own settings directly from environment variables
+  # to avoid circular dependency
+  debug_val <- Sys.getenv("YML2ENV_DEBUG", "FALSE")
+  return(as.logical(debug_val))
 }
 
 
-.cur_fun <- function() {
-  return(as.character(sys.call(-1)[[1]]))
+cur_fun <- function() {
+  print(sys.call())
+  return(as.character(sys.call(-1)[[2]]))
 }

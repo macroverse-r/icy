@@ -44,6 +44,10 @@ get_package_dir <- function(package, user_dir = TRUE, pkg_loc_first = TRUE) {
     desc_file <- file.path(current_dir, "DESCRIPTION")
     r_dir <- file.path(current_dir, "R")
 
+    cli::cli_inform("basename(current_dir) = {basename(current_dir)}")
+    cli::cli_inform("desc_file = {desc_file}")
+    cli::cli_inform("r_dir = {r_dir}")
+
     if (basename(current_dir) == package &&
           file.exists(desc_file) &&
           dir.exists(r_dir)) {
