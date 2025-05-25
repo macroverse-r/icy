@@ -9,8 +9,7 @@
 #' values, while the template serves as a read-only blueprint defining the structure
 #' and default values.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
+#' @param package Character string with the package name.
 #' @param fn_local Character string with custom filename for the local config.
 #'   If NULL, uses the default naming pattern based on case_format.
 #' @param fn_tmpl Character string with custom filename pattern for the template.
@@ -38,17 +37,12 @@
 #' }
 #'
 #' @export
-create_local <- function(package = NULL,
+create_local <- function(package,
                          fn_local = NULL,
                          fn_tmpl = NULL,
                          tmpl2local_comp = NULL,
                          case_format = "snake_case",
                          force = FALSE) {
-    
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
     
     # Use default naming convention if fn_local is not specified
     if (is.null(fn_local)) {
@@ -116,6 +110,10 @@ create_local <- function(package = NULL,
     } else {
         # If fn_local contains path separators, use it as-is
         fn_local_path <- fn_local
+    }
+
+    if (.is_in_package_repo(package = package)) {
+         fn_local_path <- file.path(fn_tmpl_path, "inst")
     }
     
     if (.debug()) {

@@ -37,7 +37,7 @@
 #'   # Use the package name to find configuration
 #'   var_names <- get_var_names(package = pkg)
 #'   cat("Configuration for package", pkg, ":\n")
-#'   show(package = pkg, var_names = var_names)
+#'   show_config(package = pkg, var_names = var_names)
 #' }
 #' }
 #'

@@ -5,7 +5,7 @@
 \title{Create Local Configuration File}
 \usage{
 create_local(
-  package = NULL,
+  package,
   fn_local = NULL,
   fn_tmpl = NULL,
   tmpl2local_comp = NULL,
@@ -14,8 +14,7 @@ create_local(
 )
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
+\item{package}{Character string with the package name.}
 
 \item{fn_local}{Character string with custom filename for the local config.
 If NULL, uses the default naming pattern based on case_format.}

@@ -18,21 +18,21 @@
 #' @examples
 #' \dontrun{
 #' # Show all environment variables for a package
-#' show("mypackage")
+#' show_config("mypackage")
 #'
 #' # Show specific variables only
-#' show("mypackage", var_names = c("API_KEY", "DB_HOST"))
+#' show_config("mypackage", var_names = c("API_KEY", "DB_HOST"))
 #'
 #' # Show without source information
-#' show("mypackage", show_source = FALSE)
+#' show_config("mypackage", show_source = FALSE)
 #'
 #' # Capture the results for programmatic use
-#' status <- show("mypackage")
+#' status <- show_config("mypackage")
 #' unset_vars <- status$variable[status$source == "not set"]
 #' }
 #'
 #' @export
-show <- function(package = NULL,
+show_config <- function(package = NULL,
                  var_names = NULL,
                  user = "default",
                  show_source = TRUE) {

@@ -88,7 +88,7 @@ sync <- function(package = NULL,
             cli::cli_alert_success("Updated {length(updated_vars)} environment variable{?s}")
             
             # Show current values
-            show(package = package, var_names = names(config))
+            show_config(package = package, var_names = names(config))
         } else {
             cli::cli_alert_info("All variables already up to date")
         }
