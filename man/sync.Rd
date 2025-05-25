@@ -26,8 +26,7 @@ values, respecting the priority hierarchy (.Renviron > local config). This funct
 is useful after modifying configuration files to apply changes without restarting R.
 }
 \details{
-Unlike \code{load()} which only sets missing variables, \code{sync()} will update existing
-variables to match the configuration values.
+\code{sync()} will update existing variables to match the configuration values.
 }
 \examples{
 \dontrun{

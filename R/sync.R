@@ -4,8 +4,7 @@
 #' values, respecting the priority hierarchy (.Renviron > local config). This function
 #' is useful after modifying configuration files to apply changes without restarting R.
 #'
-#' Unlike `load()` which only sets missing variables, `sync()` will update existing
-#' variables to match the configuration values.
+#' `sync()` will update existing variables to match the configuration values.
 #'
 #' @param package Character string with the package name. If NULL (default),
 #'   uses the current package name.
