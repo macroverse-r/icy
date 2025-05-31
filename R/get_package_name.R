@@ -42,46 +42,58 @@
 #' }
 #'
 #' @export
-get_package_name <- function() {
-
-  # Method 1: Check all parent environments for .packageName
-  env <- parent.frame()
-  while (!identical(env, emptyenv())) {
-    if (exists(".packageName", envir = env, inherits = FALSE)) {
-      pkg_name <- get(".packageName", envir = env)
-      if (pkg_name != "") return(pkg_name)
-    }
-    env <- parent.env(env)
-  }
-
-  # Method 2: If in a namespace, get the namespace name
-  env <- topenv(parent.frame())
-  if (isNamespace(env)) {
-    return(getNamespaceName(env))
-  }
-
-  # Method 3: Get environment name
-  env <- topenv(parent.frame())
-  env_name <- environmentName(env)
-  if (env_name != "" && env_name != "R_GlobalEnv") {
-    return(gsub("^package:", "", env_name))
-  }
-
-  calls <- sys.calls()
-  for (i in seq_along(calls)) {
-    call <- calls[[i]]
-    if (is.call(call) && length(call) >= 3 && identical(call[[1]], as.name("::"))) {
-      return(as.character(call[[2]]))
-    }
-  }
-  
+get_package_name <- function(verbose = FALSE,
+                             max_levels = 100) {
   # Check if we're in the global environment
-  if (identical(env, globalenv())) {
-    cli::cli_abort("`get_package_name` seems to be called from Global Environment.")
-  } else {
-    cli::cli_abort("`get_package_name` could not find the package from which it is called.")
-
+  calling_env <- parent.frame()
+  if (identical(calling_env, globalenv())) {
+    cli::cli_abort("`get_package_name` seems to have been called from Global Environment.")
   }
   
-  return(invisible(NULL))
+  current_pkg <- utils::packageName()
+  found_current_pkg <- TRUE  # We know level 0 is always current_pkg
+  
+  if (verbose) {
+    cli::cli_alert_info("Level 0: {.pkg {current_pkg}} (skipping)")
+  }
+  
+  for (i in 1:max_levels) {  # Start at 1, not 0
+    tryCatch({
+      # Parent environments only
+      pkg_name <- utils::packageName(parent.frame(n = i))
+      
+      # Check if we got a valid package name
+      if (!is.null(pkg_name) && nzchar(pkg_name) && pkg_name != "") {
+        if (pkg_name != current_pkg) {
+          # Found a different package - return immediately
+          if (verbose) {
+            cli::cli_alert_success("First non-{.pkg {current_pkg}} package found at level {i}: {.pkg {pkg_name}}")
+          }
+          return(pkg_name)
+        } else {
+          # Found current package again - continue searching
+          if (verbose) {
+            cli::cli_alert_info("Level {i}: {.pkg {current_pkg}} (skipping)")
+          }
+        }
+      } else {
+        # NULL or empty - we've reached the end of the call stack
+        if (verbose) {
+          cli::cli_alert_warning("Level {i}: NULL or empty (end of call stack)")
+        }
+        break  # Stop here - no point checking further levels
+      }
+    }, error = function(e) {
+      if (verbose) {
+        cli::cli_alert_warning("Level {i}}: Error - {.emph {e$message}} (end of call stack)")
+      }
+      break  # Stop on error too - we've gone too far
+    })
+  }
+  
+  # If we reach here, no non-current package was found
+  if (verbose) {
+    cli::cli_inform("No non-{.pkg {current_pkg}} package found, returning {.pkg {current_pkg}}")
+  }
+  return(current_pkg)
 }

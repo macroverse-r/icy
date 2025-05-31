@@ -4,7 +4,7 @@
 \alias{get_package_name}
 \title{Get the Name of the Currently Executing Package}
 \usage{
-get_package_name()
+get_package_name(verbose = FALSE, max_levels = 100)
 }
 \value{
 Character string with the package name. If it cannot be determined, this
