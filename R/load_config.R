@@ -15,21 +15,22 @@
 #'
 #' @param package Character string with the package name. If NULL (default),
 #'   uses the current package name.
-#' @param user Character string for the user/section in the YAML file (default: "default").
-#' @param unset Named list of default values to use for variables that are not set
-#'   in any configuration source. Names should match template variable names.
-#' @param ensure_local Logical. If TRUE (default), creates a local configuration file 
-#'   if it doesn't exist. Only applies when origin includes local config.
 #' @param origin Character string specifying where to read the primary configuration from:
 #'   - "template": Read from the package's template YAML file (read-only blueprint)
 #'   - "local": Read from the user's local configuration file
 #'   - "renviron": Read from .Renviron file
 #'   - "priority": Read with priority order (.Renviron > local config, default)
+#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param unset Named list of default values to use for variables that are not set
+#'   in any configuration source. Names should match template variable names.
+#' @param ensure_local Logical. If TRUE (default), creates a local configuration file 
+#'   if it doesn't exist. Only applies when origin includes local config.
 #' @param yaml_file Character string with the name or path to the YAML file. If NULL,
 #'   the function will search for the appropriate file based on the origin.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Invisibly returns a named list of the environment variables that were set.
 #'
@@ -54,10 +55,10 @@
 #'
 #' @export
 load_config <- function(package = get_package_name(),
+                        origin = "priority",
                         user = "default",
                         unset = list(),
                         ensure_local = TRUE,
-                        origin = "priority",
                         yaml_file = NULL,
                         case_format = "snake_case",
                         verbose = FALSE) {
@@ -71,8 +72,8 @@ load_config <- function(package = get_package_name(),
   template_config <- tryCatch({
     get_config(
       package = package,
-      user = "default",
       origin = "template",
+      user = "default",
       yaml_file = yaml_file,
       case_format = case_format
     )
@@ -124,8 +125,8 @@ load_config <- function(package = get_package_name(),
   config <- tryCatch({
     get_config(
       package = package,
-      user = user,
       origin = origin,
+      user = user,
       yaml_file = yaml_file,
       case_format = case_format
     )

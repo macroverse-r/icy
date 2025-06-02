@@ -30,8 +30,9 @@
 #' @param allowed_vars Optional character vector of allowed variable names for validation.
 #'   If NULL (default), the function will use the names from the package's YAML configuration.
 #'   Only applies when a package name is provided and validate=TRUE.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'   
-#' @return Returns TRUE invisibly on success.
+#' @return Invisibly returns NULL on success.
 #'
 #' @examples
 #' \dontrun{
@@ -82,7 +83,8 @@ write_renviron <- function(var_list,
                            renviron_path = get_renviron_path(),
                            overwrite = TRUE,
                            validate = TRUE,
-                           allowed_vars = NULL) {
+                           allowed_vars = NULL,
+                           verbose = FALSE) {
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
@@ -99,7 +101,8 @@ write_renviron <- function(var_list,
     .write_simple_to_renviron(
       var_list = var_list,
       renviron_path = renviron_path,
-      overwrite = overwrite
+      overwrite = overwrite,
+      verbose = verbose
     )
   } else {
     # Use the package-specific version with validation and grouping
@@ -109,19 +112,20 @@ write_renviron <- function(var_list,
       user = user,
       renviron_path = renviron_path,
       overwrite = overwrite,
-      validate = validate, 
+      validate = validate,
+      verbose = verbose,
       allowed_vars = allowed_vars
     )
   }
   
-  return(invisible(TRUE))
+  return(invisible(NULL))
 }
 
 
 
 # Internal function for writing variables not associated with a package
 # Simply updates existing variables in-place or adds new ones at the end
-.write_simple_to_renviron <- function(var_list, renviron_path, overwrite) {
+.write_simple_to_renviron <- function(var_list, renviron_path, overwrite, verbose = FALSE) {
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
@@ -165,11 +169,13 @@ write_renviron <- function(var_list,
   # Write back to file if any variables were written
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
-    cli::cli_alert_success("Wrote to .Renviron: {.val {written_vars}}")
+    if (verbose) {
+      cli::cli_alert_success("Wrote {length(written_vars)} variable{?s} to .Renviron: {.val {written_vars}}")
+    }
   }
   
   # Report skipped variables
-  if (length(existing_vars) > 0 && !overwrite) {
+  if (length(existing_vars) > 0 && !overwrite && verbose) {
     cli::cli_alert_info("Skipped (overwrite=FALSE): {.val {existing_vars}}")
   }
   
@@ -187,6 +193,7 @@ write_renviron <- function(var_list,
                                    renviron_path,
                                    overwrite,
                                    validate,
+                                   verbose = FALSE,
                                    allowed_vars) {
 
   # Validate variable names if requested
@@ -286,11 +293,13 @@ write_renviron <- function(var_list,
   # Write back to file if any variables were written
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
-    cli::cli_alert_success("Wrote to .Renviron: {.val {written_vars}}")
+    if (verbose) {
+      cli::cli_alert_success("Wrote {length(written_vars)} variable{?s} to .Renviron: {.val {written_vars}}")
+    }
   }
   
   # Report skipped variables
-  if (length(existing_vars) > 0 && !overwrite) {
+  if (length(existing_vars) > 0 && !overwrite && verbose) {
     cli::cli_alert_info("Skipped (overwrite=FALSE): {.val {existing_vars}}")
   }
   

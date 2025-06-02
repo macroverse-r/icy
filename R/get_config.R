@@ -4,19 +4,19 @@
 #' This function is typically used within an R package to retrieve environment variable
 #' configurations based on the specified origin.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param origin Character string specifying where to read the configuration from:
 #'   - "template": Read from the package's template YAML file (read-only blueprint)
 #'   - "local": Read from the user's local configuration file (default)
 #'   - "renviron": Read from .Renviron file
 #'   - "priority": Read with priority order (.Renviron > local config)
+#' @param user Character string for the user/section in the YAML file (default: "default").
 #' @param yaml_file Character string with the name or path to the YAML file. If NULL,
 #'   the function will search for the appropriate file based on the origin.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Named list of environment variable configurations.
 #'
@@ -34,8 +34,8 @@
 #'
 #' @export
 get_config <- function(package = get_package_name(),
-                       user = "default",
                        origin = "local",
+                       user = "default",
                        yaml_file = NULL,
                        case_format = "snake_case",
                        verbose = FALSE) {
@@ -88,7 +88,7 @@ get_config <- function(package = get_package_name(),
 
 #' Get configuration from local file
 #' @keywords internal
-.get_config_local <- function(package = NULL,
+.get_config_local <- function(package = get_package_name(),
                               user = "default",
                               yaml_file = NULL,
                               case_format = "snake_case",
@@ -151,7 +151,7 @@ get_config <- function(package = get_package_name(),
 
 #' Get configuration from template file
 #' @keywords internal
-.get_config_template <- function(package = NULL,
+.get_config_template <- function(package = get_package_name(),
                                  user = "default",
                                  yaml_file = NULL,
                                  case_format = "snake_case",
@@ -213,7 +213,7 @@ get_config <- function(package = get_package_name(),
 
 #' Get configuration from .Renviron file
 #' @keywords internal
-.get_config_renviron <- function(package = NULL,
+.get_config_renviron <- function(package = get_package_name(),
                                  user = "default",
                                  verbose = FALSE) {
   # Get path to .Renviron
@@ -264,8 +264,8 @@ get_config <- function(package = get_package_name(),
     template_vars <- tryCatch(
       {
         names(get_config(package = package,
-                         user = user,
-                         origin = "template"))
+                         origin = "template",
+                         user = user))
       },
       error = function(e) NULL
     )
@@ -282,7 +282,7 @@ get_config <- function(package = get_package_name(),
 
 #' Get configuration with priority resolution
 #' @keywords internal
-.get_config_priority <- function(package = NULL,
+.get_config_priority <- function(package = get_package_name(),
                                  user = "default",
                                  yaml_file = NULL,
                                  case_format = "snake_case",

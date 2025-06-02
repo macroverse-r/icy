@@ -6,17 +6,17 @@
 #'
 #' @param var_list Named list of environment variables to write. Names should be the
 #'   environment variable names and values should be the values to set.
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param user Character string for the user/section in the YAML file (default: "default").
 #' @param fn_local Character string with custom filename for the local config.
 #'   If NULL, uses the default naming pattern.
-#' @param case_format Character string indicating the case format to use for filenames.
-#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param create_if_missing Logical; if TRUE (default), creates the local config file
 #'   from template if it doesn't exist. If FALSE, returns an error if file is missing.
+#' @param case_format Character string indicating the case format to use for filenames.
+#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
-#' @return Invisibly returns the path to the local configuration file.
+#' @return Invisibly returns NULL on success.
 #'
 #' @examples
 #' \dontrun{
@@ -40,11 +40,11 @@
 #'
 #' @export
 write_local <- function(var_list,
-                        package = NULL,
+                        package = get_package_name(),
                         user = "default",
                         fn_local = NULL,
-                        case_format = "snake_case",
                         create_if_missing = TRUE,
+                        case_format = "snake_case",
                         verbose = FALSE) {
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
@@ -53,11 +53,6 @@ write_local <- function(var_list,
 
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
     cli::cli_abort("All elements in var_list must be named")
-  }
-
-  # Use current package name if not provided
-  if (is.null(package)) {
-    package <- get_package_name()
   }
 
   # Find local config file
@@ -136,6 +131,6 @@ write_local <- function(var_list,
     }
   }
 
-  return(invisible(local_path))
+  return(invisible(NULL))
 }
 

@@ -5,12 +5,11 @@
 #' `PKGNAME_VERBOSE` variable in the package's environment variables YAML file.
 #' If the variable doesn't exist, it will be created with the specified initial value.
 #'
-#' @param pkgname Character string. The name of the package to toggle verbose mode for.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The default value to use when initializing a
 #'   non-existent verbose variable. Defaults to TRUE.
-#' @param verbose Logical. Controls whether to display a message about the change.
-#'   Defaults to TRUE.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Invisibly returns the new value of the verbose variable.
 #'
@@ -26,32 +25,34 @@
 #' in the configuration.
 #'
 #' @examples
+#' \dontrun{
 #' # Toggle verbose mode for a specific package
-#' toggle_verbose(pkgname = "mypackage")
+#' toggle_verbose(package = "mypackage")
 #'
 #' # Initialize verbose mode with initial FALSE
-#' toggle_verbose(pkgname = "mypackage", initial = FALSE)
+#' toggle_verbose(package = "mypackage", initial = FALSE)
 #'
 #' # Toggle without displaying a message
-#' toggle_verbose(pkgname = "mypackage", verbose = FALSE)
+#' toggle_verbose(package = "mypackage", verbose = FALSE)
+#' }
 #'
 #' @seealso
 #' \code{\link{toggle_debug}} for toggling debug mode.
 #' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
-toggle_verbose <- function(pkgname = get_package_name(),
+toggle_verbose <- function(package = get_package_name(),
                            user = "default",
                            initial = TRUE,
-                           verbose = TRUE) {
+                           verbose = FALSE) {
   # Create dynamic variable names based on package
-  pkg_upper <- toupper(pkgname)
+  pkg_upper <- toupper(package)
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
 
   # Read current config
   current_config <- tryCatch(
     {
-      get_config(package = pkgname, user = user, origin = "local")
+      get_config(package = package, origin = "local", user = user)
     },
     error = function(e) {
       list()
@@ -72,7 +73,7 @@ toggle_verbose <- function(pkgname = get_package_name(),
   # Write updated value to local config
   write_local(
     var_list = structure(list(new_value), names = verbose_var),
-    package = pkgname,
+    package = package,
     user = user
   )
 
@@ -88,7 +89,7 @@ toggle_verbose <- function(pkgname = get_package_name(),
     # Display success message
     cli::cli_alert_success(
       paste0(
-        "Verbose mode for ", pkgname, " ",
+        "Verbose mode for ", package, " ",
         verbose_status,
         " (", verbose_var, " = {.val ", new_value, "})",
         msg

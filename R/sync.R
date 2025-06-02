@@ -6,12 +6,11 @@
 #'
 #' `sync()` will update existing variables to match the configuration values.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_names Optional character vector of specific variable names to sync.
 #'   If NULL (default), syncs all variables defined in the configuration.
 #' @param user Character string for the user/section in the YAML file (default: "default").
-#' @param verbose Logical; whether to display status messages. Default is TRUE.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Invisibly returns TRUE.
 #'
@@ -31,14 +30,14 @@
 sync <- function(package = get_package_name(),
                  var_names = NULL,
                  user = "default",
-                 verbose = TRUE) {
+                 verbose = FALSE) {
     
     # Get configuration with priority
     config <- tryCatch({
         get_config(
             package = package,
-            user = user,
-            origin = "priority"
+            origin = "priority",
+            user = user
         )
     }, error = function(e) {
         cli::cli_abort("Could not load configuration for {.pkg {package}}: {e$message}")

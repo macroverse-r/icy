@@ -7,8 +7,7 @@
 #' This is a read-only operation that simply finds existing files. To create a new local
 #' configuration file, use \code{\link{create_local}}.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param fn_local Character string with custom filename pattern. If NULL,
 #'   uses the default naming pattern based on case_format.
 #' @param case_format Character string indicating the case format to use for the filename search.
@@ -19,8 +18,7 @@
 #'     \item "PascalCase": Searches for files like "PackageConfigLocal.yml"
 #'     \item "kebab-case": Searches for files like "package-config-local.yml"
 #'   }
-#' @param verbose Logical indicating whether to display warnings when no file
-#'   is found or multiple files match (default: TRUE).
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to TRUE.
 #'
 #' @return Character string with the full path to the found YAML file, or NULL if
 #'   no file is found.
@@ -38,15 +36,10 @@
 #' }
 #'
 #' @export
-find_local <- function(package = NULL,
+find_local <- function(package = get_package_name(),
                        fn_local = NULL,
                        case_format = "snake_case",
                        verbose = FALSE) {
-    
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
     
     # Get the filename pattern
     if (is.null(fn_local)) {

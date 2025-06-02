@@ -1,14 +1,26 @@
-#' Find files matching a pattern within a package directory
+#' Search for YAML Files Matching Pattern in Package Directory
 #'
-#' Internal function that searches for YAML files matching a given pattern
-#' within a package's directory structure.
+#' Performs recursive search for YAML configuration files matching a specified
+#' filename pattern within a package's directory structure. This function is the
+#' core file discovery mechanism used by configuration loading functions.
 #'
-#' @param package Character string with the package name
-#' @param fn_pattern Character string with the filename pattern to match
-#' @param user_dir Logical indicating whether to search in user directory (default: TRUE)
-#' @param verbose Logical indicating whether to display warnings (default: FALSE)
+#' The search algorithm:
+#' 1. Locates the package directory using `get_package_path()`
+#' 2. Recursively finds all YAML files (*.yml, *.yaml) in the directory tree
+#' 3. Filters results using case-insensitive pattern matching
+#' 4. Returns full file paths for matched files
+#' 5. Optionally warns about multiple matches or no matches
 #'
-#' @return Character vector of matching file paths
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
+#' @param fn_pattern Character string with the filename pattern to match against YAML files.
+#'   Uses regex pattern matching (case-insensitive).
+#' @param user_dir Logical indicating whether to search in user directory (TRUE, default)
+#'   or package installation directory (FALSE).
+#' @param verbose Logical. If TRUE, displays informative messages about the search process
+#'   and warnings for multiple/no matches. Defaults to FALSE.
+#'
+#' @return Character vector of matching file paths. Empty vector if no matches found.
+#'
 #' @keywords internal
 .find_matching_pattern <- function(package = get_package_name(),
                                    fn_pattern,
@@ -23,7 +35,7 @@
       )
     },
     error = function(e) {
-      stop("Error locating package path: ", e$message)
+      cli::cli_abort("Error locating package path: {e$message}")
     }
   )
   if (verbose) cli::cli_inform("package_dir = {.val {package_dir}}")

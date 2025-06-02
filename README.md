@@ -1,211 +1,419 @@
 # icy
 
-[![R-CMD-check](https://github.com/benjaminpeeters/icy/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/icy/actions)
+[![R-CMD-check](https://github.com/macroverse-r/icy/workflows/R-CMD-check/badge.svg)](https://github.com/macroverse-r/icy/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/icy)](https://CRAN.R-project.org/package=icy)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![License:AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
 
-`icy` (Interface for Configuration using YAML) is an R package that provides an interface for managing configuration in R packages using YAML files. This package makes it easier for R packages to configure and manage environment variables, settings, and preferences through YAML configuration files, supporting both interactive setup and automated workflows.
+`icy` (Interface for Configuration using YAML) is an R package that provides a comprehensive interface for managing configuration in R packages using YAML files. This package makes it easier for R packages to configure and manage environment variables, settings, and preferences through YAML configuration files, supporting both interactive setup and automated workflows.
 
 ### Key Features
 
-- Load environment variable definitions from YAML configuration files
-- Write and update variables in the user's `.Renviron` file
-- Sync environment variables between the `.Renviron` file and the current R session
-- Validate environment variable names against a predefined list
-- Support for different YAML file naming conventions (snake_case, camelCase, etc.)
+- **Multi-source configuration**: Load from template, local config, or .Renviron files with priority resolution
+- **Flexible file discovery**: Support for different YAML file naming conventions (snake_case, camelCase, PascalCase, kebab-case)
+- **Environment variable management**: Write, update, and erase variables in .Renviron files
+- **Session synchronization**: Sync environment variables between .Renviron and current R session
+- **Validation**: Validate environment variable names against package templates
+- **User-friendly utilities**: Toggle debug/verbose modes, display configurations, and more
 
-## Main Functions
+## Core Functions by Category
 
+### 🚀 Setup Functions (Package Initialization)
 | Function | Description |
 |----------|-------------|
-| `get_env_var_names()` | Extract environment variable names from a package's YAML configuration |
-| `get_config_path()` | Find a package's environment variables YAML configuration file |
-| `write_to_renviron()` | Write environment variables to the .Renviron file |
-| `erase_from_renviron()` | Remove environment variables from the .Renviron file |
-| `sync_env_vars()` | Update current R session with variables from .Renviron |
-| `display_env_vars()` | Display values of specified environment variables |
-| `validate_env_var_names()` | Check if variable names are defined in package's configuration |
+| `create_local()` | Create local configuration file from template (used in `.onLoad()`) |
+| `load_config()` | Load configuration into R session environment variables (used in `.onLoad()`) |
+
+### 📖 Configuration Reading Functions
+| Function | Works With | Description |
+|----------|------------|-------------|
+| `get_config()` | Template, Local Config, .Renviron | Load configuration from any source with priority resolution |
+| `find_local()` | Local Config | Find existing local configuration files |
+| `find_template()` | Template | Find package template configuration files |
+
+### ✏️ Local Configuration Management
+| Function | Description |
+|----------|-------------|
+| `write_local()` | Write/update variables in local YAML configuration file |
+
+### 🌍 .Renviron File Management
+| Function | Description |
+|----------|-------------|
+| `write_renviron()` | Write/update variables in user's .Renviron file |
+| `erase_renviron()` | Remove variables from .Renviron file |
+
+### 🔄 R Session Environment Management
+| Function | Description |
+|----------|-------------|
+| `sync()` | Synchronize environment variables between files and current R session |
+
+### 🔧 Toggle & Configuration Utilities
+| Function | Description |
+|----------|-------------|
+| `toggle_debug()` | Toggle package debug mode in local configuration |
+| `toggle_verbose()` | Toggle package verbose mode in local configuration |
+
+### 📊 Display & Validation Functions
+| Function | Description |
+|----------|-------------|
+| `show_config()` | Display current configuration values and their sources |
+| `validate()` | Validate variable names against package template |
+
+### 🔍 Package Discovery Functions
+| Function | Description |
+|----------|-------------|
+| `get_package_name()` | Automatically detect calling package name |
+| `get_package_path()` | Get package directory path (user or installation) |
 | `get_renviron_path()` | Get path to user's .Renviron file |
-| `get_package_name()` | Get the name of the current package |
-| `get_package_dir()` | Get the directory of a package |
-| `clean_dir_path()` | Clean and normalize directory paths |
 
 ## Installation
 
-Be sure that devtools is installed in your system:
+Install the development version from GitHub:
+
 ```r
 # Install devtools if not already installed
 if (!requireNamespace("devtools", quietly = TRUE)) {
   install.packages("devtools")
 }
+
+# Install from GitHub
+devtools::install_github("macroverse-r/icy")
 ```
 
-### From GitHub
+## Quick Start: Understanding icy's Approach
 
-Install the package from GitHub using SSH
-```r
-devtools::install_git("git@github.com:benjaminpeeters/icy.git")
+The `icy` package manages configuration through a **three-layer system**:
+
+1. **📋 Template** (read-only blueprint) - Defines all possible variables and their defaults
+2. **📝 Local Config** (user-customizable) - User's package-specific settings 
+3. **🌍 .Renviron** (global environment) - System-wide environment variables
+
+### Understanding the Configuration Flow
+
+```
+Template (inst/package_config_template.yml)
+    ↓ (copied on first use)
+Local Config (~/.local/share/R/package/package_config_local.yml)
+    ↓ (priority resolution)
+.Renviron (~/.Renviron)
+    ↓ (loaded into)
+R Session Environment Variables
 ```
 
-Install the package from GitHub using HTTPS:
-```r
-devtools::install_github("benjaminpeeters/icy")
-```
+### Step 1: Create Your Package Template
 
-## Usage
-
-The `icy` package is intended to work with:
-
-- a template YAML file or .Renviron (the first is generally recommanded to avoid polluting the user .Renviron nor all their sessions / avoid conflict with other packages, etc.)
-- `.onLoad()` with `create_local()` (if you want to work directly with the YAML file) or `load_config()` (if you want to use the R session environment variables)
-
-For simplicity, we use the fake package called "dummy". Replace the names accordingly to fit your package name or desire.
-
-### Using with template YAML file without R session env. variables
-
-1. Create a YAML configuration file (e.g., `inst/mypackage_template_config.yml`) with your environment variables:
-
-Create a YAML file called `mypackage_template_config.yml` (replace "mypackage" appropriately). For example, for the package "dummy", we could have `dummy_template_config.yml` (note: it does not have to be called this way: look at the options of `create_local()` for alternative ways):
+First, define **all possible configuration variables** for your package. Create a template YAML file in your package's `inst/` directory (e.g., `inst/dummy_config_template.yml`):
 
 ```yaml
 # Template configuration for dummy package
-# This file defines all environment variables used by the dummy package
+# This is the "blueprint" - defines ALL variables your package might use
 
 default:
-  DUMMY_API_KEY: 1234
-  DUMMY_DB_HOST: "localhost"
-  DUMMY_DB_PORT: 5432
-  DUMMY_DATA_DIR: "~/dummy_data"
-  DUMMY_LOG_LEVEL: "INFO"
-  DUMMY_VERBOSE: TRUE
-  DUMMY_DEBUG: FALSE
-  DUMMY_MAX_RETRIES: ~
-  DUMMY_TIMEOUT: 30
+  DUMMY_API_KEY: "your-api-key-here"  # User will replace this
+  DUMMY_DB_HOST: "localhost"          # Safe default
+  DUMMY_DB_PORT: 5432                 # Default PostgreSQL port
+  DUMMY_DATA_DIR: "~/dummy_data"      # User's home directory
+  DUMMY_LOG_LEVEL: "INFO"             # Moderate logging
+  DUMMY_VERBOSE: TRUE                 # Help users understand what's happening
+  DUMMY_DEBUG: FALSE                  # Debug off by default
+  DUMMY_TIMEOUT: 30                   # 30 seconds timeout
 
+# Advanced: Different environments
 production:
-  DUMMY_API_KEY:
   DUMMY_DB_HOST: "prod.database.com"
-  DUMMY_DB_PORT: 5432
-  DUMMY_LOG_LEVEL: "WARNING"
+  DUMMY_LOG_LEVEL: "WARNING"          # Less verbose in production
   DUMMY_VERBOSE: FALSE
   DUMMY_DEBUG: FALSE
 
 development:
-  DUMMY_API_KEY: "dev-key-12345"
-  DUMMY_DB_HOST: "localhost"
-  DUMMY_DB_PORT: 5433
-  DUMMY_LOG_LEVEL: "DEBUG"
+  DUMMY_LOG_LEVEL: "DEBUG"            # More details for developers
   DUMMY_VERBOSE: TRUE
   DUMMY_DEBUG: TRUE
 ```
 
-2. Use the icy functions in your package to automatically load or create a local config file:
+**Why this matters:** The template serves as documentation for users AND validation for your package.
 
-Then, in the `R` folder in my `dummy repo`, I can create the following `zzz.R` file:
+### Step 2: Choose Your Package Strategy
 
-```R
-#' Package startup
-#' @keywords internal
-.onLoad <- function(libname, pkgname) {
-  # Use icy to create local config in user's local if it does not exist already
-  icy::create_local()
-}
-```
+You have **two main approaches** for using `icy` in your package:
 
-Note that we don't need to specify the package name because we are in the "dummy" pacakge here. If you want to automatically interact with other packages, then you will have to add the specific pacakge name to `icy`.
-
-This will ensure that the local configuration folder of the user contains the file "dummy_template_config.yml" that will contain the configuration, is persistent between section, is user-specific, can be customizeable, and only be loaded when your package will be loaded by the user.
-
-Note that the template file will never be overwritten by `icy`.
-Note that only the default section of the template will be loaded in the local config file by default.
-
-Without using the R session environment to store the variables, the user/developer can access the variables using `get_config()`. For example, this line store the value 5433 (as a integer) independently of the local configuration choice of the user (because we specify the origin as "template"):
-```R
-a <- icy::get_config(package = "dummy",
-                     user = "development",
-                     origin = "template")$DUMMY_DB_PORT
-```
-
-
-
-### Using with template YAML file without R session env. variables
-
-If you like using the `Sys.setenv()` and `Sys.getenv()` or need your configuration variables to be available in your R session, you can write a templace config file as before and use the following .onLoad() function:
-
-```R
-#' Package startup
-#' @keywords internal
-.onLoad <- function(libname, pkgname) {
-  # Use icy to load my configuration
-  icy::load_config(
-    unset = list(DUMMY_API_KEY = 123,
-                 DUMMY_MAX_RETRIES = 15)
-  )
-}
-```
-
-Now, in this case, I can use `Sys.getenv("DUMMY_API_KEY")`, which will be "1234" (as a string!), and `Sys.getenv("DUMMY_MAX_RETRIES")`, which will be "15" (as a string)
-
-### Renviron
-
-Imagine now, that we would have the following `.Renviron` file on the path:
-```R
-# I decided to defined my environment variables in my $HOME/.Renviron
-DUMMY_DB_PORT: "Here is the .Renviron"
-```
-
-`Sys.getenv("DUMMY_MAX_RETRIES")` after `library(dummy)` will return "Here is the .Renviron" and not "5432" because the R session environment variables are not overwritten by default.
-
-### Access and Modify Variables using local config
-
-
-3. Use the icy functions in your package to manage these variables:
+#### Strategy A: Local Config Files (Recommended)
+**When to use:** You want users to have persistent, customizable settings without polluting their global environment.
 
 ```r
-#' Configure Your Package
-#' 
-#' @export
-configure_my_package <- function() {
-  # Get environment variable names
-  vars <- icy::get_env_var_names(package = "mypackage")
+# In your R/zzz.R file
+.onLoad <- function(libname, pkgname) {
+  # This creates ~/.local/share/R/dummy/dummy_config_local.yml if it doesn't exist
+  icy::create_local()
   
-  # Prompt user for values and write to .Renviron
-  # (Implementation depends on your package's needs)
-  
-  # Sync variables to make them available in the current session
-  icy::sync_env_vars(vars)
+  # Now users can edit their local config and it persists between sessions
+}
+
+# In your package functions
+get_my_api_key <- function() {
+  config <- icy::get_config(origin = "priority")  # Checks .Renviron > local
+  return(config$DUMMY_API_KEY)
 }
 ```
 
+#### Strategy B: R Session Environment Variables
+**When to use:** You want traditional `Sys.getenv()` / `Sys.setenv()` behavior.
 
-### Make user-friendly configuration function
+```r
+# In your R/zzz.R file
+.onLoad <- function(libname, pkgname) {
+  # Load config into R session environment variables
+  icy::load_config(
+    origin = "priority",  # .Renviron > local > template
+    unset = list(         # Fallbacks for missing values
+      DUMMY_API_KEY = "demo-key-12345",
+      DUMMY_TIMEOUT = 30
+    )
+  )
+}
 
-Not yet implemented
+# In your package functions  
+get_my_api_key <- function() {
+  return(Sys.getenv("DUMMY_API_KEY"))  # Standard R approach
+}
+```
 
-### Additional Examples
+Note: `load_config()` runs `create_local()`.
+
+### Step 3: Understanding What Happens for Users
+
+#### First Time User Experience:
+1. User installs and loads your package
+2. `icy::create_local()` copies template to their local config directory
+3. User can now customize settings without affecting other users or projects
+
+#### Ongoing Usage:
+```r
+# User can see current settings
+icy::show_config(package = "dummy")
+
+# User can modify local settings
+icy::write_local(
+  package = "dummy",
+  var_list = list(DUMMY_API_KEY = "my-real-key")
+)
+
+# User can set global settings (affects all projects)
+icy::write_renviron(
+  package = "dummy",
+  var_list = list(DUMMY_API_KEY = "global-key")
+)
+
+# Changes take effect immediately in session environment
+icy::sync(package = "dummy")
+```
+
+## Usage Patterns: Real-World Scenarios
+
+### Pattern 1: "I want to see what's currently configured"
+
+Understanding your configuration state is the first step:
 
 ```r
 library(icy)
 
-# Get all environment variable names defined in your package's YAML config
-var_names <- get_env_var_names(package = "mypackage")
+# See all variables and where they come from
+show_config(package = "dummy")
+# Output shows:
+# DUMMY_API_KEY: "my-secret" (from: .Renviron)
+# DUMMY_DB_HOST: "localhost" (from: local config)  
+# DUMMY_DEBUG: FALSE (from: template)
 
-# Display current values of environment variables
-display_env_vars(var_names)
+# Check what's in each source individually
+template_values <- get_config(package = "dummy", origin = "template")
+local_values <- get_config(package = "dummy", origin = "local") 
+renviron_values <- get_config(package = "dummy", origin = "renviron")
 
-# Write variables to .Renviron
-write_to_renviron(list(
-  MY_API_KEY = "secret-key-value",
-  MY_DATA_DIR = "/path/to/data"
-))
-
-# Sync variables from .Renviron to current R session
-sync_env_vars(var_names)
+# See the final merged result (priority: .Renviron > local > template)
+final_config <- get_config(package = "dummy", origin = "priority")
 ```
 
+**💡 Educational note:** When developing, you can use `show_config()` frequently. It's your "dashboard" for understanding configuration state.
+
+### Pattern 2: "I'm setting up the package for the first time"
+
+**As a package developer**, you want to make it easy for users:
+
+```r
+# User loads your package for the first time
+library(dummy)  # Your .onLoad() runs icy::create_local()
+
+# Check what was created
+icy::show_config(package = "dummy")
+# Shows template values because local config was just created
+
+# User customizes their local settings
+icy::write_local(
+  var_list = list(
+    DUMMY_API_KEY = "my-real-api-key-from-vendor",
+    DUMMY_DATA_DIR = "/my/project/data",
+    DUMMY_VERBOSE = FALSE  # I don't need chatty output
+  ),
+  package = "dummy"
+)
+
+# Settings are now persistent and package-specific
+```
+
+**💡 Educational note:** Local config changes only affect this package, not other R packages or projects.
+
+**🔧 Developer note:** By default, `icy` detects with you are in a R package or not and behaves accordingly. Specifically, the local config with be saved in the same folder than the template if you R session is in the R package and in the user-specific config folder (e.g., ~/.config/R on Linux) in a standard R session.
+
+### Pattern 3: "I want global settings across all my projects"
+
+Sometimes you want the same setting everywhere:
+
+```r
+# Set a global API key for all projects
+icy::write_renviron(
+  var_list = list(
+    DUMMY_API_KEY = "my-global-key-for-all-projects"
+  ),
+  package = "dummy"  # Still validates against dummy's template
+)
+
+# This goes in ~/.Renviron and affects ALL R sessions
+# Priority: .Renviron beats local config
+```
+
+**💡 Educational note:** .Renviron changes affect your entire R environment. Use sparingly!
+
+### Pattern 4: "I need different settings for different environments"
+
+Working with development, testing, and production:
+
+```r
+# Development setup
+dev_config <- get_config(
+  package = "dummy",
+  user = "development",  # Uses the "development" section from template
+  origin = "template"
+)
+
+# User can override with local development settings
+write_local(
+  var_list = list(
+    DUMMY_DB_HOST = "my-local-dev-db.internal",
+    DUMMY_DEBUG = TRUE
+  ),
+  package = "dummy"
+  # This goes in the "default" section of local config
+)
+
+# For production, user might set global .Renviron
+write_renviron(
+  var_list = list(
+    DUMMY_DB_HOST = "prod-db.company.com",
+    DUMMY_DEBUG = FALSE
+  ),
+  package = "dummy"
+)
+```
+
+**💡 Educational note:** Template sections are read-only. User customizations always go in "default" section of local/renviron.
+
+### Pattern 5: "I made changes and need them active now"
+
+Configuration changes don't automatically affect the current R session:
+
+```r
+# Before changes
+api_key_before <- get_config(package = "dummy")$DUMMY_API_KEY
+print(api_key_before)  # "old-key"
+
+# Make changes
+write_local(
+  var_list = list(DUMMY_API_KEY = "new-key"),
+  package = "dummy"
+)
+
+# Configuration files updated, but R session not yet
+api_key_still_old <- get_config(package = "dummy")$DUMMY_API_KEY
+print(api_key_still_old)  # Still "old-key"
+
+# Sync to make changes active
+sync(package = "dummy")
+
+# Now it's updated
+api_key_new <- get_config(package = "dummy")$DUMMY_API_KEY
+print(api_key_new)  # "new-key"
+```
+
+**💡 Educational note:** Always `sync()` after making changes if you need them immediately!
+
+### Pattern 6: "I want to reset everything back to defaults"
+
+Sometimes you need to start over:
+
+```r
+# See what variables are configured
+var_names <- names(get_config(package = "dummy"))
+
+# Remove from .Renviron (global reset)
+erase_renviron(var_names, package = "dummy")
+
+# Could also reset local config by overwriting with template values
+template_defaults <- get_config(package = "dummy", origin = "template")
+write_local(var_list = template_defaults, package = "dummy")
+
+# Apply changes to current session
+sync(package = "dummy", var_names = var_names)
+```
+
+### Pattern 7: "I'm debugging configuration issues"
+
+When things aren't working as expected:
+
+```r
+# Turn on verbose mode to see what icy is doing
+toggle_verbose(package = "dummy")
+
+# Turn on debug mode for even more details
+toggle_debug(package = "dummy") 
+
+# Now icy functions will be much more chatty
+config <- get_config(package = "dummy", origin = "priority", verbose = TRUE)
+
+# Validate that your variable names are correct
+validate(
+  package = "dummy",
+  var_names = c("DUMMY_API_KEY", "DUMMY_TYPO_VAR")  # Will catch the typo
+)
+
+# Check if files exist where expected
+local_path <- find_local(package = "dummy")
+template_path <- find_template(package = "dummy")
+print(c(local = local_path, template = template_path))
+```
+
+**💡 Educational note:** Use `toggle_verbose()` and `toggle_debug()` when configuration isn't behaving as expected or during development phase.
+
+## Configuration Priority
+
+The package follows a clear priority hierarchy:
+
+1. **`.Renviron`** - Highest priority (global user settings)
+2. **Local Config** - Medium priority (package-specific user settings)
+
+When using `origin = "priority"`, values from higher priority sources override lower priority ones.
+
+## File Naming Conventions
+
+Using the `case_format` argument, several functions of the package supports multiple naming conventions for configuration files:
+
+- **snake_case** (default): `package_config_local.yml`
+- **camelCase**: `packageConfigLocal.yml`
+- **PascalCase**: `PackageConfigLocal.yml`
+- **kebab-case**: `package-config-local.yml`
+
+Alternatively, you can also use any other names (e.g., using `yaml_file` with `get_config()` and `fn_local` and `fn_tmpl` with `create_local()`)
 
 ## License
 

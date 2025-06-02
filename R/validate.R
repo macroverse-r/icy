@@ -4,8 +4,7 @@
 #' the package's configuration. This function provides comprehensive validation
 #' including name checking, type validation, and custom validation rules.
 #'
-#' @param package Character string with the package name. If NULL (default),
-#'   uses the current package name.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_names Character vector of variable names to validate. If NULL,
 #'   validates all variables defined in the template.
 #' @param values Optional named list of values to validate. If provided,
@@ -39,22 +38,17 @@
 #' }
 #'
 #' @export
-validate <- function(package = NULL,
+validate <- function(package = get_package_name(),
                      var_names = NULL,
                      values = NULL,
                      user = "default",
                      warn = TRUE,
                      allowed_vars = NULL) {
     
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
-    
     # Get allowed variables from template if not provided
     if (is.null(allowed_vars)) {
         allowed_vars <- tryCatch({
-            names(get_config(package = package, user = user, origin = "template"))
+            names(get_config(package = package, origin = "template", user = user))
         }, error = function(e) {
             msg <- paste0("Could not retrieve allowed variables from template: ", e$message)
             if (warn) {

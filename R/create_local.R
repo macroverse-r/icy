@@ -9,7 +9,7 @@
 #' values, while the template serves as a read-only blueprint defining the structure
 #' and default values.
 #'
-#' @param package Character string with the package name.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param fn_local Character string with custom filename for the local config.
 #'   If NULL, uses the default naming pattern based on case_format.
 #' @param fn_tmpl Character string with custom filename pattern for the template.
@@ -17,10 +17,11 @@
 #' @param tmpl_section Character string specifying which component/section from
 #'   the template to copy to the local config. If NULL (default), copies only
 #'   the "default" section.
-#' @param case_format Character string indicating the case format to use for filenames.
-#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param overwrite Logical indicating whether to overwrite existing local config file
 #'   (default: FALSE).
+#' @param case_format Character string indicating the case format to use for filenames.
+#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Character string with the full path to the created local config file.
 #'
@@ -41,11 +42,12 @@ create_local <- function(package = get_package_name(),
                          fn_local = NULL,
                          fn_tmpl = NULL,
                          tmpl_section = "default",
+                         overwrite = FALSE,
                          case_format = "snake_case",
-                         verbose = FALSE,
-                         overwrite = FALSE) {
+                         verbose = FALSE) {
 
   if (!is.character(tmpl_section)) {
+    cli::cli_warn("tmpl_section must be a character string. Using 'default' instead.")
     tmpl_section <- "default"
   }
 
@@ -73,7 +75,7 @@ create_local <- function(package = get_package_name(),
         "i" = "Use {.arg overwrite = TRUE} to overwrite."
       ))
     }
-    return(invisible(NULL))
+    return(invisible(existing))
   } else if (verbose && !is.null(existing) && overwrite) {
     cli::cli_alert_danger("Overwriting existing local config YAML file: {.file {existing}}")
   }

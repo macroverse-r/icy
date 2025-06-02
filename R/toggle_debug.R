@@ -5,12 +5,11 @@
 #' `PKGNAME_DEBUG` variable in the package's environment variables YAML file.
 #' If the variable doesn't exist, it will be created with the specified initial value.
 #'
-#' @param pkgname Character string. The name of the package to toggle debug mode for.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The initial value to use when initializing a 
 #'   non-existent debug variable. Defaults to TRUE.
-#' @param verbose Logical. Controls whether to display a message about the change.
-#'   Defaults to TRUE. 
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE. 
 #'
 #' @return Invisibly returns the new value of the debug variable.
 #'
@@ -27,29 +26,29 @@
 #' @examples
 #' \dontrun{
 #' # Toggle debug mode for a specific package
-#' toggle_debug(pkgname = "mypackage")
+#' toggle_debug(package = "mypackage")
 #'
 #' # Initialize debug mode with initial FALSE
-#' toggle_debug(pkgname = "otherpackage", initial = FALSE)
+#' toggle_debug(package = "otherpackage", initial = FALSE)
 #' }
 #'
 #' @seealso
 #' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
-toggle_debug <- function(pkgname = get_package_name(),
+toggle_debug <- function(package = get_package_name(),
                          user = "default",
                          initial = TRUE,
-                         verbose = TRUE) {
+                         verbose = FALSE) {
   
   # Create dynamic variable names based on package
-  pkg_upper <- toupper(pkgname)
+  pkg_upper <- toupper(package)
   debug_var <- paste0(pkg_upper, "_DEBUG")
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
   
   # Read current config
   current_config <- tryCatch({
-    get_config(package = pkgname, user = user, origin = "local")
+    get_config(package = package, origin = "local", user = user)
   }, error = function(e) {
     list()
   })
@@ -68,7 +67,7 @@ toggle_debug <- function(pkgname = get_package_name(),
   # Write updated value to local config
   write_local(
     var_list = structure(list(new_value), names = debug_var),
-    package = pkgname,
+    package = package,
     user = user
   )
   
@@ -88,7 +87,7 @@ toggle_debug <- function(pkgname = get_package_name(),
       # Display success message
       cli::cli_alert_success(
         paste0(
-          "Debug mode for ", pkgname, " ", 
+          "Debug mode for ", package, " ", 
           debug_status, 
           " (", debug_var, " = {.val ", new_value, "})",
           msg

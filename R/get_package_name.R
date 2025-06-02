@@ -4,7 +4,7 @@
 #' This utility function is essential for creating context-aware package functions that need to
 #' know which package they're operating within.
 #'
-#' @param verbose Logical. If TRUE, prints detailed information about the package detection process. Defaults to FALSE.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #' @param max_levels Integer. Maximum number of call stack levels to examine when searching for the calling package. Defaults to 100.
 #'
 #' The function uses several methods to identify the calling package:

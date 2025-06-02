@@ -1,8 +1,28 @@
 
-#' Define search patterns based on case format
+#' Generate YAML File Search Patterns Based on Case Format
 #'
-#' @param case_format Character string specifying the case format
-#' @param file Character string specifying the file type
+#' Creates filename patterns for YAML configuration files based on package name,
+#' case format, and file type. This function standardizes filename generation
+#' across different naming conventions to support flexible file discovery.
+#'
+#' The function supports four case formats:
+#' - `snake_case`: "package_config_local.yml" (default)
+#' - `camelCase`: "packageConfigLocal.yml" 
+#' - `PascalCase`: "PackageConfigLocal.yml"
+#' - `kebab-case`: "package-config-local.yml"
+#'
+#' Pattern structure: `{package}{prefix}config{separator}{file}{extension}`
+#' where prefix, separator, and transform rules depend on the case format.
+#'
+#' @param package Character string with the package name used as filename prefix.
+#' @param case_format Character string specifying the case format. Options are:
+#'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param file Character string specifying the file type suffix (e.g., "local", "template").
+#'   Defaults to "local".
+#' @param yml Logical. If TRUE, uses exact ".yml" extension. If FALSE (default),
+#'   uses regex pattern "\\.ya?ml$" to match both .yml and .yaml extensions.
+#'
+#' @return Character string containing the generated filename pattern.
 #'
 #' @keywords internal
 .pattern <- function(package,

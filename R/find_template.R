@@ -21,6 +21,7 @@
 #'     \item "PascalCase": Searches for files like "PackageConfigTemplate.yml"
 #'     \item "kebab-case": Searches for files like "package-config-template.yml"
 #'   }
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Character string with the full path to the found template file, or NULL
 #'   if no template is found.
@@ -40,7 +41,8 @@
 #' @export
 find_template <- function(package = get_package_name(),
                           fn_tmpl = NULL,
-                          case_format = "snake_case") {
+                          case_format = "snake_case",
+                          verbose = FALSE) {
 
   if (!is.null(fn_tmpl)) {
     # If custom template filename is provided
@@ -50,14 +52,16 @@ find_template <- function(package = get_package_name(),
         package = package,
         fn_pattern = fn_tmpl,
         user_dir = FALSE,
-        verbose = TRUE
+        verbose = verbose
       )
     } else {
       # Full path provided, check if it exists
       if (file.exists(fn_tmpl)) {
         tmpl_path <- fn_tmpl
       } else {
-        cli::cli_alert_warning("Template file not found: {.file {fn_tmpl}}")
+        if (verbose) {
+          cli::cli_alert_warning("Template file not found: {.file {fn_tmpl}}")
+        }
         tmpl_path <- character(0)
       }
     }
@@ -68,15 +72,19 @@ find_template <- function(package = get_package_name(),
       case_format = case_format,
       file = "template"
     )
-    cli::cli_inform("tmpl_pattern = {.val {tmpl_pattern}}")
+    if (verbose) {
+      cli::cli_inform("tmpl_pattern = {.val {tmpl_pattern}}")
+    }
     tmpl_path <- .find_matching_pattern(
       package = package,
       fn_pattern = tmpl_pattern,
       user_dir = FALSE,
-      verbose = TRUE
+      verbose = verbose
     )
   }
-  cli::cli_inform("tmpl_path = {.val {tmpl_path}}")
+  if (verbose) {
+    cli::cli_inform("tmpl_path = {.val {tmpl_path}}")
+  }
 
   # Return results
   if (length(tmpl_path) == 0) {
@@ -85,11 +93,13 @@ find_template <- function(package = get_package_name(),
     return(tmpl_path)
   } else {
     # Multiple templates found - this is likely an error
-    cli::cli_alert_warning(c(
-      "Multiple template files found:",
-      "{.file {basename(tmpl_path)}}",
-      "Returning first: {.file {tmpl_path[1]}}"
-    ))
+    if (verbose) {
+      cli::cli_alert_warning(c(
+        "Multiple template files found:",
+        "{.file {basename(tmpl_path)}}",
+        "Returning first: {.file {tmpl_path[1]}}"
+      ))
+    }
     return(tmpl_path[1])
   }
 }
