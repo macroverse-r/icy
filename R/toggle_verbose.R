@@ -6,6 +6,7 @@
 #' If the variable doesn't exist, it will be created with the specified initial value.
 #'
 #' @param pkgname Character string. The name of the package to toggle verbose mode for.
+#' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The default value to use when initializing a
 #'   non-existent verbose variable. Defaults to TRUE.
 #' @param verbose Logical. Controls whether to display a message about the change.
@@ -36,7 +37,7 @@
 #'
 #' @seealso
 #' \code{\link{toggle_debug}} for toggling debug mode.
-#' \code{\link{get_config_path}} for retrieving the config file path.
+#' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
 toggle_verbose <- function(pkgname = get_package_name(),

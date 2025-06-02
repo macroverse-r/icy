@@ -6,6 +6,7 @@
 #' If the variable doesn't exist, it will be created with the specified initial value.
 #'
 #' @param pkgname Character string. The name of the package to toggle debug mode for.
+#' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The initial value to use when initializing a 
 #'   non-existent debug variable. Defaults to TRUE.
 #' @param verbose Logical. Controls whether to display a message about the change.
@@ -24,14 +25,16 @@
 #' exists and is set to FALSE.
 #'
 #' @examples
+#' \dontrun{
 #' # Toggle debug mode for a specific package
 #' toggle_debug(pkgname = "mypackage")
 #'
 #' # Initialize debug mode with initial FALSE
 #' toggle_debug(pkgname = "otherpackage", initial = FALSE)
+#' }
 #'
 #' @seealso
-#' \code{\link{get_config_path}} for retrieving the config file path.
+#' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
 toggle_debug <- function(pkgname = get_package_name(),

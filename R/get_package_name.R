@@ -4,6 +4,9 @@
 #' This utility function is essential for creating context-aware package functions that need to
 #' know which package they're operating within.
 #'
+#' @param verbose Logical. If TRUE, prints detailed information about the package detection process. Defaults to FALSE.
+#' @param max_levels Integer. Maximum number of call stack levels to examine when searching for the calling package. Defaults to 100.
+#'
 #' The function uses several methods to identify the calling package:
 #' 
 #' 1. Checks parent environments for `.packageName`
@@ -81,13 +84,13 @@ get_package_name <- function(verbose = FALSE,
         if (verbose) {
           cli::cli_alert_warning("Level {i}: NULL or empty (end of call stack)")
         }
-        break  # Stop here - no point checking further levels
+        return(current_pkg)  # Stop here - no point checking further levels
       }
     }, error = function(e) {
       if (verbose) {
         cli::cli_alert_warning("Level {i}}: Error - {.emph {e$message}} (end of call stack)")
       }
-      break  # Stop on error too - we've gone too far
+      return(current_pkg)  # Stop on error too - we've gone too far
     })
   }
   

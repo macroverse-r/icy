@@ -8,9 +8,9 @@ create_local(
   package = get_package_name(),
   fn_local = NULL,
   fn_tmpl = NULL,
-  tmpl2local_comp = NULL,
+  tmpl_section = NULL,
   case_format = "snake_case",
-  force = FALSE
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -22,14 +22,14 @@ If NULL, uses the default naming pattern based on case_format.}
 \item{fn_tmpl}{Character string with custom filename pattern for the template.
 If NULL, searches for the template using default patterns.}
 
-\item{tmpl2local_comp}{Character string specifying which component/section from
+\item{tmpl_section}{Character string specifying which component/section from
 the template to copy to the local config. If NULL (default), copies only
 the "default" section.}
 
 \item{case_format}{Character string indicating the case format to use for filenames.
 Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
-\item{force}{Logical indicating whether to overwrite existing local config file
+\item{overwrite}{Logical indicating whether to overwrite existing local config file
 (default: FALSE).}
 }
 \value{
@@ -52,7 +52,7 @@ and default values.
 local_path <- create_local("mypackage")
 
 # Create local config from a specific template section
-local_path <- create_local("mypackage", tmpl2local_comp = "production")
+local_path <- create_local("mypackage", tmpl_section = "production")
 
 # Create with custom filename
 local_path <- create_local("mypackage", fn_local = "my_local_config.yml")

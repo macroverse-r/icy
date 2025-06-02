@@ -23,6 +23,7 @@ cur_fun <- function() {
 
 #' Check if a value is NULL and provide a default
 #'
+#' @name grapes-or-or-grapes
 #' @param x The value to check
 #' @param default The default value to use if x is NULL
 #'

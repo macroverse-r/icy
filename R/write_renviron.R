@@ -21,6 +21,7 @@
 #' @param package Character string with the package name. If provided, enables validation
 #'   and grouping related variables together in the .Renviron file. If NULL (default),
 #'   performs a simple write without validation or grouping.
+#' @param user Character string. The user configuration to use. Defaults to "default".
 #' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
 #' @param overwrite Logical; if TRUE (default), overwrites existing variables.
 #'   If FALSE, existing variables are left unchanged.

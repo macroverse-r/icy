@@ -10,7 +10,7 @@ Description: Provides an interface for managing configuration in R packages usin
     YAML files. This package enables R packages to easily configure and manage 
     environment variables, settings, and preferences through YAML configuration files,
     supporting both interactive setup and automated workflows.
-License: AGPL (>= 3.0)
+License: AGPL (>= 3.0) + file LICENSE
 License_is_FOSS: yes
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

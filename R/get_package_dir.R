@@ -15,6 +15,9 @@
 #' consistently for both package developers and end users.
 #'
 #' @param package Character string with the package name to locate.
+#' @param user_dir Logical. If TRUE, uses `tools::R_user_dir()` to locate the package directory. Defaults to TRUE.
+#' @param pkg_first Logical. If TRUE, checks if the current working directory is the package directory first. Defaults to TRUE.
+#' @param ud_which Character string. Passed to `tools::R_user_dir()` which parameter. Defaults to "config".
 #'
 #' @return Character string with the absolute path to the package's root directory.
 #'
