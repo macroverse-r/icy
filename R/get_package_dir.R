@@ -21,7 +21,7 @@
 #' @examples
 #' \dontrun{
 #' # Get the package directory
-#' pkg_dir <- get_package_dir("mypackage")
+#' pkg_dir <- get_package_path("mypackage")
 #' 
 #' # Use it to locate resources in the package
 #' config_path <- file.path(pkg_dir, "inst", "config", "default.yml")
@@ -29,7 +29,7 @@
 #' 
 #' # Use in a function that needs to find files in the package directory
 #' get_package_resources <- function(pkg_name) {
-#'   base_dir <- get_package_dir(pkg_name)
+#'   base_dir <- get_package_path(pkg_name)
 #'   templates_dir <- file.path(base_dir, "inst", "templates")
 #'   available_templates <- list.files(templates_dir, pattern = "\\.Rmd$")
 #'   return(available_templates)
@@ -37,16 +37,21 @@
 #' }
 #'
 #' @export
-get_package_dir <- function(package, user_dir = TRUE, pkg_loc_first = TRUE) {
+get_package_path <- function(package = get_package_name(),
+                            user_dir = TRUE,
+                            pkg_first = TRUE,
+                            ud_which = "config") {
+
   # First try: use current working directory if it seems to be a R package directory
-  if (pkg_loc_first && .is_in_package_repo()) {
+  if (pkg_first && .is_pkg_dir(package = package)) {
     return(getwd())
   }
   
   # Second try: for installed package
   # use tools::R_user_dir() if user_dir is TRUE (default)
   if (user_dir) {
-    path <- suppressWarnings(tools::R_user_dir(package = package, "config"))
+    path <- suppressWarnings(tools::R_user_dir(package = package,
+                                               which = ud_which))
   } else {
     # use system.file if not referring to user_dir
     path <- suppressWarnings(system.file(package = package))
@@ -54,14 +59,12 @@ get_package_dir <- function(package, user_dir = TRUE, pkg_loc_first = TRUE) {
 
   if (path != "") {
     # Remove any trailing "/"
-    path <- sub("/$", "", path)
+    path <- .clean_dir_path(path)
     # If path ends with "/inst", strip it off
     if (endsWith(path, "/inst")) {
       path <- sub("/inst$", "", path)
     }
-    return(path)
   }
-  
-  # Fallback to current directory
-  return(current_dir)
+
+  return(path)
 }

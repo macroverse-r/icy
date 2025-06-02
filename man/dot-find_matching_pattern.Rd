@@ -4,7 +4,12 @@
 \alias{.find_matching_pattern}
 \title{Find files matching a pattern within a package directory}
 \usage{
-.find_matching_pattern(package, fn_pattern, user_dir = TRUE, verbose = FALSE)
+.find_matching_pattern(
+  package = get_package_name(),
+  fn_pattern,
+  user_dir = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{package}{Character string with the package name}

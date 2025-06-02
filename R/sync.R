@@ -28,15 +28,10 @@
 #' }
 #'
 #' @export
-sync <- function(package = NULL,
+sync <- function(package = get_package_name(),
                  var_names = NULL,
                  user = "default",
                  verbose = TRUE) {
-    
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
     
     # Get configuration with priority
     config <- tryCatch({

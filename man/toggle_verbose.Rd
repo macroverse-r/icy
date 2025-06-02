@@ -4,7 +4,12 @@
 \alias{toggle_verbose}
 \title{Toggle or Initialize Verbose Mode for Package}
 \usage{
-toggle_verbose(pkgname, user = "default", initial = TRUE, verbose = TRUE)
+toggle_verbose(
+  pkgname = get_package_name(),
+  user = "default",
+  initial = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{pkgname}{Character string. The name of the package to toggle verbose mode for.}

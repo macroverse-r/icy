@@ -45,106 +45,104 @@ write_local <- function(var_list,
                         fn_local = NULL,
                         case_format = "snake_case",
                         create_if_missing = TRUE) {
-    
-    # Input validation
-    if (!is.list(var_list) || length(var_list) == 0) {
-        cli::cli_abort("var_list must be a non-empty named list of environment variables")
-    }
-    
-    if (is.null(names(var_list)) || any(names(var_list) == "")) {
-        cli::cli_abort("All elements in var_list must be named")
-    }
-    
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
-    
-    # Find local config file
-    local_path <- find_local(
+  # Input validation
+  if (!is.list(var_list) || length(var_list) == 0) {
+    cli::cli_abort("var_list must be a non-empty named list of environment variables")
+  }
+
+  if (is.null(names(var_list)) || any(names(var_list) == "")) {
+    cli::cli_abort("All elements in var_list must be named")
+  }
+
+  # Use current package name if not provided
+  if (is.null(package)) {
+    package <- get_package_name()
+  }
+
+  # Find local config file
+  local_path <- find_local(
+    package = package,
+    fn_local = fn_local,
+    case_format = case_format,
+    verbose = FALSE
+  )
+
+  # Create if missing
+  if (is.null(local_path)) {
+    if (create_if_missing) {
+      local_path <- create_local(
         package = package,
         fn_local = fn_local,
-        case_format = case_format,
-        verbose = FALSE
-    )
-    
-    # Create if missing
-    if (is.null(local_path)) {
-        if (create_if_missing) {
-            local_path <- create_local(
-                package = package,
-                fn_local = fn_local,
-                case_format = case_format
-            )
-            cli::cli_alert_info("Created new local config file: {.file {local_path}}")
-        } else {
-            cli::cli_abort(c(
-                "No local configuration file found for package {.pkg {package}}",
-                "i" = "Set {.arg create_if_missing = TRUE} to create one automatically"
-            ))
-        }
+        case_format = case_format
+      )
+      cli::cli_alert_info("Created new local config file: {.file {local_path}}")
+    } else {
+      cli::cli_abort(c(
+        "No local configuration file found for package {.pkg {package}}",
+        "i" = "Set {.arg create_if_missing = TRUE} to create one automatically"
+      ))
     }
-    
-    # Read existing configuration
-    config_data <- yaml::read_yaml(local_path)
-    
-    # Ensure user section exists
-    if (!user %in% names(config_data)) {
-        config_data[[user]] <- list()
+  }
+
+  # Read existing configuration
+  config_data <- yaml::read_yaml(local_path)
+
+  # Ensure user section exists
+  if (!user %in% names(config_data)) {
+    config_data[[user]] <- list()
+  }
+
+  # Track what we're updating
+  updated_vars <- character(0)
+  new_vars <- character(0)
+
+  # Update configuration
+  for (var_name in names(var_list)) {
+    old_value <- config_data[[user]][[var_name]]
+    new_value <- var_list[[var_name]]
+
+    # Convert non-character values to character
+    if (!is.character(new_value)) {
+      new_value <- as.character(new_value)
     }
-    
-    # Track what we're updating
-    updated_vars <- character(0)
-    new_vars <- character(0)
-    
-    # Update configuration
-    for (var_name in names(var_list)) {
-        old_value <- config_data[[user]][[var_name]]
-        new_value <- var_list[[var_name]]
-        
-        # Convert non-character values to character
-        if (!is.character(new_value)) {
-            new_value <- as.character(new_value)
-        }
-        
-        config_data[[user]][[var_name]] <- new_value
-        
-        if (!is.null(old_value)) {
-            if (old_value != new_value) {
-                updated_vars <- c(updated_vars, var_name)
-            }
-        } else {
-            new_vars <- c(new_vars, var_name)
-        }
+
+    config_data[[user]][[var_name]] <- new_value
+
+    if (!is.null(old_value)) {
+      if (old_value != new_value) {
+        updated_vars <- c(updated_vars, var_name)
+      }
+    } else {
+      new_vars <- c(new_vars, var_name)
     }
-    
-    # Write back to file
-    yaml::write_yaml(config_data, local_path)
-    
-    # Report what was done
-    if (length(updated_vars) > 0) {
-        cli::cli_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
-        if (.verbose()) {
-            cli::cli_bullets(setNames(
-                paste0("{.var ", updated_vars, "}"),
-                rep("*", length(updated_vars))
-            ))
-        }
+  }
+
+  # Write back to file
+  yaml::write_yaml(config_data, local_path)
+
+  # Report what was done
+  if (length(updated_vars) > 0) {
+    cli::cli_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
+    if (.verbose()) {
+      bullets <- paste0("{.var ", updated_vars, "}")
+      names(bullets) <- rep("*", length(updated_vars))
+      cli::cli_bullets(bullets)
     }
-    
-    if (length(new_vars) > 0) {
-        cli::cli_alert_success("Added {length(new_vars)} new variable{?s} to local config")
-        if (.verbose()) {
-            cli::cli_bullets(setNames(
-                paste0("{.var ", new_vars, "}"),
-                rep("*", length(new_vars))
-            ))
-        }
+  }
+
+  if (length(new_vars) > 0) {
+    cli::cli_alert_success("Added {length(new_vars)} new variable{?s} to local config")
+    if (.verbose()) {
+      bullets <- paste0("{.var ", new_vars, "}")
+      names(bullets) <- rep("*", length(new_vars))
+      cli::cli_bullets(bullets)
     }
-    
-    if (length(updated_vars) == 0 && length(new_vars) == 0) {
-        cli::cli_alert_info("No changes made - all values were already up to date")
-    }
-    
-    return(invisible(local_path))
+  }
+
+  if (length(updated_vars) == 0 && length(new_vars) == 0) {
+    cli::cli_alert_info("No changes made - all values were already up to date")
+  }
+
+  return(invisible(local_path))
 }
+

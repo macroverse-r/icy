@@ -38,66 +38,63 @@
 #' }
 #'
 #' @export
-find_template <- function(package = NULL,
+find_template <- function(package = get_package_name(),
                           fn_tmpl = NULL,
                           case_format = "snake_case") {
-    
-    # Use current package name if not provided
-    if (is.null(package)) {
-        package <- get_package_name()
-    }
-    
-    if (!is.null(fn_tmpl)) {
-        # If custom template filename is provided
-        if (!grepl("[/\\\\]", fn_tmpl)) {
-            # Just a filename, search for it
-            tmpl_path <- .find_matching_pattern(
-                package = package,
-                fn_pattern = fn_tmpl,
-                user_dir = FALSE,
-                verbose = TRUE
-            )
-        } else {
-            # Full path provided, check if it exists
-            if (file.exists(fn_tmpl)) {
-                tmpl_path <- fn_tmpl
-            } else {
-                cli::cli_alert_warning("Template file not found: {.file {fn_tmpl}}")
-                tmpl_path <- character(0)
-            }
-        }
+  if (!is.null(fn_tmpl)) {
+    # If custom template filename is provided
+    if (!grepl("[/\\\\]", fn_tmpl)) {
+      # Just a filename, search for it
+      tmpl_path <- .find_matching_pattern(
+        package = package,
+        fn_pattern = fn_tmpl,
+        user_dir = FALSE,
+        verbose = TRUE
+      )
     } else {
-        # Use default pattern
-        tmpl_pattern <- .pattern(
-            package = package,
-            case_format = case_format,
-            file = "template"
-        )
-        tmpl_path <- .find_matching_pattern(
-            package = package,
-            fn_pattern = tmpl_pattern,
-            user_dir = FALSE,
-            verbose = TRUE
-        )
+      # Full path provided, check if it exists
+      if (file.exists(fn_tmpl)) {
+        tmpl_path <- fn_tmpl
+      } else {
+        cli::cli_alert_warning("Template file not found: {.file {fn_tmpl}}")
+        tmpl_path <- character(0)
+      }
     }
-    
-    if (.debug()) {
-        fun <- sys.call()[1]
-        cli::cli_text("From {.strong {fun}}: tmpl_path = {.path {tmpl_path}}")
-    }
-    
-    # Return results
-    if (length(tmpl_path) == 0) {
-        return(NULL)
-    } else if (length(tmpl_path) == 1) {
-        return(tmpl_path)
-    } else {
-        # Multiple templates found - this is likely an error
-        cli::cli_alert_warning(c(
-            "Multiple template files found:",
-            "{.file {basename(tmpl_path)}}",
-            "Returning first: {.file {tmpl_path[1]}}"
-        ))
-        return(tmpl_path[1])
-    }
+  } else {
+    # Use default pattern
+    tmpl_pattern <- .pattern(
+      package = package,
+      case_format = case_format,
+      file = "template"
+    )
+    cli::cli_inform("tmpl_pattern = {.val {tmpl_pattern}}")
+    tmpl_path <- .find_matching_pattern(
+      package = package,
+      fn_pattern = tmpl_pattern,
+      user_dir = FALSE,
+      verbose = TRUE
+    )
+  }
+  cli::cli_inform("tmpl_path = {.val {tmpl_path}}")
+
+  if (.debug()) {
+    fun <- sys.call()[1]
+    cli::cli_text("From {.strong {fun}}: tmpl_path = {.path {tmpl_path}}")
+  }
+
+  # Return results
+  if (length(tmpl_path) == 0) {
+    return(NULL)
+  } else if (length(tmpl_path) == 1) {
+    return(tmpl_path)
+  } else {
+    # Multiple templates found - this is likely an error
+    cli::cli_alert_warning(c(
+      "Multiple template files found:",
+      "{.file {basename(tmpl_path)}}",
+      "Returning first: {.file {tmpl_path[1]}}"
+    ))
+    return(tmpl_path[1])
+  }
 }
+

@@ -1,15 +1,15 @@
-Package: yml2env
-Title: YAML to .Renviron Variable Management
+Package: icy
+Title: Interface for Configuration using YAML
 Version: 0.1.20
 Authors@R: 
     person("Benjamin", "Peeters", 
            email = "benjamin.peeters@pik-potsdam.de", 
            role = c("aut", "cre"),
            comment = c(ORCID = ""))
-Description: Provides utilities to manage .Renviron configuration variables
-    from YAML configuration files. This package enables R packages to automatically
-    adjust and rely on .Renviron variables for configuration, allowing for a more
-    robust and standardized approach to environment variable management.
+Description: Provides an interface for managing configuration in R packages using 
+    YAML files. This package enables R packages to easily configure and manage 
+    environment variables, settings, and preferences through YAML configuration files,
+    supporting both interactive setup and automated workflows.
 License: AGPL (>= 3.0)
 License_is_FOSS: yes
 Encoding: UTF-8

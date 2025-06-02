@@ -5,7 +5,7 @@
 \title{Get Environment Variable Configuration}
 \usage{
 get_config(
-  package = NULL,
+  package = get_package_name(),
   user = "default",
   origin = "local",
   yaml_file = NULL,

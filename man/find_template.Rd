@@ -4,7 +4,11 @@
 \alias{find_template}
 \title{Find Template Configuration File}
 \usage{
-find_template(package = NULL, fn_tmpl = NULL, case_format = "snake_case")
+find_template(
+  package = get_package_name(),
+  fn_tmpl = NULL,
+  case_format = "snake_case"
+)
 }
 \arguments{
 \item{package}{Character string with the package name. If NULL (default),

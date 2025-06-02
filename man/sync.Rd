@@ -4,7 +4,12 @@
 \alias{sync}
 \title{Sync Environment Variables with Configuration}
 \usage{
-sync(package = NULL, var_names = NULL, user = "default", verbose = TRUE)
+sync(
+  package = get_package_name(),
+  var_names = NULL,
+  user = "default",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{package}{Character string with the package name. If NULL (default),

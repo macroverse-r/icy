@@ -45,7 +45,7 @@ erase_renviron(c("MY_PACKAGE_DATA_DIR", "MY_PACKAGE_API_KEY"),
                package = "mypackage")
 
 # Remove all package variables at once
-var_names <- get_var_names(package = "mypackage")
+var_names <- names(get_config(package = "mypackage"))
 erase_renviron(var_names, package = "mypackage")
 
 # After erasing, sync the current session to reflect changes

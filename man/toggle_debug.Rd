@@ -4,7 +4,12 @@
 \alias{toggle_debug}
 \title{Toggle or Initialize Debug Mode for Package}
 \usage{
-toggle_debug(pkgname, user = "default", initial = TRUE, verbose = TRUE)
+toggle_debug(
+  pkgname = get_package_name(),
+  user = "default",
+  initial = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{pkgname}{Character string. The name of the package to toggle debug mode for.}

@@ -26,19 +26,19 @@
 #' @examples
 #' \dontrun{
 #' # Basic path normalization
-#' clean_dir_path("/path/to/directory/")
+#' .clean_dir_path("/path/to/directory/")
 #' # Returns: "/path/to/directory"
 #' 
 #' # Path with Windows-style separators
-#' clean_dir_path("C:\\Users\\username\\Documents\\")
+#' .clean_dir_path("C:\\Users\\username\\Documents\\")
 #' # Returns: "C:/Users/username/Documents"
 #' 
 #' # Check if directory exists without creating it
-#' clean_dir_path("/path/that/might/not/exist", check_exists = TRUE)
+#' .clean_dir_path("/path/that/might/not/exist", check_exists = TRUE)
 #' # Returns: NULL if the directory doesn't exist
 #' 
 #' # Clean path and create directory if it doesn't exist
-#' clean_dir_path("/path/to/new/directory", 
+#' .clean_dir_path("/path/to/new/directory", 
 #'               check_exists = TRUE, 
 #'               create_if_missing = TRUE)
 #' # Creates the directory if needed and returns the normalized path
@@ -46,7 +46,7 @@
 #' # Using in a configuration function
 #' save_user_preferences <- function(data_dir) {
 #'   # Clean and validate the path, creating it if needed
-#'   clean_dir <- clean_dir_path(data_dir, 
+#'   clean_dir <- .clean_dir_path(data_dir, 
 #'                              check_exists = TRUE, 
 #'                              create_if_missing = TRUE)
 #'   if (is.null(clean_dir)) {
@@ -59,8 +59,8 @@
 #' }
 #' }
 #'
-#' @export
-clean_dir_path <- function(path, check_exists = TRUE, create_if_missing = FALSE) {
+#' @keywords internal
+.clean_dir_path <- function(path, check_exists = TRUE, create_if_missing = FALSE) {
   # Remove trailing slashes and normalize path separators
   clean_path <- sub("/*$", "", path)
   

@@ -1,13 +1,13 @@
-# yml2env
+# icy
 
-[![R-CMD-check](https://github.com/benjaminpeeters/yml2env/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/yml2env/actions)
-[![CRAN status](https://www.r-pkg.org/badges/version/yml2env)](https://CRAN.R-project.org/package=yml2env)
+[![R-CMD-check](https://github.com/benjaminpeeters/icy/workflows/R-CMD-check/badge.svg)](https://github.com/benjaminpeeters/icy/actions)
+[![CRAN status](https://www.r-pkg.org/badges/version/icy)](https://CRAN.R-project.org/package=icy)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![License:AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Overview
 
-`yml2env` is an R package designed to manage environment variables in `.Renviron` files using YAML configuration. This package makes it easier for other R packages to configure and rely on environment variables in a consistent way.
+`icy` (Interface for Configuration using YAML) is an R package that provides an interface for managing configuration in R packages using YAML files. This package makes it easier for R packages to configure and manage environment variables, settings, and preferences through YAML configuration files, supporting both interactive setup and automated workflows.
 
 ### Key Features
 
@@ -47,12 +47,12 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 
 Install the package from GitHub using SSH
 ```r
-devtools::install_git("git@github.com:benjaminpeeters/yml2env.git")
+devtools::install_git("git@github.com:benjaminpeeters/icy.git")
 ```
 
 Install the package from GitHub using HTTPS:
 ```r
-devtools::install_github("benjaminpeeters/yml2env")
+devtools::install_github("benjaminpeeters/icy")
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ devtools::install_github("benjaminpeeters/yml2env")
 ### Basic Example
 
 ```r
-library(yml2env)
+library(icy)
 
 # Get all environment variable names defined in your package's YAML config
 var_names <- get_env_var_names(package = "mypackage")
@@ -89,7 +89,7 @@ environment_variables:
   - PACKAGE_DEBUG_MODE
 ```
 
-2. Use the yml2env functions in your package to manage these variables:
+2. Use the icy functions in your package to manage these variables:
 
 ```r
 #' Configure Your Package
@@ -97,13 +97,13 @@ environment_variables:
 #' @export
 configure_my_package <- function() {
   # Get environment variable names
-  vars <- yml2env::get_env_var_names(package = "mypackage")
+  vars <- icy::get_env_var_names(package = "mypackage")
   
   # Prompt user for values and write to .Renviron
   # (Implementation depends on your package's needs)
   
   # Sync variables to make them available in the current session
-  yml2env::sync_env_vars(vars)
+  icy::sync_env_vars(vars)
 }
 ```
 

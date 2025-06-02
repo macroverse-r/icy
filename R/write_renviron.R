@@ -213,7 +213,8 @@ write_renviron <- function(var_list,
   # Get all environment variables for this package
   package_var_names <- character(0)
   tryCatch({
-    package_var_names <- get_var_names(package = package, user = user)
+    package_config <- get_config(package = package, user = user)
+    package_var_names <- names(package_config)
   }, error = function(e) {
     # If we can't get the package var names, continue without grouping
     cli::cli_warn("Could not retrieve full list of package variables: {e$message}")

@@ -34,7 +34,7 @@
 #' \code{\link{get_config_path}} for retrieving the config file path.
 #'
 #' @export
-toggle_debug <- function(pkgname,
+toggle_debug <- function(pkgname = get_package_name(),
                          user = "default",
                          initial = TRUE,
                          verbose = TRUE) {
@@ -64,7 +64,7 @@ toggle_debug <- function(pkgname,
   
   # Write updated value to local config
   write_local(
-    var_list = setNames(list(new_value), debug_var),
+    var_list = structure(list(new_value), names = debug_var),
     package = pkgname,
     user = user
   )
