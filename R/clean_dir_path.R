@@ -60,7 +60,9 @@
 #' }
 #'
 #' @keywords internal
-.clean_dir_path <- function(path, check_exists = TRUE, create_if_missing = FALSE) {
+.clean_dir_path <- function(path,
+                            check_exists = TRUE,
+                            create_if_missing = FALSE) {
   # Remove trailing slashes and normalize path separators
   clean_path <- sub("/*$", "", path)
   

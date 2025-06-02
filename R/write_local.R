@@ -44,7 +44,8 @@ write_local <- function(var_list,
                         user = "default",
                         fn_local = NULL,
                         case_format = "snake_case",
-                        create_if_missing = TRUE) {
+                        create_if_missing = TRUE,
+                        verbose = FALSE) {
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
     cli::cli_abort("var_list must be a non-empty named list of environment variables")
@@ -100,12 +101,6 @@ write_local <- function(var_list,
   for (var_name in names(var_list)) {
     old_value <- config_data[[user]][[var_name]]
     new_value <- var_list[[var_name]]
-
-    # Convert non-character values to character
-    if (!is.character(new_value)) {
-      new_value <- as.character(new_value)
-    }
-
     config_data[[user]][[var_name]] <- new_value
 
     if (!is.null(old_value)) {
@@ -121,26 +116,24 @@ write_local <- function(var_list,
   yaml::write_yaml(config_data, local_path)
 
   # Report what was done
-  if (length(updated_vars) > 0) {
-    cli::cli_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
-    if (.verbose()) {
+  if (verbose) {
+    if (length(updated_vars) > 0) {
+      cli::cli_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
       bullets <- paste0("{.var ", updated_vars, "}")
       names(bullets) <- rep("*", length(updated_vars))
       cli::cli_bullets(bullets)
     }
-  }
 
-  if (length(new_vars) > 0) {
-    cli::cli_alert_success("Added {length(new_vars)} new variable{?s} to local config")
-    if (.verbose()) {
+    if (length(new_vars) > 0) {
+      cli::cli_alert_success("Added {length(new_vars)} new variable{?s} to local config")
       bullets <- paste0("{.var ", new_vars, "}")
       names(bullets) <- rep("*", length(new_vars))
       cli::cli_bullets(bullets)
     }
-  }
 
-  if (length(updated_vars) == 0 && length(new_vars) == 0) {
-    cli::cli_alert_info("No changes made - all values were already up to date")
+    if (length(updated_vars) == 0 && length(new_vars) == 0) {
+      cli::cli_alert_info("No changes made - all values were already up to date")
+    }
   }
 
   return(invisible(local_path))

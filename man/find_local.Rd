@@ -8,7 +8,7 @@ find_local(
   package = NULL,
   fn_local = NULL,
   case_format = "snake_case",
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{

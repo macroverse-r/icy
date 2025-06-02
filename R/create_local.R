@@ -40,9 +40,15 @@
 create_local <- function(package = get_package_name(),
                          fn_local = NULL,
                          fn_tmpl = NULL,
-                         tmpl_section = NULL,
+                         tmpl_section = "default",
                          case_format = "snake_case",
+                         verbose = FALSE,
                          overwrite = FALSE) {
+
+  if (!is.character(tmpl_section)) {
+    tmpl_section <- "default"
+  }
+
   # Use default naming convention if fn_local is not specified
   if (is.null(fn_local)) {
     fn_local <- .pattern(
@@ -62,11 +68,14 @@ create_local <- function(package = get_package_name(),
   )
 
   if (!is.null(existing) && !overwrite) {
-    cli::cli_alert_warning(c(
-      "Local config YAML file already exists: {.file {existing}}",
-      "i" = "Use {.arg overwrite = TRUE} to overwrite."
-    ))
+    if (verbose) {
+      cli::cli_warn(c("Local config YAML file already exists: {.file {existing}}",
+        "i" = "Use {.arg overwrite = TRUE} to overwrite."
+      ))
+    }
     return(invisible(NULL))
+  } else if (verbose && !is.null(existing) && overwrite) {
+    cli::cli_alert_danger("Overwriting existing local config YAML file: {.file {existing}}")
   }
 
   # Read template
@@ -82,25 +91,14 @@ create_local <- function(package = get_package_name(),
   tmpl_config <- yaml::read_yaml(tmpl_path)
 
   # Extract the relevant section for local config
-  if (!is.null(tmpl_section)) {
-    if (!tmpl_section %in% names(tmpl_config)) {
-      cli::cli_abort(c(
-        "Component {.val {tmpl_section}} not found in template",
-        "i" = "Available components: {.val {names(tmpl_config)}}"
-      ))
-    }
-    local_config <- tmpl_config[[tmpl_section]]
-  } else {
-    # Only keep the default section for the local config
-    if (!"default" %in% names(tmpl_config)) {
-      cli::cli_abort(c(
-        "No 'default' section found in template",
-        "i" = "Available sections: {.val {names(tmpl_config)}}"
-      ))
-    }
-    local_config <- list()
-    local_config$default <- tmpl_config[["default"]]
+  if (!tmpl_section %in% names(tmpl_config)) {
+    cli::cli_abort(c(
+      "Component {.val {tmpl_section}} not found in template",
+      "i" = "Available components: {.val {names(tmpl_config)}}"
+    ))
   }
+  local_config <- list()
+  local_config[[tmpl_section]] <- tmpl_config[[tmpl_section]]
 
   # Determine the full path for local config file
   # If fn_local is just a filename, place it in the package directory
@@ -110,15 +108,15 @@ create_local <- function(package = get_package_name(),
       local_path <- file.path(dirname(tmpl_path), fn_local)
     } else {
       local_path <- file.path(get_package_path(package = package), fn_local)
-
     }
   } else {
     # If fn_local contains path separators, use it as-is (user is responsible)
     local_path <- fn_local
   }
 
-  if (.debug()) {
-    cli::cli_text("From {.strong {sys.call()[1]}}:")
+  if (verbose) {
+    fun <- as.character(sys.call())
+    cli::cli_text("From {.strong {fun}}:")
     cli::cli_inform(" - fn_local = {fn_local}")
     cli::cli_inform(" - package_dir = {get_package_path(package = package)}")
     cli::cli_inform(" - local_path = {local_path}")
@@ -133,7 +131,7 @@ create_local <- function(package = get_package_name(),
   # Write the local config file
   yaml::write_yaml(local_config, local_path)
 
-  if (.verbose()) {
+  if (verbose) {
     cli::cli_alert_success("Created local config file: {.file {local_path}}")
   }
 

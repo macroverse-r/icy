@@ -41,7 +41,7 @@
 find_local <- function(package = NULL,
                        fn_local = NULL,
                        case_format = "snake_case",
-                       verbose = TRUE) {
+                       verbose = FALSE) {
     
     # Use current package name if not provided
     if (is.null(package)) {
@@ -59,7 +59,7 @@ find_local <- function(package = NULL,
         fn_local_pattern <- fn_local
     }
     
-    if (.debug()) {
+    if (verbose) {
         fun <- sys.call()[1]
         cli::cli_text("From {.strong {fun}}: package = {.path {package}}")
         cli::cli_text("From {.strong {fun}}: fn_local_pattern = {.path {fn_local_pattern}}")
@@ -73,7 +73,7 @@ find_local <- function(package = NULL,
         verbose = verbose
     )
     
-    if (.debug()) {
+    if (verbose) {
         cli::cli_text("From {.strong {fun}}: length(matching_files) = {length(matching_files)}")
     }
     

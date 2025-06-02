@@ -9,7 +9,8 @@ get_config(
   user = "default",
   origin = "local",
   yaml_file = NULL,
-  case_format = "snake_case"
+  case_format = "snake_case",
+  verbose = FALSE
 )
 }
 \arguments{

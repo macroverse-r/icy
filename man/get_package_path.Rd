@@ -13,6 +13,12 @@ get_package_path(
 }
 \arguments{
 \item{package}{Character string with the package name to locate.}
+
+\item{user_dir}{Logical. If TRUE, uses \code{tools::R_user_dir()} to locate the package directory. Defaults to TRUE.}
+
+\item{pkg_first}{Logical. If TRUE, checks if the current working directory is the package directory first. Defaults to TRUE.}
+
+\item{ud_which}{Character string. Passed to \code{tools::R_user_dir()} which parameter. Defaults to "config".}
 }
 \value{
 Character string with the absolute path to the package's root directory.

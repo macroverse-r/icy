@@ -41,6 +41,7 @@
 find_template <- function(package = get_package_name(),
                           fn_tmpl = NULL,
                           case_format = "snake_case") {
+
   if (!is.null(fn_tmpl)) {
     # If custom template filename is provided
     if (!grepl("[/\\\\]", fn_tmpl)) {
@@ -76,11 +77,6 @@ find_template <- function(package = get_package_name(),
     )
   }
   cli::cli_inform("tmpl_path = {.val {tmpl_path}}")
-
-  if (.debug()) {
-    fun <- sys.call()[1]
-    cli::cli_text("From {.strong {fun}}: tmpl_path = {.path {tmpl_path}}")
-  }
 
   # Return results
   if (length(tmpl_path) == 0) {

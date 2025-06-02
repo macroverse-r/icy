@@ -6,16 +6,11 @@
 \usage{
 get_package_name(verbose = FALSE, max_levels = 100)
 }
-\value{
-Character string with the package name. If it cannot be determined, this
-function will raise an error rather than returning NULL.
-}
-\description{
-Intelligently determines the name of the package from which the current function is being called.
-This utility function is essential for creating context-aware package functions that need to
-know which package they're operating within.
-}
-\details{
+\arguments{
+\item{verbose}{Logical. If TRUE, prints detailed information about the package detection process. Defaults to FALSE.}
+
+\item{max_levels}{Integer. Maximum number of call stack levels to examine when searching for the calling package. Defaults to 100.
+
 The function uses several methods to identify the calling package:
 \enumerate{
 \item Checks parent environments for \code{.packageName}
@@ -25,7 +20,16 @@ The function uses several methods to identify the calling package:
 }
 
 This function is particularly useful in supporting functions that need to automatically detect
-their package context without requiring explicit package name parameters.
+their package context without requiring explicit package name parameters.}
+}
+\value{
+Character string with the package name. If it cannot be determined, this
+function will raise an error rather than returning NULL.
+}
+\description{
+Intelligently determines the name of the package from which the current function is being called.
+This utility function is essential for creating context-aware package functions that need to
+know which package they're operating within.
 }
 \examples{
 \dontrun{

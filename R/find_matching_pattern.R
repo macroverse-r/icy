@@ -26,7 +26,7 @@
       stop("Error locating package path: ", e$message)
     }
   )
-  cli::cli_inform("package_dir = {.val {package_dir}}")
+  if (verbose) cli::cli_inform("package_dir = {.val {package_dir}}")
 
   # Use list.files to recursively find yaml files
   yaml_files <- list.files(

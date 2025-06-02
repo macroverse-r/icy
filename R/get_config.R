@@ -37,7 +37,8 @@ get_config <- function(package = get_package_name(),
                        user = "default",
                        origin = "local",
                        yaml_file = NULL,
-                       case_format = "snake_case") {
+                       case_format = "snake_case",
+                       verbose = FALSE) {
 
   # Validate origin parameter
   valid_origins <- c("template", "local", "renviron", "priority")
@@ -54,26 +55,30 @@ get_config <- function(package = get_package_name(),
       package = package,
       user = user,
       yaml_file = yaml_file,
-      case_format = case_format
+      case_format = case_format,
+      verbose = verbose
     )
   } else if (origin == "local") {
     config <- .get_config_local(
       package = package,
       user = user,
       yaml_file = yaml_file,
-      case_format = case_format
+      case_format = case_format,
+      verbose = verbose
     )
   } else if (origin == "renviron") {
     config <- .get_config_renviron(
       package = package,
-      user = user
+      user = user,
+      verbose = verbose
     )
   } else if (origin == "priority") {
     config <- .get_config_priority(
       package = package,
       user = user,
       yaml_file = yaml_file,
-      case_format = case_format
+      case_format = case_format,
+      verbose = verbose
     )
   }
 
@@ -86,13 +91,14 @@ get_config <- function(package = get_package_name(),
 .get_config_local <- function(package = NULL,
                               user = "default",
                               yaml_file = NULL,
-                              case_format = "snake_case") {
+                              case_format = "snake_case",
+                              verbose = FALSE) {
   # Find the YAML file
   if (is.null(yaml_file)) {
     yaml_file <- find_local(
       package = package,
       case_format = case_format,
-      verbose = FALSE
+      verbose = verbose
     )
 
     if (is.null(yaml_file)) {
@@ -111,7 +117,7 @@ get_config <- function(package = get_package_name(),
     }
   }
 
-  if (.verbose() && .debug()) {
+  if (verbose) {
     cli::cli_text("Reading local config from: {.path {yaml_file}}")
   }
 
@@ -148,7 +154,8 @@ get_config <- function(package = get_package_name(),
 .get_config_template <- function(package = NULL,
                                  user = "default",
                                  yaml_file = NULL,
-                                 case_format = "snake_case") {
+                                 case_format = "snake_case",
+                                 verbose = FALSE) {
   # Find the YAML file
   if (is.null(yaml_file)) {
     yaml_file <- find_template(
@@ -172,7 +179,7 @@ get_config <- function(package = get_package_name(),
     }
   }
 
-  if (.verbose() && .debug()) {
+  if (verbose) {
     cli::cli_text("Reading template config from: {.path {yaml_file}}")
   }
 
@@ -207,7 +214,8 @@ get_config <- function(package = get_package_name(),
 #' Get configuration from .Renviron file
 #' @keywords internal
 .get_config_renviron <- function(package = NULL,
-                                 user = "default") {
+                                 user = "default",
+                                 verbose = FALSE) {
   # Get path to .Renviron
   renviron_path <- get_renviron_path()
 
@@ -246,6 +254,10 @@ get_config <- function(package = get_package_name(),
     }
   }
 
+  if (verbose) {
+    cli::cli_text("Reading .Renviron: {.path {renviron_path}}")
+  }
+
   # If package is specified, filter to only package-specific variables
   if (!is.null(package)) {
     # First, try to get variable names from template
@@ -273,18 +285,21 @@ get_config <- function(package = get_package_name(),
 .get_config_priority <- function(package = NULL,
                                  user = "default",
                                  yaml_file = NULL,
-                                 case_format = "snake_case") {
+                                 case_format = "snake_case",
+                                 verbose = FALSE) {
   # Get configurations from both sources
   local_config <- .get_config_local(
     package = package,
     user = user,
     yaml_file = yaml_file,
-    case_format = case_format
+    case_format = case_format,
+    verbose = verbose
   )
 
   renviron_config <- .get_config_renviron(
     package = package,
-    user = user
+    user = user,
+    verbose = verbose
   )
 
   # Merge with .Renviron taking priority

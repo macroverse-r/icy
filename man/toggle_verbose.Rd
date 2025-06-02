@@ -14,6 +14,8 @@ toggle_verbose(
 \arguments{
 \item{pkgname}{Character string. The name of the package to toggle verbose mode for.}
 
+\item{user}{Character string. The user configuration to modify. Defaults to "default".}
+
 \item{initial}{Logical. The default value to use when initializing a
 non-existent verbose variable. Defaults to TRUE.}
 
@@ -52,5 +54,5 @@ toggle_verbose(pkgname = "mypackage", verbose = FALSE)
 }
 \seealso{
 \code{\link{toggle_debug}} for toggling debug mode.
-\code{\link{get_config_path}} for retrieving the config file path.
+\code{\link{get_config}} for retrieving the config data.
 }

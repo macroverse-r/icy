@@ -22,6 +22,8 @@ environment variable names and values should be the values to set.}
 and grouping related variables together in the .Renviron file. If NULL (default),
 performs a simple write without validation or grouping.}
 
+\item{user}{Character string. The user configuration to use. Defaults to "default".}
+
 \item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 
 \item{overwrite}{Logical; if TRUE (default), overwrites existing variables.

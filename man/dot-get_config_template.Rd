@@ -8,7 +8,8 @@
   package = NULL,
   user = "default",
   yaml_file = NULL,
-  case_format = "snake_case"
+  case_format = "snake_case",
+  verbose = FALSE
 )
 }
 \description{

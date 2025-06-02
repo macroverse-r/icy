@@ -10,7 +10,8 @@ write_local(
   user = "default",
   fn_local = NULL,
   case_format = "snake_case",
-  create_if_missing = TRUE
+  create_if_missing = TRUE,
+  verbose = FALSE
 )
 }
 \arguments{

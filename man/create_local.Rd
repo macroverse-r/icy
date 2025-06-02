@@ -8,8 +8,9 @@ create_local(
   package = get_package_name(),
   fn_local = NULL,
   fn_tmpl = NULL,
-  tmpl_section = NULL,
+  tmpl_section = "default",
   case_format = "snake_case",
+  verbose = FALSE,
   overwrite = FALSE
 )
 }
