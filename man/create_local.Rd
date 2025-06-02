@@ -9,13 +9,13 @@ create_local(
   fn_local = NULL,
   fn_tmpl = NULL,
   tmpl_section = "default",
+  overwrite = FALSE,
   case_format = "snake_case",
-  verbose = FALSE,
-  overwrite = FALSE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{package}{Character string with the package name.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{fn_local}{Character string with custom filename for the local config.
 If NULL, uses the default naming pattern based on case_format.}
@@ -27,11 +27,13 @@ If NULL, searches for the template using default patterns.}
 the template to copy to the local config. If NULL (default), copies only
 the "default" section.}
 
+\item{overwrite}{Logical indicating whether to overwrite existing local config file
+(default: FALSE).}
+
 \item{case_format}{Character string indicating the case format to use for filenames.
 Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
-\item{overwrite}{Logical indicating whether to overwrite existing local config file
-(default: FALSE).}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Character string with the full path to the created local config file.

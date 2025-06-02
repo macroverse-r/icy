@@ -9,13 +9,14 @@ erase_renviron(
   package = NULL,
   renviron_path = get_renviron_path(),
   validate = TRUE,
-  allowed_vars = NULL
+  allowed_vars = NULL,
+  verbose = FALSE
 )
 }
 \arguments{
 \item{var_names}{Character vector of variable names to erase from the .Renviron file.}
 
-\item{package}{Character string with the package name. Used for validation if provided.}
+\item{package}{Character string with the package name. If NULL (default), validation is skipped.}
 
 \item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 
@@ -24,6 +25,8 @@ package's YAML configuration. Only applies if package is provided.}
 
 \item{allowed_vars}{Optional character vector of allowed variable names for validation.
 If NULL (default), the function will use the names from the package's YAML configuration.}
+
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Invisibly returns NULL.
@@ -35,7 +38,7 @@ the package to fall back to runtime defaults or when cleaning up package configu
 }
 \details{
 Note: This function only modifies the .Renviron file, not the current R session.
-To also remove these variables from the current session, use \code{sync_env_vars()} after
+To also remove these variables from the current session, use \code{sync()} after
 calling this function.
 }
 \examples{
@@ -49,14 +52,14 @@ var_names <- names(get_config(package = "mypackage"))
 erase_renviron(var_names, package = "mypackage")
 
 # After erasing, sync the current session to reflect changes
-sync(var_names)
+sync(package = "mypackage", var_names = var_names)
 
 # Using in a package configuration reset function
 reset_package_config <- function() {
   pkg <- "mypackage"
-  var_names <- get_var_names(package = pkg)
+  var_names <- names(get_config(package = pkg))
   erase_renviron(var_names, package = pkg)
-  sync(var_names)
+  sync(package = pkg, var_names = var_names)
   cat("Package configuration has been reset. Runtime defaults will be used.\n")
 }
 }

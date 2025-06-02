@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_matching_pattern.R
 \name{.find_matching_pattern}
 \alias{.find_matching_pattern}
-\title{Find files matching a pattern within a package directory}
+\title{Search for YAML Files Matching Pattern in Package Directory}
 \usage{
 .find_matching_pattern(
   package = get_package_name(),
@@ -12,19 +12,33 @@
 )
 }
 \arguments{
-\item{package}{Character string with the package name}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{fn_pattern}{Character string with the filename pattern to match}
+\item{fn_pattern}{Character string with the filename pattern to match against YAML files.
+Uses regex pattern matching (case-insensitive).}
 
-\item{user_dir}{Logical indicating whether to search in user directory (default: TRUE)}
+\item{user_dir}{Logical indicating whether to search in user directory (TRUE, default)
+or package installation directory (FALSE).}
 
-\item{verbose}{Logical indicating whether to display warnings (default: FALSE)}
+\item{verbose}{Logical. If TRUE, displays informative messages about the search process
+and warnings for multiple/no matches. Defaults to FALSE.}
 }
 \value{
-Character vector of matching file paths
+Character vector of matching file paths. Empty vector if no matches found.
 }
 \description{
-Internal function that searches for YAML files matching a given pattern
-within a package's directory structure.
+Performs recursive search for YAML configuration files matching a specified
+filename pattern within a package's directory structure. This function is the
+core file discovery mechanism used by configuration loading functions.
+}
+\details{
+The search algorithm:
+\enumerate{
+\item Locates the package directory using \code{get_package_path()}
+\item Recursively finds all YAML files (*.yml, *.yaml) in the directory tree
+\item Filters results using case-insensitive pattern matching
+\item Returns full file paths for matched files
+\item Optionally warns about multiple matches or no matches
+}
 }
 \keyword{internal}

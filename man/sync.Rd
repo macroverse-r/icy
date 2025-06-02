@@ -8,19 +8,18 @@ sync(
   package = get_package_name(),
   var_names = NULL,
   user = "default",
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{var_names}{Optional character vector of specific variable names to sync.
 If NULL (default), syncs all variables defined in the configuration.}
 
 \item{user}{Character string for the user/section in the YAML file (default: "default").}
 
-\item{verbose}{Logical; whether to display status messages. Default is TRUE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Invisibly returns TRUE.

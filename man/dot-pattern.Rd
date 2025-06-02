@@ -2,16 +2,40 @@
 % Please edit documentation in R/pattern.R
 \name{.pattern}
 \alias{.pattern}
-\title{Define search patterns based on case format}
+\title{Generate YAML File Search Patterns Based on Case Format}
 \usage{
 .pattern(package, case_format = "snake_case", file = "local", yml = FALSE)
 }
 \arguments{
-\item{case_format}{Character string specifying the case format}
+\item{package}{Character string with the package name used as filename prefix.}
 
-\item{file}{Character string specifying the file type}
+\item{case_format}{Character string specifying the case format. Options are:
+"snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+
+\item{file}{Character string specifying the file type suffix (e.g., "local", "template").
+Defaults to "local".}
+
+\item{yml}{Logical. If TRUE, uses exact ".yml" extension. If FALSE (default),
+uses regex pattern "\\.ya?ml$" to match both .yml and .yaml extensions.}
+}
+\value{
+Character string containing the generated filename pattern.
 }
 \description{
-Define search patterns based on case format
+Creates filename patterns for YAML configuration files based on package name,
+case format, and file type. This function standardizes filename generation
+across different naming conventions to support flexible file discovery.
+}
+\details{
+The function supports four case formats:
+\itemize{
+\item \code{snake_case}: "package_config_local.yml" (default)
+\item \code{camelCase}: "packageConfigLocal.yml"
+\item \code{PascalCase}: "PackageConfigLocal.yml"
+\item \code{kebab-case}: "package-config-local.yml"
+}
+
+Pattern structure: \verb{\{package\}\{prefix\}config\{separator\}\{file\}\{extension\}}
+where prefix, separator, and transform rules depend on the case format.
 }
 \keyword{internal}

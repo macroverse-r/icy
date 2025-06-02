@@ -6,25 +6,18 @@
 \usage{
 load_config(
   package = get_package_name(),
+  origin = "priority",
   user = "default",
   unset = list(),
   ensure_local = TRUE,
-  origin = "priority",
   yaml_file = NULL,
-  case_format = "snake_case"
+  case_format = "snake_case",
+  verbose = FALSE
 )
 }
 \arguments{
 \item{package}{Character string with the package name. If NULL (default),
 uses the current package name.}
-
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
-
-\item{unset}{Named list of default values to use for variables that are not set
-in any configuration source. Names should match template variable names.}
-
-\item{ensure_local}{Logical. If TRUE (default), creates a local configuration file
-if it doesn't exist. Only applies when origin includes local config.}
 
 \item{origin}{Character string specifying where to read the primary configuration from:
 \itemize{
@@ -34,12 +27,22 @@ if it doesn't exist. Only applies when origin includes local config.}
 \item "priority": Read with priority order (.Renviron > local config, default)
 }}
 
+\item{user}{Character string for the user/section in the YAML file (default: "default").}
+
+\item{unset}{Named list of default values to use for variables that are not set
+in any configuration source. Names should match template variable names.}
+
+\item{ensure_local}{Logical. If TRUE (default), creates a local configuration file
+if it doesn't exist. Only applies when origin includes local config.}
+
 \item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
 the function will search for the appropriate file based on the origin.}
 
 \item{case_format}{Character string indicating the case format to use for
 searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Invisibly returns a named list of the environment variables that were set.

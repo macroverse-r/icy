@@ -5,7 +5,7 @@
 \title{Get configuration from template file}
 \usage{
 .get_config_template(
-  package = NULL,
+  package = get_package_name(),
   user = "default",
   yaml_file = NULL,
   case_format = "snake_case",

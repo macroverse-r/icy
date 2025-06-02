@@ -5,22 +5,21 @@
 \title{Toggle or Initialize Verbose Mode for Package}
 \usage{
 toggle_verbose(
-  pkgname = get_package_name(),
+  package = get_package_name(),
   user = "default",
   initial = TRUE,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{pkgname}{Character string. The name of the package to toggle verbose mode for.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{user}{Character string. The user configuration to modify. Defaults to "default".}
 
 \item{initial}{Logical. The default value to use when initializing a
 non-existent verbose variable. Defaults to TRUE.}
 
-\item{verbose}{Logical. Controls whether to display a message about the change.
-Defaults to TRUE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Invisibly returns the new value of the verbose variable.
@@ -42,14 +41,16 @@ only if the \code{verbose} parameter is TRUE, regardless of the current verbose 
 in the configuration.
 }
 \examples{
+\dontrun{
 # Toggle verbose mode for a specific package
-toggle_verbose(pkgname = "mypackage")
+toggle_verbose(package = "mypackage")
 
 # Initialize verbose mode with initial FALSE
-toggle_verbose(pkgname = "mypackage", initial = FALSE)
+toggle_verbose(package = "mypackage", initial = FALSE)
 
 # Toggle without displaying a message
-toggle_verbose(pkgname = "mypackage", verbose = FALSE)
+toggle_verbose(package = "mypackage", verbose = FALSE)
+}
 
 }
 \seealso{

@@ -4,7 +4,11 @@
 \alias{.get_config_renviron}
 \title{Get configuration from .Renviron file}
 \usage{
-.get_config_renviron(package = NULL, user = "default", verbose = FALSE)
+.get_config_renviron(
+  package = get_package_name(),
+  user = "default",
+  verbose = FALSE
+)
 }
 \description{
 Get configuration from .Renviron file

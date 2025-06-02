@@ -7,7 +7,7 @@
 get_package_name(verbose = FALSE, max_levels = 100)
 }
 \arguments{
-\item{verbose}{Logical. If TRUE, prints detailed information about the package detection process. Defaults to FALSE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 
 \item{max_levels}{Integer. Maximum number of call stack levels to examine when searching for the calling package. Defaults to 100.
 

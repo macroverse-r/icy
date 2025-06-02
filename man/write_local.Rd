@@ -6,11 +6,11 @@
 \usage{
 write_local(
   var_list,
-  package = NULL,
+  package = get_package_name(),
   user = "default",
   fn_local = NULL,
-  case_format = "snake_case",
   create_if_missing = TRUE,
+  case_format = "snake_case",
   verbose = FALSE
 )
 }
@@ -18,22 +18,23 @@ write_local(
 \item{var_list}{Named list of environment variables to write. Names should be the
 environment variable names and values should be the values to set.}
 
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{user}{Character string for the user/section in the YAML file (default: "default").}
 
 \item{fn_local}{Character string with custom filename for the local config.
 If NULL, uses the default naming pattern.}
 
+\item{create_if_missing}{Logical; if TRUE (default), creates the local config file
+from template if it doesn't exist. If FALSE, returns an error if file is missing.}
+
 \item{case_format}{Character string indicating the case format to use for filenames.
 Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
-\item{create_if_missing}{Logical; if TRUE (default), creates the local config file
-from template if it doesn't exist. If FALSE, returns an error if file is missing.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
-Invisibly returns the path to the local configuration file.
+Invisibly returns NULL on success.
 }
 \description{
 Writes or updates environment variables in the local configuration YAML file.

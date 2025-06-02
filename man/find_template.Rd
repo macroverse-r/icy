@@ -7,7 +7,8 @@
 find_template(
   package = get_package_name(),
   fn_tmpl = NULL,
-  case_format = "snake_case"
+  case_format = "snake_case",
+  verbose = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ Options are:
 \item "PascalCase": Searches for files like "PackageConfigTemplate.yml"
 \item "kebab-case": Searches for files like "package-config-template.yml"
 }}
+
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Character string with the full path to the found template file, or NULL

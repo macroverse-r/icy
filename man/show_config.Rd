@@ -5,15 +5,14 @@
 \title{Show Environment Variable Status}
 \usage{
 show_config(
-  package = NULL,
+  package = get_package_name(),
   var_names = NULL,
   user = "default",
   show_source = TRUE
 )
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{var_names}{Optional character vector of specific variable names to show.
 If NULL (default), shows all variables defined in the configuration.}

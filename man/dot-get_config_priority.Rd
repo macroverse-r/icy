@@ -5,7 +5,7 @@
 \title{Get configuration with priority resolution}
 \usage{
 .get_config_priority(
-  package = NULL,
+  package = get_package_name(),
   user = "default",
   yaml_file = NULL,
   case_format = "snake_case",

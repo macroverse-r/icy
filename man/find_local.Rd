@@ -5,15 +5,14 @@
 \title{Find Local Configuration File}
 \usage{
 find_local(
-  package = NULL,
+  package = get_package_name(),
   fn_local = NULL,
   case_format = "snake_case",
   verbose = FALSE
 )
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{fn_local}{Character string with custom filename pattern. If NULL,
 uses the default naming pattern based on case_format.}
@@ -27,8 +26,7 @@ Options are:
 \item "kebab-case": Searches for files like "package-config-local.yml"
 }}
 
-\item{verbose}{Logical indicating whether to display warnings when no file
-is found or multiple files match (default: TRUE).}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to TRUE.}
 }
 \value{
 Character string with the full path to the found YAML file, or NULL if

@@ -6,18 +6,15 @@
 \usage{
 get_config(
   package = get_package_name(),
-  user = "default",
   origin = "local",
+  user = "default",
   yaml_file = NULL,
   case_format = "snake_case",
   verbose = FALSE
 )
 }
 \arguments{
-\item{package}{Character string with the package name. If NULL (default),
-uses the current package name.}
-
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{origin}{Character string specifying where to read the configuration from:
 \itemize{
@@ -27,12 +24,16 @@ uses the current package name.}
 \item "priority": Read with priority order (.Renviron > local config)
 }}
 
+\item{user}{Character string for the user/section in the YAML file (default: "default").}
+
 \item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
 the function will search for the appropriate file based on the origin.}
 
 \item{case_format}{Character string indicating the case format to use for
 searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Named list of environment variable configurations.

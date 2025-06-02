@@ -11,7 +11,8 @@ write_renviron(
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
   validate = TRUE,
-  allowed_vars = NULL
+  allowed_vars = NULL,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -35,9 +36,11 @@ YAML configuration. Only applies when a package name is provided.}
 \item{allowed_vars}{Optional character vector of allowed variable names for validation.
 If NULL (default), the function will use the names from the package's YAML configuration.
 Only applies when a package name is provided and validate=TRUE.}
+
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
-Returns TRUE invisibly on success.
+Invisibly returns NULL on success.
 }
 \description{
 This function writes or updates environment variables in the user's .Renviron file.

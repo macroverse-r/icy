@@ -12,7 +12,7 @@ get_package_path(
 )
 }
 \arguments{
-\item{package}{Character string with the package name to locate.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{user_dir}{Logical. If TRUE, uses \code{tools::R_user_dir()} to locate the package directory. Defaults to TRUE.}
 

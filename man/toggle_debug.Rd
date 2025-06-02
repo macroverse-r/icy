@@ -5,22 +5,21 @@
 \title{Toggle or Initialize Debug Mode for Package}
 \usage{
 toggle_debug(
-  pkgname = get_package_name(),
+  package = get_package_name(),
   user = "default",
   initial = TRUE,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{pkgname}{Character string. The name of the package to toggle debug mode for.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{user}{Character string. The user configuration to modify. Defaults to "default".}
 
 \item{initial}{Logical. The initial value to use when initializing a
 non-existent debug variable. Defaults to TRUE.}
 
-\item{verbose}{Logical. Controls whether to display a message about the change.
-Defaults to TRUE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
 Invisibly returns the new value of the debug variable.
@@ -43,10 +42,10 @@ exists and is set to FALSE.
 \examples{
 \dontrun{
 # Toggle debug mode for a specific package
-toggle_debug(pkgname = "mypackage")
+toggle_debug(package = "mypackage")
 
 # Initialize debug mode with initial FALSE
-toggle_debug(pkgname = "otherpackage", initial = FALSE)
+toggle_debug(package = "otherpackage", initial = FALSE)
 }
 
 }
