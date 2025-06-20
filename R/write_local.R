@@ -71,11 +71,11 @@ write_local <- function(var_list,
         fn_local = fn_local,
         case_format = case_format
       )
-      icy_alert_info("Created new local config file: (local_path)")
+      icy_alert_info(paste0("Created new local config file: ", local_path))
     } else {
       icy_abort(c(
-        "No local configuration file found for package {.pkg {package)",
-        "i" = "Set {.arg create_if_missing = TRUE} to create one automatically"
+        paste0("No local configuration file found for package ", package),
+        "i" = "Set create_if_missing = TRUE to create one automatically"
       ))
     }
   }
@@ -113,15 +113,15 @@ write_local <- function(var_list,
   # Report what was done
   if (verbose) {
     if (length(updated_vars) > 0) {
-      icy_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
-      bullets <- paste0("{.var ", updated_vars, "}")
+      icy_alert_success(paste0("Updated ", length(updated_vars), " variable", if(length(updated_vars) > 1) "s" else "", " in local config"))
+      bullets <- updated_vars
       names(bullets) <- rep("*", length(updated_vars))
       icy_bullets(bullets)
     }
 
     if (length(new_vars) > 0) {
-      icy_alert_success("Added {length(new_vars)} new variable{?s} to local config")
-      bullets <- paste0("{.var ", new_vars, "}")
+      icy_alert_success(paste0("Added ", length(new_vars), " new variable", if(length(new_vars) > 1) "s" else "", " to local config"))
+      bullets <- new_vars
       names(bullets) <- rep("*", length(new_vars))
       icy_bullets(bullets)
     }

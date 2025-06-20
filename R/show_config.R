@@ -57,7 +57,7 @@ show_config <- function(package = get_package_name(),
     var_names <- unique(c(template_vars, local_vars))
 
     if (length(var_names) == 0) {
-      icy_alert_warning("No variables found in configuration for {.pkg {package)")
+      icy_alert_warning(paste0("No variables found in configuration for ", package))
       return(invisible(NULL))
     }
   }
@@ -110,7 +110,7 @@ show_config <- function(package = get_package_name(),
   }
 
   # Display results
-  icy_h3("Environment variables for {.pkg {package):")
+  icy_h3(paste0("Environment variables for ", package, ":"))
 
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
@@ -120,23 +120,23 @@ show_config <- function(package = get_package_name(),
     # Format display based on variable type and source
     if (value == "(not set)") {
       if (show_source) {
-        icy_text("(var) = (value)")
+        icy_text(paste0(var, " = ", value))
       } else {
-        icy_text("(var) = (value)")
+        icy_text(paste0(var, " = ", value))
       }
     } else {
       # Format paths with .file
       if (grepl("_DIR$|_PATH$", var)) {
         if (show_source) {
-          icy_text("(var) = (value) [{.emph {source)]")
+          icy_text(paste0(var, " = ", value, " [", source, "]"))
         } else {
-          icy_text("(var) = (value)")
+          icy_text(paste0(var, " = ", value))
         }
       } else {
         if (show_source) {
-          icy_text("(var) = (value) [{.emph {source)]")
+          icy_text(paste0(var, " = ", value, " [", source, "]"))
         } else {
-          icy_text("(var) = (value)")
+          icy_text(paste0(var, " = ", value))
         }
       }
     }

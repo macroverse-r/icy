@@ -91,7 +91,7 @@ toggle_verbose <- function(package = get_package_name(),
       paste0(
         "Verbose mode for ", package, " ",
         verbose_status,
-        " (", verbose_var, " = {.val ", new_value, "})",
+        " (", verbose_var, " = ", new_value, ")",
         msg
       )
     )

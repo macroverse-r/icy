@@ -18,7 +18,11 @@ NULL
 #' @param ... Additional arguments (currently unused, for compatibility)
 #' @export
 icy_abort <- function(msg, ...) {
-  stop(col_red(paste0("✗ ", msg)), call. = FALSE)
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_stop(msg, ...)
+  } else {
+    stop(col_red(paste0("✗ ", msg)), call. = FALSE)
+  }
 }
 
 #' Warning with formatted message
@@ -31,7 +35,11 @@ icy_abort <- function(msg, ...) {
 #' @param ... Additional arguments (currently unused, for compatibility)
 #' @export
 icy_warn <- function(msg, ...) {
-  warning(col_yellow(paste0("! ", msg)), call. = FALSE)
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_warn(msg, ...)
+  } else {
+    warning(col_yellow(paste0("! ", msg)), call. = FALSE)
+  }
 }
 
 #' Information message
@@ -44,7 +52,11 @@ icy_warn <- function(msg, ...) {
 #' @param ... Additional arguments (currently unused, for compatibility)
 #' @export
 icy_inform <- function(msg, ...) {
-  message(msg)
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_text(msg, ...)
+  } else {
+    message(msg)
+  }
 }
 
 #' Plain text output
@@ -56,7 +68,11 @@ icy_inform <- function(msg, ...) {
 #' @param ... Additional arguments passed to cat()
 #' @export
 icy_text <- function(msg, ...) {
-  cat(msg, "\n", sep = "")
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_text(msg, ...)
+  } else {
+    cat(msg, "\n", sep = "")
+  }
 }
 
 #' Success alert message
@@ -151,6 +167,40 @@ icy_enhanced_inform <- function(msg, ...) {
     contextual::cx_text(msg, ...)
   } else {
     icy_inform(msg, ...)
+  }
+}
+
+#' Generic alert message
+#'
+#' @description
+#' Generic alert function that uses contextual formatting when available.
+#' Falls back to info alert when contextual is not available.
+#'
+#' @param msg Alert message
+#' @param ... Additional arguments passed to underlying functions
+#' @export
+icy_alert <- function(msg, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_alert(msg, ...)
+  } else {
+    icy_alert_info(msg)
+  }
+}
+
+#' Debug message
+#'
+#' @description
+#' Debug message function that uses contextual formatting when available.
+#' Falls back to simple message output when contextual is not available.
+#'
+#' @param msg Debug message
+#' @param ... Additional arguments passed to underlying functions
+#' @export
+icy_debug <- function(msg, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_debug(msg, ...)
+  } else {
+    message("[DEBUG] ", msg)
   }
 }
 

@@ -12,7 +12,8 @@
 )
 }
 \arguments{
-\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
+\item{package}{Character string with the package name.
+Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{fn_pattern}{Character string with the filename pattern to match against YAML files.
 Uses regex pattern matching (case-insensitive).}

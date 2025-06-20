@@ -78,7 +78,7 @@ load_config <- function(package = get_package_name(),
       case_format = case_format
     )
   }, error = function(e) {
-    icy_abort("Failed to read template configuration: {e$message}")
+    icy_abort(paste0("Failed to read template configuration: ", e$message))
   })
 
   # Validate that unset names match template variable names
@@ -93,8 +93,8 @@ load_config <- function(package = get_package_name(),
     invalid_names <- setdiff(unset_var_names, template_var_names)
     if (length(invalid_names) > 0) {
       icy_abort(c(
-        "Invalid variable names in unset: (invalid_names)",
-        "i" = "Valid template variables: (template_var_names)"
+        paste0("Invalid variable names in unset: ", paste(invalid_names, collapse = ", ")),
+        "i" = paste0("Valid template variables: ", paste(template_var_names, collapse = ", "))
       ))
     }
   }
@@ -116,7 +116,7 @@ load_config <- function(package = get_package_name(),
           overwrite = FALSE
         )
       }, error = function(e) {
-        icy_abort("Failed to create local config: {e$message}")
+        icy_abort(paste0("Failed to create local config: ", e$message))
       })
     }
   }
@@ -131,7 +131,7 @@ load_config <- function(package = get_package_name(),
       case_format = case_format
     )
   }, error = function(e) {
-    icy_abort("Failed to read {origin} configuration: {e$message}")
+    icy_abort(paste0("Failed to read ", origin, " configuration: ", e$message))
   })
 
   # Add missing variables using unset defaults or template values
@@ -152,7 +152,7 @@ load_config <- function(package = get_package_name(),
     # Show success message
     if (verbose) {
       var_names <- names(config)
-      icy_alert_success("Loaded {length(var_names)} env. variable{?s}: (var_names)")
+      icy_alert_success(paste0("Loaded ", length(var_names), " env. variable", if(length(var_names) > 1) "s" else "", ": ", paste(var_names, collapse = ", ")))
     }
   } else {
     if (verbose) icy_alert_info("No environment variables to load")

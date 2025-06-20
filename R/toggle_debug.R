@@ -89,7 +89,7 @@ toggle_debug <- function(package = get_package_name(),
         paste0(
           "Debug mode for ", package, " ", 
           debug_status, 
-          " (", debug_var, " = {.val ", new_value, "})",
+          " (", debug_var, " = ", new_value, ")",
           msg
         )
       )

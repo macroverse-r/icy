@@ -77,12 +77,12 @@
       # Try to create the directory
       dir_created <- dir.create(clean_path, recursive = TRUE, showWarnings = FALSE)
       if (!dir_created) {
-        icy_alert_warning("Could not create directory: (clean_path)")
+        icy_alert_warning(paste0("Could not create directory: ", clean_path))
         return(NULL)
       }
-      icy_alert_success("Created directory: (clean_path)")
+      icy_alert_success(paste0("Created directory: ", clean_path))
     } else {
-      icy_alert_warning("Directory does not exist: (clean_path)")
+      icy_alert_warning(paste0("Directory does not exist: ", clean_path))
       return(NULL)
     }
   }

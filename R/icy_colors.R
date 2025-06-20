@@ -74,7 +74,6 @@ ansi_bold <- function(x) paste0("\033[1m", x, "\033[22m")
 #'
 #' @param x Text to colorize
 #' @return Colored text if terminal supports it, plain text otherwise
-#' @export
 #' @name safe_colors
 NULL
 

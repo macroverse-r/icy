@@ -57,7 +57,7 @@ erase_renviron <- function(var_names,
   
   # Make sure the file exists, but don't create it if it doesn't
   if (!file.exists(renviron_path)) {
-    icy_abort(".Renviron file not found at (renviron_path)")
+    icy_abort(paste0(".Renviron file not found at ", renviron_path))
   }
   
   # Read existing content
@@ -83,7 +83,7 @@ erase_renviron <- function(var_names,
   if (length(erased_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      icy_alert_success("Erased {length(erased_vars)} variable{?s} from .Renviron: (erased_vars)")
+      icy_alert_success(paste0("Erased ", length(erased_vars), " variable", if(length(erased_vars) > 1) "s" else "", " from .Renviron: ", paste(erased_vars, collapse = ", ")))
     }
   } else {
     if (verbose) {
