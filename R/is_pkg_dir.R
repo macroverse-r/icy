@@ -28,7 +28,7 @@
   has_namespace <- file.exists("NAMESPACE")
 
   if (debug) {
-    cli::cli_inform("basename(current_dir) = {basename(current_dir)}")
+    icy_inform("basename(current_dir) = {basename(current_dir)}")
   }
 
   if (is.null(package) && has_r_dir && has_description) {

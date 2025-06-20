@@ -43,9 +43,9 @@ get_config <- function(package = get_package_name(),
   # Validate origin parameter
   valid_origins <- c("template", "local", "renviron", "priority")
   if (!origin %in% valid_origins) {
-    cli::cli_abort(c(
-      "Invalid origin: {.val {origin}}",
-      "i" = "Valid origins are: {.val {valid_origins}}"
+    icy_abort(c(
+      "Invalid origin: (origin)",
+      "i" = "Valid origins are: (valid_origins)"
     ))
   }
 
@@ -112,13 +112,13 @@ get_config <- function(package = get_package_name(),
         yaml_file <- file.path(get_package_path(package = package), yaml_file)
       }
       if (!file.exists(yaml_file)) {
-        cli::cli_abort("YAML file not found: {.file {yaml_file}}")
+        icy_abort("YAML file not found: (yaml_file)")
       }
     }
   }
 
   if (verbose) {
-    cli::cli_text("Reading local config from: {.path {yaml_file}}")
+    icy_text("Reading local config from: {.path {yaml_file)")
   }
 
   # Read the YAML file
@@ -128,9 +128,9 @@ get_config <- function(package = get_package_name(),
 
       # Extract user section
       if (!user %in% names(config_data)) {
-        cli::cli_abort(c(
-          "User section {.val {user}} not found in local config",
-          "i" = "Available sections: {.val {names(config_data)}}"
+        icy_abort(c(
+          "User section (user) not found in local config",
+          "i" = "Available sections: (names(config_data))"
         ))
       }
 
@@ -143,7 +143,7 @@ get_config <- function(package = get_package_name(),
       return(config)
     },
     error = function(e) {
-      cli::cli_abort("Error reading YAML file: {e$message}")
+      icy_abort("Error reading YAML file: {e$message}")
     }
   )
 }
@@ -164,7 +164,7 @@ get_config <- function(package = get_package_name(),
     )
 
     if (is.null(yaml_file)) {
-      cli::cli_abort("No template configuration file found for package {.pkg {package}}")
+      icy_abort("No template configuration file found for package {.pkg {package)")
     }
   } else {
     # If yaml_file is provided, check if it exists
@@ -174,13 +174,13 @@ get_config <- function(package = get_package_name(),
         yaml_file <- file.path(get_package_path(package = package, user_dir = FALSE), yaml_file)
       }
       if (!file.exists(yaml_file)) {
-        cli::cli_abort("Template YAML file not found: {.file {yaml_file}}")
+        icy_abort("Template YAML file not found: (yaml_file)")
       }
     }
   }
 
   if (verbose) {
-    cli::cli_text("Reading template config from: {.path {yaml_file}}")
+    icy_text("Reading template config from: {.path {yaml_file)")
   }
 
   # Read the YAML file
@@ -190,22 +190,22 @@ get_config <- function(package = get_package_name(),
 
       # Extract user section
       if (!user %in% names(config_data)) {
-        cli::cli_abort(c(
-          "User section {.val {user}} not found in template",
-          "i" = "Available sections: {.val {names(config_data)}}"
+        icy_abort(c(
+          "User section (user) not found in template",
+          "i" = "Available sections: (names(config_data))"
         ))
       }
 
       config <- config_data[[user]]
 
       if (is.null(config) || length(config) == 0) {
-        cli::cli_abort("No environment variables found in template section {.val {user}}")
+        icy_abort("No environment variables found in template section (user)")
       }
 
       return(config)
     },
     error = function(e) {
-      cli::cli_abort("Error reading template YAML file: {e$message}")
+      icy_abort("Error reading template YAML file: {e$message}")
     }
   )
 }
@@ -255,7 +255,7 @@ get_config <- function(package = get_package_name(),
   }
 
   if (verbose) {
-    cli::cli_text("Reading .Renviron: {.path {renviron_path}}")
+    icy_text("Reading .Renviron: {.path {renviron_path)")
   }
 
   # If package is specified, filter to only package-specific variables

@@ -60,7 +60,7 @@ find_template <- function(package = get_package_name(),
         tmpl_path <- fn_tmpl
       } else {
         if (verbose) {
-          cli::cli_alert_warning("Template file not found: {.file {fn_tmpl}}")
+          icy_alert_warning(paste0("Template file not found: ", fn_tmpl))
         }
         tmpl_path <- character(0)
       }
@@ -73,7 +73,7 @@ find_template <- function(package = get_package_name(),
       file = "template"
     )
     if (verbose) {
-      cli::cli_inform("tmpl_pattern = {.val {tmpl_pattern}}")
+      icy_inform(paste0("tmpl_pattern = ", tmpl_pattern))
     }
     tmpl_path <- .find_matching_pattern(
       package = package,
@@ -83,7 +83,7 @@ find_template <- function(package = get_package_name(),
     )
   }
   if (verbose) {
-    cli::cli_inform("tmpl_path = {.val {tmpl_path}}")
+    icy_inform(paste0("tmpl_path = ", paste(tmpl_path, collapse = ", ")))
   }
 
   # Return results
@@ -94,10 +94,10 @@ find_template <- function(package = get_package_name(),
   } else {
     # Multiple templates found - this is likely an error
     if (verbose) {
-      cli::cli_alert_warning(c(
-        "Multiple template files found:",
-        "{.file {basename(tmpl_path)}}",
-        "Returning first: {.file {tmpl_path[1]}}"
+      icy_alert_warning(paste0(
+        "Multiple template files found: ", 
+        paste(basename(tmpl_path), collapse = ", "), 
+        ". Returning first: ", tmpl_path[1]
       ))
     }
     return(tmpl_path[1])

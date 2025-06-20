@@ -65,7 +65,7 @@ load_config <- function(package = get_package_name(),
 
   # Input validation
   if (!is.list(unset)) {
-    cli::cli_abort("unset must be a named list")
+    icy_abort("unset must be a named list")
   }
 
   # Get template configuration to know all possible variables
@@ -78,7 +78,7 @@ load_config <- function(package = get_package_name(),
       case_format = case_format
     )
   }, error = function(e) {
-    cli::cli_abort("Failed to read template configuration: {e$message}")
+    icy_abort("Failed to read template configuration: {e$message}")
   })
 
   # Validate that unset names match template variable names
@@ -87,14 +87,14 @@ load_config <- function(package = get_package_name(),
     unset_var_names <- names(unset)
     
     if (is.null(unset_var_names) || any(unset_var_names == "")) {
-      cli::cli_abort("All elements in unset must be named")
+      icy_abort("All elements in unset must be named")
     }
     
     invalid_names <- setdiff(unset_var_names, template_var_names)
     if (length(invalid_names) > 0) {
-      cli::cli_abort(c(
-        "Invalid variable names in unset: {.val {invalid_names}}",
-        "i" = "Valid template variables: {.val {template_var_names}}"
+      icy_abort(c(
+        "Invalid variable names in unset: (invalid_names)",
+        "i" = "Valid template variables: (template_var_names)"
       ))
     }
   }
@@ -116,7 +116,7 @@ load_config <- function(package = get_package_name(),
           overwrite = FALSE
         )
       }, error = function(e) {
-        cli::cli_abort("Failed to create local config: {e$message}")
+        icy_abort("Failed to create local config: {e$message}")
       })
     }
   }
@@ -131,7 +131,7 @@ load_config <- function(package = get_package_name(),
       case_format = case_format
     )
   }, error = function(e) {
-    cli::cli_abort("Failed to read {origin} configuration: {e$message}")
+    icy_abort("Failed to read {origin} configuration: {e$message}")
   })
 
   # Add missing variables using unset defaults or template values
@@ -152,10 +152,10 @@ load_config <- function(package = get_package_name(),
     # Show success message
     if (verbose) {
       var_names <- names(config)
-      cli::cli_alert_success("Loaded {length(var_names)} env. variable{?s}: {.val {var_names}}")
+      icy_alert_success("Loaded {length(var_names)} env. variable{?s}: (var_names)")
     }
   } else {
-    if (verbose) cli::cli_alert_info("No environment variables to load")
+    if (verbose) icy_alert_info("No environment variables to load")
   }
 
   # Return the configuration invisibly

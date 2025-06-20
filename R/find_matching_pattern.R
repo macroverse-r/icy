@@ -36,10 +36,10 @@
       )
     },
     error = function(e) {
-      cli::cli_abort("Error locating package path: {e$message}")
+      icy_abort(paste0("Error locating package path: ", e$message))
     }
   )
-  if (verbose) cli::cli_inform("package_dir = {.val {package_dir}}")
+  if (verbose) icy_inform(paste0("package_dir = ", package_dir))
 
   # Use list.files to recursively find yaml files
   yaml_files <- list.files(
@@ -54,10 +54,10 @@
 
   if (verbose) {
     if (length(matching_files) == 0) {
-      cli::cli_alert_warning("No YAML file in {.file {package_dir}} matching {.var {fn_pattern}}")
+      icy_alert_warning(paste0("No YAML file in ", package_dir, " matching ", fn_pattern))
     } else if (length(matching_files) > 1) {
-      cli::cli_alert_warning(
-        "Multiple config YAML files found: {.file {basename(matching_files)}}. \nPlease ensure only one file is present."
+      icy_alert_warning(
+        paste0("Multiple config YAML files found: ", paste(basename(matching_files), collapse = ", "), ". Please ensure only one file is present.")
       )
     }
   }

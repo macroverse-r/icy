@@ -48,11 +48,11 @@ write_local <- function(var_list,
                         verbose = FALSE) {
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
-    cli::cli_abort("var_list must be a non-empty named list of environment variables")
+    icy_abort("var_list must be a non-empty named list of environment variables")
   }
 
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
-    cli::cli_abort("All elements in var_list must be named")
+    icy_abort("All elements in var_list must be named")
   }
 
   # Find local config file
@@ -71,10 +71,10 @@ write_local <- function(var_list,
         fn_local = fn_local,
         case_format = case_format
       )
-      cli::cli_alert_info("Created new local config file: {.file {local_path}}")
+      icy_alert_info("Created new local config file: (local_path)")
     } else {
-      cli::cli_abort(c(
-        "No local configuration file found for package {.pkg {package}}",
+      icy_abort(c(
+        "No local configuration file found for package {.pkg {package)",
         "i" = "Set {.arg create_if_missing = TRUE} to create one automatically"
       ))
     }
@@ -113,21 +113,21 @@ write_local <- function(var_list,
   # Report what was done
   if (verbose) {
     if (length(updated_vars) > 0) {
-      cli::cli_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
+      icy_alert_success("Updated {length(updated_vars)} variable{?s} in local config")
       bullets <- paste0("{.var ", updated_vars, "}")
       names(bullets) <- rep("*", length(updated_vars))
-      cli::cli_bullets(bullets)
+      icy_bullets(bullets)
     }
 
     if (length(new_vars) > 0) {
-      cli::cli_alert_success("Added {length(new_vars)} new variable{?s} to local config")
+      icy_alert_success("Added {length(new_vars)} new variable{?s} to local config")
       bullets <- paste0("{.var ", new_vars, "}")
       names(bullets) <- rep("*", length(new_vars))
-      cli::cli_bullets(bullets)
+      icy_bullets(bullets)
     }
 
     if (length(updated_vars) == 0 && length(new_vars) == 0) {
-      cli::cli_alert_info("No changes made - all values were already up to date")
+      icy_alert_info("No changes made - all values were already up to date")
     }
   }
 

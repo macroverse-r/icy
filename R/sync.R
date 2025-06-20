@@ -40,7 +40,7 @@ sync <- function(package = get_package_name(),
             user = user
         )
     }, error = function(e) {
-        cli::cli_abort("Could not load configuration for {.pkg {package}}: {e$message}")
+        icy_abort("Could not load configuration for {.pkg {package): {e$message}")
     })
     
     # If specific var_names provided, filter config
@@ -50,13 +50,13 @@ sync <- function(package = get_package_name(),
         # Check for missing variables
         missing_vars <- setdiff(var_names, names(config))
         if (length(missing_vars) > 0 && verbose) {
-            cli::cli_alert_warning("Variables not found in configuration: {.var {missing_vars}}")
+            icy_alert_warning("Variables not found in configuration: (missing_vars)")
         }
     }
     
     if (length(config) == 0) {
         if (verbose) {
-            cli::cli_alert_info("No variables to sync")
+            icy_alert_info("No variables to sync")
         }
         return(invisible(TRUE))
     }
@@ -78,12 +78,12 @@ sync <- function(package = get_package_name(),
     
     if (verbose) {
         if (length(updated_vars) > 0) {
-            cli::cli_alert_success("Updated {length(updated_vars)} environment variable{?s}")
+            icy_alert_success("Updated {length(updated_vars)} environment variable{?s}")
             
             # Show current values
             show_config(package = package, var_names = names(config))
         } else {
-            cli::cli_alert_info("All variables already up to date")
+            icy_alert_info("All variables already up to date")
         }
     }
     

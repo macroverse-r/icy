@@ -33,7 +33,7 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{get_config}} for retrieving the config data.
+#' \code{\link{get_config) for retrieving the config data.
 #'
 #' @export
 toggle_debug <- function(package = get_package_name(),
@@ -80,12 +80,12 @@ toggle_debug <- function(package = get_package_name(),
     if (should_print) {
       # Prepare status message with colored output
       debug_status <- if (new_value) 
-        cli::col_green("enabled") 
+        col_green("enabled") 
       else 
-        cli::col_red("disabled")
+        col_red("disabled")
       
       # Display success message
-      cli::cli_alert_success(
+      icy_alert_success(
         paste0(
           "Debug mode for ", package, " ", 
           debug_status, 

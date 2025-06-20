@@ -37,8 +37,8 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{toggle_debug}} for toggling debug mode.
-#' \code{\link{get_config}} for retrieving the config data.
+#' \code{\link{toggle_debug) for toggling debug mode.
+#' \code{\link{get_config) for retrieving the config data.
 #'
 #' @export
 toggle_verbose <- function(package = get_package_name(),
@@ -81,13 +81,13 @@ toggle_verbose <- function(package = get_package_name(),
   if (verbose) {
     # Prepare status message with colored output
     verbose_status <- if (new_value) {
-      cli::col_green("enabled")
+      col_green("enabled")
     } else {
-      cli::col_red("disabled")
+      col_red("disabled")
     }
 
     # Display success message
-    cli::cli_alert_success(
+    icy_alert_success(
       paste0(
         "Verbose mode for ", package, " ",
         verbose_status,

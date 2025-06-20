@@ -16,12 +16,9 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
-    cli,
     tools,
-    yaml,
-    mvcommon
+    yaml
 Suggests:
+    contextual,
     testthat (>= 3.0.0)
-Remotes: 
-    macroverse-r/mvcommon
 Config/testthat/edition: 3

@@ -52,10 +52,10 @@ validate <- function(package = get_package_name(),
         }, error = function(e) {
             msg <- paste0("Could not retrieve allowed variables from template: ", e$message)
             if (warn) {
-                cli::cli_alert_warning(msg)
+                icy_alert_warning(msg)
                 return(character(0))
             } else {
-                cli::cli_abort(msg)
+                icy_abort(msg)
             }
         })
     }
@@ -65,10 +65,10 @@ validate <- function(package = get_package_name(),
         if (!is.list(values) || is.null(names(values))) {
             msg <- "values must be a named list"
             if (warn) {
-                cli::cli_alert_danger(msg)
+                icy_alert_danger(msg)
                 return(FALSE)
             } else {
-                cli::cli_abort(msg)
+                icy_abort(msg)
             }
         }
         value_names <- names(values)
@@ -78,10 +78,10 @@ validate <- function(package = get_package_name(),
             if (!setequal(var_names, value_names)) {
                 msg <- "var_names and names(values) must match"
                 if (warn) {
-                    cli::cli_alert_danger(msg)
+                    icy_alert_danger(msg)
                     return(FALSE)
                 } else {
-                    cli::cli_abort(msg)
+                    icy_abort(msg)
                 }
             }
         } else {
@@ -97,16 +97,16 @@ validate <- function(package = get_package_name(),
     # Validate variable names
     unknown_vars <- setdiff(var_names, allowed_vars)
     if (length(unknown_vars) > 0) {
-        msg <- c(
-            "Unknown environment variables: {.var {unknown_vars}}",
-            "i" = "Allowed variables: {.var {allowed_vars}}"
+        msg <- paste0(
+            "Unknown environment variables: ", paste(unknown_vars, collapse = ", "), 
+            ". Allowed variables: ", paste(allowed_vars, collapse = ", ")
         )
         
         if (warn) {
-            cli::cli_alert_warning(msg)
+            icy_alert_warning(msg)
             validation_passed <- FALSE
         } else {
-            cli::cli_abort(msg)
+            icy_abort(msg)
         }
     } else {
         validation_passed <- TRUE
@@ -119,19 +119,19 @@ validate <- function(package = get_package_name(),
         for (var in names(values)) {
             val <- values[[var]]
             if (is.null(val) || (is.character(val) && nchar(val) == 0)) {
-                msg <- "Variable {.var {var}} has empty value"
+                msg <- paste0("Variable ", var, " has empty value")
                 if (warn) {
-                    cli::cli_alert_warning(msg)
+                    icy_alert_warning(msg)
                     validation_passed <- FALSE
                 } else {
-                    cli::cli_abort(msg)
+                    icy_abort(msg)
                 }
             }
         }
     }
     
     if (validation_passed && length(var_names) > 0) {
-        cli::cli_alert_success("All variables validated successfully")
+        icy_alert_success("All variables validated successfully")
     }
     
     return(validation_passed)

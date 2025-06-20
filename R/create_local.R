@@ -47,7 +47,7 @@ create_local <- function(package = get_package_name(),
                          verbose = FALSE) {
 
   if (!is.character(tmpl_section)) {
-    cli::cli_warn("tmpl_section must be a character string. Using 'default' instead.")
+    icy_warn("tmpl_section must be a character string. Using 'default' instead.")
     tmpl_section <- "default"
   }
 
@@ -71,13 +71,13 @@ create_local <- function(package = get_package_name(),
 
   if (!is.null(existing) && !overwrite) {
     if (verbose) {
-      cli::cli_warn(c("Local config YAML file already exists: {.file {existing}}",
+      icy_warn(c("Local config YAML file already exists: (existing)",
         "i" = "Use {.arg overwrite = TRUE} to overwrite."
       ))
     }
     return(invisible(existing))
   } else if (verbose && !is.null(existing) && overwrite) {
-    cli::cli_alert_danger("Overwriting existing local config YAML file: {.file {existing}}")
+    icy_alert_danger("Overwriting existing local config YAML file: (existing)")
   }
 
   # Read template
@@ -88,15 +88,15 @@ create_local <- function(package = get_package_name(),
   )
 
   if (is.null(tmpl_path)) {
-    cli::cli_abort("No template config ({.val {tmpl_path}}) found for package {.pkg {package}}")
+    icy_abort("No template config ((tmpl_path)) found for package {.pkg {package)")
   }
   tmpl_config <- yaml::read_yaml(tmpl_path)
 
   # Extract the relevant section for local config
   if (!tmpl_section %in% names(tmpl_config)) {
-    cli::cli_abort(c(
-      "Component {.val {tmpl_section}} not found in template",
-      "i" = "Available components: {.val {names(tmpl_config)}}"
+    icy_abort(c(
+      "Component (tmpl_section) not found in template",
+      "i" = "Available components: (names(tmpl_config))"
     ))
   }
   local_config <- list()
@@ -118,10 +118,10 @@ create_local <- function(package = get_package_name(),
 
   if (verbose) {
     fun <- as.character(sys.call())
-    cli::cli_text("From {.strong {fun}}:")
-    cli::cli_inform(" - fn_local = {fn_local}")
-    cli::cli_inform(" - package_dir = {get_package_path(package = package)}")
-    cli::cli_inform(" - local_path = {local_path}")
+    icy_text("From {.strong {fun):")
+    icy_inform(" - fn_local = {fn_local}")
+    icy_inform(" - package_dir = {get_package_path(package = package)}")
+    icy_inform(" - local_path = {local_path}")
   }
 
   # Create the directory if it doesn't exist
@@ -134,7 +134,7 @@ create_local <- function(package = get_package_name(),
   yaml::write_yaml(local_config, local_path)
 
   if (verbose) {
-    cli::cli_alert_success("Created local config file: {.file {local_path}}")
+    icy_alert_success("Created local config file: (local_path)")
   }
 
   return(local_path)

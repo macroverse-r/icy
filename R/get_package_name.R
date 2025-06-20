@@ -50,14 +50,14 @@ get_package_name <- function(verbose = FALSE,
   # Check if we're in the global environment
   calling_env <- parent.frame()
   if (identical(calling_env, globalenv())) {
-    cli::cli_abort("`get_package_name` seems to have been called from Global Environment.")
+    icy_abort("`get_package_name` seems to have been called from Global Environment.")
   }
   
   current_pkg <- utils::packageName()
   found_current_pkg <- TRUE  # We know level 0 is always current_pkg
   
   if (verbose) {
-    cli::cli_alert_info("Level 0: {.pkg {current_pkg}} (skipping)")
+    icy_alert_info(paste0("Level 0: ", current_pkg, " (skipping)"))
   }
   
   for (i in 1:max_levels) {  # Start at 1, not 0
@@ -70,25 +70,25 @@ get_package_name <- function(verbose = FALSE,
         if (pkg_name != current_pkg) {
           # Found a different package - return immediately
           if (verbose) {
-            cli::cli_alert_success("First non-{.pkg {current_pkg}} package found at level {i}: {.pkg {pkg_name}}")
+            icy_alert_success(paste0("First non-", current_pkg, " package found at level ", i, ": ", pkg_name))
           }
           return(pkg_name)
         } else {
           # Found current package again - continue searching
           if (verbose) {
-            cli::cli_alert_info("Level {i}: {.pkg {current_pkg}} (skipping)")
+            icy_alert_info(paste0("Level ", i, ": ", current_pkg, " (skipping)"))
           }
         }
       } else {
         # NULL or empty - we've reached the end of the call stack
         if (verbose) {
-          cli::cli_alert_warning("Level {i}: NULL or empty (end of call stack)")
+          icy_alert_warning(paste0("Level ", i, ": NULL or empty (end of call stack)"))
         }
         return(current_pkg)  # Stop here - no point checking further levels
       }
     }, error = function(e) {
       if (verbose) {
-        cli::cli_alert_warning("Level {i}}: Error - {.emph {e$message}} (end of call stack)")
+        icy_alert_warning(paste0("Level ", i, ": Error - ", e$message, " (end of call stack)"))
       }
       return(current_pkg)  # Stop on error too - we've gone too far
     })
@@ -96,7 +96,7 @@ get_package_name <- function(verbose = FALSE,
   
   # If we reach here, no non-current package was found
   if (verbose) {
-    cli::cli_inform("No non-{.pkg {current_pkg}} package found, returning {.pkg {current_pkg}}")
+    icy_inform(paste0("No non-", current_pkg, " package found, returning ", current_pkg))
   }
   return(current_pkg)
 }

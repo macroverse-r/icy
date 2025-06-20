@@ -5,7 +5,7 @@
 #' local configuration file matching the expected naming pattern.
 #'
 #' This is a read-only operation that simply finds existing files. To create a new local
-#' configuration file, use \code{\link{create_local}}.
+#' configuration file, use \code{\link{create_local).
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param fn_local Character string with custom filename pattern. If NULL,
@@ -54,8 +54,8 @@ find_local <- function(package = get_package_name(),
     
     if (verbose) {
         fun <- sys.call()[1]
-        cli::cli_text("From {.strong {fun}}: package = {.path {package}}")
-        cli::cli_text("From {.strong {fun}}: fn_local_pattern = {.path {fn_local_pattern}}")
+        icy_text("From {.strong {fun): package = {.path {package)")
+        icy_text("From {.strong {fun): fn_local_pattern = {.path {fn_local_pattern)")
     }
     
     # Find all matching files
@@ -67,7 +67,7 @@ find_local <- function(package = get_package_name(),
     )
     
     if (verbose) {
-        cli::cli_text("From {.strong {fun}}: length(matching_files) = {length(matching_files)}")
+        icy_text("From {.strong {fun): length(matching_files) = {length(matching_files)}")
     }
     
     # Return results
@@ -78,7 +78,7 @@ find_local <- function(package = get_package_name(),
     } else {
         # Multiple files found - return first but warn if verbose
         if (verbose) {
-            cli::cli_alert_warning("Multiple files found, returning first: {.file {matching_files[1]}}")
+            icy_alert_warning("Multiple files found, returning first: (matching_files[1])")
         }
         return(matching_files[1])
     }
