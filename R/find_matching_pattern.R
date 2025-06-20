@@ -11,7 +11,8 @@
 #' 4. Returns full file paths for matched files
 #' 5. Optionally warns about multiple matches or no matches
 #'
-#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
+#' @param package Character string with the package name. 
+#'   Defaults to `get_package_name()` to detect the calling package.
 #' @param fn_pattern Character string with the filename pattern to match against YAML files.
 #'   Uses regex pattern matching (case-insensitive).
 #' @param user_dir Logical indicating whether to search in user directory (TRUE, default)
