@@ -6,7 +6,7 @@
 \usage{
 get_config(
   package = get_package_name(),
-  origin = "local",
+  origin = "priority",
   user = "default",
   yaml_file = NULL,
   case_format = "snake_case",

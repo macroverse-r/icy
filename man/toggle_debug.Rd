@@ -8,7 +8,7 @@ toggle_debug(
   package = get_package_name(),
   user = "default",
   initial = TRUE,
-  verbose = FALSE
+  verbose = NULL
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ toggle_debug(
 \item{initial}{Logical. The initial value to use when initializing a
 non-existent debug variable. Defaults to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.}
 }
 \value{
 Invisibly returns the new value of the debug variable.

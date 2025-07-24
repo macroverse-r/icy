@@ -34,7 +34,7 @@
 #'
 #' @export
 get_config <- function(package = get_package_name(),
-                       origin = "local",
+                       origin = "priority",
                        user = "default",
                        yaml_file = NULL,
                        case_format = "snake_case",
@@ -43,7 +43,7 @@ get_config <- function(package = get_package_name(),
   # Validate origin parameter
   valid_origins <- c("template", "local", "renviron", "priority")
   if (!origin %in% valid_origins) {
-    icy_abort(c(
+    .icy_abort(c(
       paste0("Invalid origin: ", origin),
       "i" = paste0("Valid origins are: ", paste(valid_origins, collapse = ", "))
     ))
@@ -112,13 +112,13 @@ get_config <- function(package = get_package_name(),
         yaml_file <- file.path(get_package_path(package = package), yaml_file)
       }
       if (!file.exists(yaml_file)) {
-        icy_abort(paste0("YAML file not found: ", yaml_file))
+        .icy_abort(paste0("YAML file not found: ", yaml_file))
       }
     }
   }
 
   if (verbose) {
-    icy_text(paste0("Reading local config from: ", yaml_file))
+    .icy_text(paste0("Reading local config from: ", yaml_file))
   }
 
   # Read the YAML file
@@ -128,7 +128,7 @@ get_config <- function(package = get_package_name(),
 
       # Extract user section
       if (!user %in% names(config_data)) {
-        icy_abort(c(
+        .icy_abort(c(
           paste0("User section ", user, " not found in local config"),
           "i" = paste0("Available sections: ", paste(names(config_data), collapse = ", "))
         ))
@@ -143,7 +143,7 @@ get_config <- function(package = get_package_name(),
       return(config)
     },
     error = function(e) {
-      icy_abort(paste0("Error reading YAML file: ", e$message))
+      .icy_abort(paste0("Error reading YAML file: ", e$message))
     }
   )
 }
@@ -164,7 +164,7 @@ get_config <- function(package = get_package_name(),
     )
 
     if (is.null(yaml_file)) {
-      icy_abort(paste0("No template configuration file found for package ", package))
+      .icy_abort(paste0("No template configuration file found for package ", package))
     }
   } else {
     # If yaml_file is provided, check if it exists
@@ -174,13 +174,13 @@ get_config <- function(package = get_package_name(),
         yaml_file <- file.path(get_package_path(package = package, user_dir = FALSE), yaml_file)
       }
       if (!file.exists(yaml_file)) {
-        icy_abort(paste0("Template YAML file not found: ", yaml_file))
+        .icy_abort(paste0("Template YAML file not found: ", yaml_file))
       }
     }
   }
 
   if (verbose) {
-    icy_text(paste0("Reading template config from: ", yaml_file))
+    .icy_text(paste0("Reading template config from: ", yaml_file))
   }
 
   # Read the YAML file
@@ -190,7 +190,7 @@ get_config <- function(package = get_package_name(),
 
       # Extract user section
       if (!user %in% names(config_data)) {
-        icy_abort(c(
+        .icy_abort(c(
           paste0("User section ", user, " not found in template"),
           "i" = paste0("Available sections: ", paste(names(config_data), collapse = ", "))
         ))
@@ -199,13 +199,13 @@ get_config <- function(package = get_package_name(),
       config <- config_data[[user]]
 
       if (is.null(config) || length(config) == 0) {
-        icy_abort(paste0("No environment variables found in template section ", user))
+        .icy_abort(paste0("No environment variables found in template section ", user))
       }
 
       return(config)
     },
     error = function(e) {
-      icy_abort(paste0("Error reading template YAML file: ", e$message))
+      .icy_abort(paste0("Error reading template YAML file: ", e$message))
     }
   )
 }
@@ -255,7 +255,7 @@ get_config <- function(package = get_package_name(),
   }
 
   if (verbose) {
-    icy_text(paste0("Reading .Renviron: ", renviron_path))
+    .icy_text(paste0("Reading .Renviron: ", renviron_path))
   }
 
   # If package is specified, filter to only package-specific variables

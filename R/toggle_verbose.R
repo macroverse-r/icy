@@ -9,7 +9,7 @@
 #' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The default value to use when initializing a
 #'   non-existent verbose variable. Defaults to TRUE.
-#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.
 #'
 #' @return Invisibly returns the new value of the verbose variable.
 #'
@@ -44,7 +44,7 @@
 toggle_verbose <- function(package = get_package_name(),
                            user = "default",
                            initial = TRUE,
-                           verbose = FALSE) {
+                           verbose = NULL) {
   # Create dynamic variable names based on package
   pkg_upper <- toupper(package)
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
@@ -58,6 +58,9 @@ toggle_verbose <- function(package = get_package_name(),
       list()
     }
   )
+  
+  # Set verbose default from config if not explicitly provided
+  if (is.null(verbose)) verbose <- TRUE
 
   # Check if verbose variable exists
   if (is.null(current_config[[verbose_var]])) {
@@ -81,13 +84,13 @@ toggle_verbose <- function(package = get_package_name(),
   if (verbose) {
     # Prepare status message with colored output
     verbose_status <- if (new_value) {
-      col_green("enabled")
+      .apply_color("enabled", "green")
     } else {
-      col_red("disabled")
+      .apply_color("disabled", "red")
     }
 
     # Display success message
-    icy_alert_success(
+    .icy_alert_success(
       paste0(
         "Verbose mode for ", package, " ",
         verbose_status,

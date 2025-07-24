@@ -1,21 +1,18 @@
-#' ANSI Color Support for icy Package
+#' Internal ANSI Color Support
 #'
 #' @description
-#' Lightweight ANSI color functions with terminal detection.
-#' No external dependencies - uses direct ANSI escape codes.
+#' Internal color functions for icy package messaging.
+#' Not exported - contextual handles user-facing color functionality.
 #'
-#' @name icy_colors
+#' @keywords internal
+#' @name icy_colors_internal
 NULL
 
 #' Check if terminal supports colors
 #'
-#' @description
-#' Detects if the current terminal supports ANSI color codes.
-#' Respects NO_COLOR environment variable and checks for TTY.
-#'
 #' @return Logical indicating if colors are supported
 #' @keywords internal
-has_color <- function() {
+.has_color <- function() {
   # Respect NO_COLOR environment variable
   if (Sys.getenv("NO_COLOR", "") != "") return(FALSE)
   
@@ -33,67 +30,55 @@ has_color <- function() {
   TRUE
 }
 
-#' Raw ANSI color functions
-#'
-#' @description
-#' Direct ANSI escape code functions. These always apply color codes
-#' regardless of terminal support. Use the safe `col_*` functions instead.
+#' Apply ANSI color to text
 #'
 #' @param x Text to colorize
-#' @return Text with ANSI color codes
-#' @keywords internal
-#' @name ansi_colors
-NULL
-
-#' @rdname ansi_colors
-ansi_red <- function(x) paste0("\033[31m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_green <- function(x) paste0("\033[32m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_yellow <- function(x) paste0("\033[33m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_blue <- function(x) paste0("\033[34m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_magenta <- function(x) paste0("\033[35m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_cyan <- function(x) paste0("\033[36m", x, "\033[39m")
-
-#' @rdname ansi_colors
-ansi_bold <- function(x) paste0("\033[1m", x, "\033[22m")
-
-#' Safe color functions with terminal detection
-#'
-#' @description
-#' Color functions that automatically detect terminal support and only
-#' apply colors when appropriate. Safe to use in all contexts.
-#'
-#' @param x Text to colorize
+#' @param color Color name or ANSI code
+#' @param style Optional style (bold, italic, etc.)
 #' @return Colored text if terminal supports it, plain text otherwise
-#' @name safe_colors
-NULL
+#' @keywords internal
+.apply_color <- function(x, color = NULL, style = NULL) {
+  if (!.has_color()) return(x)
+  
+  # ANSI color codes
+  colors <- list(
+    red = 31,
+    green = 32,
+    yellow = 33,
+    blue = 34,
+    magenta = 35,
+    cyan = 36,
+    white = 37,
+    grey = 90,
+    gray = 90
+  )
+  
+  # ANSI style codes
+  styles <- list(
+    bold = 1,
+    italic = 3,
+    underline = 4
+  )
+  
+  result <- x
+  
+  # Apply color
+  if (!is.null(color) && color %in% names(colors)) {
+    result <- paste0("\033[", colors[[color]], "m", result, "\033[39m")
+  }
+  
+  # Apply style
+  if (!is.null(style) && style %in% names(styles)) {
+    style_code <- styles[[style]]
+    # Reset codes: bold->22, italic->23, underline->24
+    reset_code <- switch(style,
+      bold = 22,
+      italic = 23,
+      underline = 24
+    )
+    result <- paste0("\033[", style_code, "m", result, "\033[", reset_code, "m")
+  }
+  
+  result
+}
 
-#' @rdname safe_colors
-col_red <- function(x) if (has_color()) ansi_red(x) else x
-
-#' @rdname safe_colors
-col_green <- function(x) if (has_color()) ansi_green(x) else x
-
-#' @rdname safe_colors
-col_yellow <- function(x) if (has_color()) ansi_yellow(x) else x
-
-#' @rdname safe_colors
-col_blue <- function(x) if (has_color()) ansi_blue(x) else x
-
-#' @rdname safe_colors
-col_magenta <- function(x) if (has_color()) ansi_magenta(x) else x
-
-#' @rdname safe_colors
-col_cyan <- function(x) if (has_color()) ansi_cyan(x) else x
-
-#' @rdname safe_colors
-col_bold <- function(x) if (has_color()) ansi_bold(x) else x

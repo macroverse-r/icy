@@ -1,0 +1,4 @@
+default:
+  ICY_VERBOSE: no
+  ICY_DEBUG: no
+  ICY_KING: Renviron

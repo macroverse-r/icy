@@ -52,10 +52,10 @@ validate <- function(package = get_package_name(),
         }, error = function(e) {
             msg <- paste0("Could not retrieve allowed variables from template: ", e$message)
             if (warn) {
-                icy_alert_warning(msg)
+                .icy_alert_warning(msg)
                 return(character(0))
             } else {
-                icy_abort(msg)
+                .icy_abort(msg)
             }
         })
     }
@@ -65,10 +65,10 @@ validate <- function(package = get_package_name(),
         if (!is.list(values) || is.null(names(values))) {
             msg <- "values must be a named list"
             if (warn) {
-                icy_alert_danger(msg)
+                .icy_alert_danger(msg)
                 return(FALSE)
             } else {
-                icy_abort(msg)
+                .icy_abort(msg)
             }
         }
         value_names <- names(values)
@@ -78,10 +78,10 @@ validate <- function(package = get_package_name(),
             if (!setequal(var_names, value_names)) {
                 msg <- "var_names and names(values) must match"
                 if (warn) {
-                    icy_alert_danger(msg)
+                    .icy_alert_danger(msg)
                     return(FALSE)
                 } else {
-                    icy_abort(msg)
+                    .icy_abort(msg)
                 }
             }
         } else {
@@ -103,10 +103,10 @@ validate <- function(package = get_package_name(),
         )
         
         if (warn) {
-            icy_alert_warning(msg)
+            .icy_alert_warning(msg)
             validation_passed <- FALSE
         } else {
-            icy_abort(msg)
+            .icy_abort(msg)
         }
     } else {
         validation_passed <- TRUE
@@ -121,17 +121,17 @@ validate <- function(package = get_package_name(),
             if (is.null(val) || (is.character(val) && nchar(val) == 0)) {
                 msg <- paste0("Variable ", var, " has empty value")
                 if (warn) {
-                    icy_alert_warning(msg)
+                    .icy_alert_warning(msg)
                     validation_passed <- FALSE
                 } else {
-                    icy_abort(msg)
+                    .icy_abort(msg)
                 }
             }
         }
     }
     
     if (validation_passed && length(var_names) > 0) {
-        icy_alert_success("All variables validated successfully")
+        .icy_alert_success("All variables validated successfully")
     }
     
     return(validation_passed)

@@ -6,7 +6,7 @@
 \usage{
 erase_renviron(
   var_names,
-  package = NULL,
+  package = get_package_name(),
   renviron_path = get_renviron_path(),
   validate = TRUE,
   allowed_vars = NULL,
@@ -16,7 +16,8 @@ erase_renviron(
 \arguments{
 \item{var_names}{Character vector of variable names to erase from the .Renviron file.}
 
-\item{package}{Character string with the package name. If NULL (default), validation is skipped.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.
+Set to NULL to skip validation.}
 
 \item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 

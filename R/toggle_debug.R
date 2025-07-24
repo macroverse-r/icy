@@ -9,7 +9,7 @@
 #' @param user Character string. The user configuration to modify. Defaults to "default".
 #' @param initial Logical. The initial value to use when initializing a 
 #'   non-existent debug variable. Defaults to TRUE.
-#' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE. 
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set. 
 #'
 #' @return Invisibly returns the new value of the debug variable.
 #'
@@ -39,7 +39,7 @@
 toggle_debug <- function(package = get_package_name(),
                          user = "default",
                          initial = TRUE,
-                         verbose = FALSE) {
+                         verbose = NULL) {
   
   # Create dynamic variable names based on package
   pkg_upper <- toupper(package)
@@ -52,6 +52,15 @@ toggle_debug <- function(package = get_package_name(),
   }, error = function(e) {
     list()
   })
+  
+  # Set verbose default from config if not explicitly provided
+  if (is.null(verbose)) {
+    verbose <- if (!is.null(current_config[[verbose_var]])) {
+      as.logical(current_config[[verbose_var]])
+    } else {
+      FALSE
+    }
+  }
   
   # Check if debug variable exists
   if (is.null(current_config[[debug_var]])) {
@@ -80,12 +89,12 @@ toggle_debug <- function(package = get_package_name(),
     if (should_print) {
       # Prepare status message with colored output
       debug_status <- if (new_value) 
-        col_green("enabled") 
+        .apply_color("enabled", "green") 
       else 
-        col_red("disabled")
+        .apply_color("disabled", "red")
       
       # Display success message
-      icy_alert_success(
+      .icy_alert_success(
         paste0(
           "Debug mode for ", package, " ", 
           debug_status, 

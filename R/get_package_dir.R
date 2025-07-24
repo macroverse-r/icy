@@ -62,7 +62,7 @@ get_package_path <- function(package = get_package_name(),
 
   if (path != "") {
     # Remove any trailing "/"
-    path <- .clean_dir_path(path)
+    path <- clean_dir_path(path, check_exists = FALSE)
     # If path ends with "/inst", strip it off
     if (endsWith(path, "/inst")) {
       path <- sub("/inst$", "", path)

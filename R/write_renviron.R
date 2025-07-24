@@ -1,10 +1,11 @@
 #' Write Environment Variables to .Renviron File
 #'
 #' This function writes or updates environment variables in the user's .Renviron file.
+#' By default, it detects the calling package automatically and enables validation and grouping.
 #' It can be used in two different ways:
 #'
-#' 1. With a package name (for package developers) - Groups related variables, validates names
-#' 2. Without a package name (for general use) - Simple writing of variables
+#' 1. With package detection (default) - Groups related variables, validates names
+#' 2. With `package = NULL` (for general use) - Simple writing of variables without validation
 #'
 #' Key features:
 #' 
@@ -18,9 +19,9 @@
 #'
 #' @param var_list Named list of environment variables to write. Names should be the
 #'   environment variable names and values should be the values to set.
-#' @param package Character string with the package name. If provided, enables validation
-#'   and grouping related variables together in the .Renviron file. If NULL (default),
-#'   performs a simple write without validation or grouping.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
+#'   If provided, enables validation and grouping related variables together in the .Renviron file. 
+#'   Set to NULL to perform a simple write without validation or grouping.
 #' @param user Character string. The user configuration to use. Defaults to "default".
 #' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
 #' @param overwrite Logical; if TRUE (default), overwrites existing variables.
@@ -50,7 +51,8 @@
 #'   var_list = list(
 #'     R_MAX_VSIZE = "4GB",
 #'     API_KEY = "my-api-key"
-#'   )
+#'   ),
+#'   package = NULL
 #' )
 #' 
 #' # Using this function in a configuration utility for your package
@@ -78,7 +80,7 @@
 #'   
 #' @export
 write_renviron <- function(var_list,
-                           package = NULL,
+                           package = get_package_name(),
                            user = "default",
                            renviron_path = get_renviron_path(),
                            overwrite = TRUE,
@@ -88,11 +90,11 @@ write_renviron <- function(var_list,
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
-    icy_abort("var_list must be a non-empty named list of environment variables")
+    .icy_abort("var_list must be a non-empty named list of environment variables")
   }
   
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
-    icy_abort("All elements in var_list must be named")
+    .icy_abort("All elements in var_list must be named")
   }
   
   # Delegate to the appropriate internal function based on whether a package is provided
@@ -129,7 +131,7 @@ write_renviron <- function(var_list,
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
-      icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
+      .icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
     }
   }
   
@@ -170,13 +172,13 @@ write_renviron <- function(var_list,
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
+      .icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
     }
   }
   
   # Report skipped variables
   if (length(existing_vars) > 0 && !overwrite && verbose) {
-    icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
+    .icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
   }
   
   return(list(
@@ -207,7 +209,7 @@ write_renviron <- function(var_list,
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
-      icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
+      .icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
     }
   }
   
@@ -225,7 +227,7 @@ write_renviron <- function(var_list,
     package_var_names <- names(package_config)
   }, error = function(e) {
     # If we can't get the package var names, continue without grouping
-    icy_warn(paste0("Could not retrieve full list of package variables: ", e$message))
+    .icy_warn(paste0("Could not retrieve full list of package variables: ", e$message))
   })
   
   # Process existing variables first (in-place updates)
@@ -294,13 +296,13 @@ write_renviron <- function(var_list,
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
+      .icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
     }
   }
   
   # Report skipped variables
   if (length(existing_vars) > 0 && !overwrite && verbose) {
-    icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
+    .icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
   }
   
   return(list(

@@ -4,10 +4,15 @@
 \alias{.pattern}
 \title{Generate YAML File Search Patterns Based on Case Format}
 \usage{
-.pattern(package, case_format = "snake_case", file = "local", yml = FALSE)
+.pattern(
+  package = get_package_name(),
+  case_format = "snake_case",
+  file = "local",
+  yml = FALSE
+)
 }
 \arguments{
-\item{package}{Character string with the package name used as filename prefix.}
+\item{package}{Character string with the package name used as filename prefix. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{case_format}{Character string specifying the case format. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}

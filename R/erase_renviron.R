@@ -9,7 +9,8 @@
 #' calling this function.
 #'
 #' @param var_names Character vector of variable names to erase from the .Renviron file.
-#' @param package Character string with the package name. If NULL (default), validation is skipped.
+#' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
+#'   Set to NULL to skip validation.
 #' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
 #' @param validate Logical; if TRUE (default), validates variable names against the
 #'   package's YAML configuration. Only applies if package is provided.
@@ -44,7 +45,7 @@
 #'   
 #' @export
 erase_renviron <- function(var_names,
-                           package = NULL,
+                           package = get_package_name(),
                            renviron_path = get_renviron_path(),
                            validate = TRUE,
                            allowed_vars = NULL,
@@ -57,7 +58,7 @@ erase_renviron <- function(var_names,
   
   # Make sure the file exists, but don't create it if it doesn't
   if (!file.exists(renviron_path)) {
-    icy_abort(paste0(".Renviron file not found at ", renviron_path))
+    .icy_abort(paste0(".Renviron file not found at ", renviron_path))
   }
   
   # Read existing content
@@ -83,11 +84,11 @@ erase_renviron <- function(var_names,
   if (length(erased_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      icy_alert_success(paste0("Erased ", length(erased_vars), " variable", if(length(erased_vars) > 1) "s" else "", " from .Renviron: ", paste(erased_vars, collapse = ", ")))
+      .icy_alert_success(paste0("Erased ", length(erased_vars), " variable", if(length(erased_vars) > 1) "s" else "", " from .Renviron: ", paste(erased_vars, collapse = ", ")))
     }
   } else {
     if (verbose) {
-      icy_alert_info("No variables found to erase")
+      .icy_alert_info("No variables found to erase")
     }
   }
   

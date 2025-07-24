@@ -54,8 +54,8 @@ find_local <- function(package = get_package_name(),
     
     if (verbose) {
         fun <- sys.call()[1]
-        icy_text(paste0("From ", fun, ": package = ", package))
-        icy_text(paste0("From ", fun, ": fn_local_pattern = ", fn_local_pattern))
+        .icy_text(paste0("From ", fun, ": package = ", package))
+        .icy_text(paste0("From ", fun, ": fn_local_pattern = ", fn_local_pattern))
     }
     
     # Find all matching files
@@ -67,7 +67,7 @@ find_local <- function(package = get_package_name(),
     )
     
     if (verbose) {
-        icy_text(paste0("From ", fun, ": length(matching_files) = ", length(matching_files)))
+        .icy_text(paste0("From ", fun, ": length(matching_files) = ", length(matching_files)))
     }
     
     # Return results
@@ -78,7 +78,7 @@ find_local <- function(package = get_package_name(),
     } else {
         # Multiple files found - return first but warn if verbose
         if (verbose) {
-            icy_alert_warning(paste0("Multiple files found, returning first: ", matching_files[1]))
+            .icy_alert_warning(paste0("Multiple files found, returning first: ", matching_files[1]))
         }
         return(matching_files[1])
     }

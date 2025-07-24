@@ -6,7 +6,7 @@
 \usage{
 write_renviron(
   var_list,
-  package = NULL,
+  package = get_package_name(),
   user = "default",
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
@@ -19,9 +19,9 @@ write_renviron(
 \item{var_list}{Named list of environment variables to write. Names should be the
 environment variable names and values should be the values to set.}
 
-\item{package}{Character string with the package name. If provided, enables validation
-and grouping related variables together in the .Renviron file. If NULL (default),
-performs a simple write without validation or grouping.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.
+If provided, enables validation and grouping related variables together in the .Renviron file.
+Set to NULL to perform a simple write without validation or grouping.}
 
 \item{user}{Character string. The user configuration to use. Defaults to "default".}
 
@@ -44,12 +44,13 @@ Invisibly returns NULL on success.
 }
 \description{
 This function writes or updates environment variables in the user's .Renviron file.
+By default, it detects the calling package automatically and enables validation and grouping.
 It can be used in two different ways:
 }
 \details{
 \enumerate{
-\item With a package name (for package developers) - Groups related variables, validates names
-\item Without a package name (for general use) - Simple writing of variables
+\item With package detection (default) - Groups related variables, validates names
+\item With \code{package = NULL} (for general use) - Simple writing of variables without validation
 }
 
 Key features:
@@ -79,7 +80,8 @@ write_renviron(
   var_list = list(
     R_MAX_VSIZE = "4GB",
     API_KEY = "my-api-key"
-  )
+  ),
+  package = NULL
 )
 
 # Using this function in a configuration utility for your package

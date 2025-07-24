@@ -36,10 +36,10 @@
       )
     },
     error = function(e) {
-      icy_abort(paste0("Error locating package path: ", e$message))
+      .icy_abort(paste0("Error locating package path: ", e$message))
     }
   )
-  if (verbose) icy_inform(paste0("package_dir = ", package_dir))
+  if (verbose) .icy_inform(paste0("package_dir = ", package_dir))
 
   # Use list.files to recursively find yaml files
   yaml_files <- list.files(
@@ -54,9 +54,9 @@
 
   if (verbose) {
     if (length(matching_files) == 0) {
-      icy_alert_warning(paste0("No YAML file in ", package_dir, " matching ", fn_pattern))
+      .icy_alert_warning(paste0("No YAML file in ", package_dir, " matching ", fn_pattern))
     } else if (length(matching_files) > 1) {
-      icy_alert_warning(
+      .icy_alert_warning(
         paste0("Multiple config YAML files found: ", paste(basename(matching_files), collapse = ", "), ". Please ensure only one file is present.")
       )
     }

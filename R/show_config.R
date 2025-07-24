@@ -41,7 +41,9 @@ show_config <- function(package = get_package_name(),
     # Try to get from template to see all possible variables
     template_vars <- tryCatch(
       {
-        names(get_config(package = package, origin = "template", user = user))
+        names(get_config(package = package,
+                         origin = "template",
+                         user = user))
       },
       error = function(e) NULL
     )
@@ -57,7 +59,7 @@ show_config <- function(package = get_package_name(),
     var_names <- unique(c(template_vars, local_vars))
 
     if (length(var_names) == 0) {
-      icy_alert_warning(paste0("No variables found in configuration for ", package))
+      .icy_alert_warning(paste0("No variables found in configuration for ", package))
       return(invisible(NULL))
     }
   }
@@ -89,20 +91,26 @@ show_config <- function(package = get_package_name(),
   for (i in seq_along(var_names)) {
     var <- var_names[i]
 
-    # Check current session first
+    # Check current session
     session_value <- Sys.getenv(var, unset = NA)
 
+    # Determine value and source with priority: session > .Renviron > local config
     if (!is.na(session_value)) {
       status_df$value[i] <- session_value
-
-      # Determine source
-      if (var %in% names(renviron_config) && renviron_config[[var]] == session_value) {
+      # Determine if session value matches a config source
+      if (var %in% names(renviron_config) && !is.null(renviron_config[[var]]) && renviron_config[[var]] == session_value) {
         status_df$source[i] <- ".Renviron"
-      } else if (var %in% names(local_config) && local_config[[var]] == session_value) {
+      } else if (var %in% names(local_config) && !is.null(local_config[[var]]) && local_config[[var]] == session_value) {
         status_df$source[i] <- "local config"
       } else {
         status_df$source[i] <- "session"
       }
+    } else if (var %in% names(renviron_config) && !is.null(renviron_config[[var]])) {
+      status_df$value[i] <- as.character(renviron_config[[var]])
+      status_df$source[i] <- ".Renviron"
+    } else if (var %in% names(local_config) && !is.null(local_config[[var]])) {
+      status_df$value[i] <- as.character(local_config[[var]])
+      status_df$source[i] <- "local config"
     } else {
       status_df$value[i] <- "(not set)"
       status_df$source[i] <- "not set"
@@ -110,7 +118,7 @@ show_config <- function(package = get_package_name(),
   }
 
   # Display results
-  icy_h3(paste0("Environment variables for ", package, ":"))
+  .icy_h3(paste0("Environment variables for ", package, ":"))
 
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
@@ -120,23 +128,23 @@ show_config <- function(package = get_package_name(),
     # Format display based on variable type and source
     if (value == "(not set)") {
       if (show_source) {
-        icy_text(paste0(var, " = ", value))
+        .icy_text(paste0(var, " = ", value))
       } else {
-        icy_text(paste0(var, " = ", value))
+        .icy_text(paste0(var, " = ", value))
       }
     } else {
       # Format paths with .file
       if (grepl("_DIR$|_PATH$", var)) {
         if (show_source) {
-          icy_text(paste0(var, " = ", value, " [", source, "]"))
+          .icy_text(paste0(var, " = ", value, " [", source, "]"))
         } else {
-          icy_text(paste0(var, " = ", value))
+          .icy_text(paste0(var, " = ", value))
         }
       } else {
         if (show_source) {
-          icy_text(paste0(var, " = ", value, " [", source, "]"))
+          .icy_text(paste0(var, " = ", value, " [", source, "]"))
         } else {
-          icy_text(paste0(var, " = ", value))
+          .icy_text(paste0(var, " = ", value))
         }
       }
     }

@@ -16,12 +16,23 @@ NULL
 #'
 #' @param msg Main error message
 #' @param ... Additional arguments (currently unused, for compatibility)
-#' @export
-icy_abort <- function(msg, ...) {
+.icy_abort <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_stop(msg, ...)
+    # Get the calling function (skip .icy_abort wrapper)
+    call_info <- sys.call(-1)
+    if (!is.null(call_info)) {
+      func_name <- as.character(call_info[[1]])
+      # Format message with function name and message
+      formatted_message <- paste0("in ", 
+                                  cli::style_bold(cli::col_blue(func_name)), 
+                                  "(): ", 
+                                  cli::col_red(msg))
+    } else {
+      formatted_message <- cli::col_red(msg)
+    }
+    cli::cli_abort(c("x" = formatted_message), call = NULL, ...)
   } else {
-    stop(col_red(paste0("✗ ", msg)), call. = FALSE)
+    stop(.apply_color(paste0("✗ ", msg), "red"), call. = FALSE)
   }
 }
 
@@ -33,12 +44,11 @@ icy_abort <- function(msg, ...) {
 #'
 #' @param msg Main warning message
 #' @param ... Additional arguments (currently unused, for compatibility)
-#' @export
-icy_warn <- function(msg, ...) {
+.icy_warn <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_warn(msg, ...)
   } else {
-    warning(col_yellow(paste0("! ", msg)), call. = FALSE)
+    warning(.apply_color(paste0("! ", msg), "yellow"), call. = FALSE)
   }
 }
 
@@ -50,8 +60,7 @@ icy_warn <- function(msg, ...) {
 #'
 #' @param msg Information message
 #' @param ... Additional arguments (currently unused, for compatibility)
-#' @export
-icy_inform <- function(msg, ...) {
+.icy_inform <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_text(msg, ...)
   } else {
@@ -66,8 +75,7 @@ icy_inform <- function(msg, ...) {
 #'
 #' @param msg Text to output
 #' @param ... Additional arguments passed to cat()
-#' @export
-icy_text <- function(msg, ...) {
+.icy_text <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_text(msg, ...)
   } else {
@@ -81,9 +89,8 @@ icy_text <- function(msg, ...) {
 #' Displays a success message with green checkmark when terminal supports it.
 #'
 #' @param msg Success message
-#' @export
-icy_alert_success <- function(msg) {
-  message(col_green("✓ "), msg)
+.icy_alert_success <- function(msg) {
+  message(.apply_color("✓ ", "green"), msg)
 }
 
 #' Warning alert message
@@ -92,9 +99,8 @@ icy_alert_success <- function(msg) {
 #' Displays a warning message with yellow exclamation mark when terminal supports it.
 #'
 #' @param msg Warning message
-#' @export
-icy_alert_warning <- function(msg) {
-  message(col_yellow("! "), msg)
+.icy_alert_warning <- function(msg) {
+  message(.apply_color("! ", "yellow"), msg)
 }
 
 #' Information alert message
@@ -103,9 +109,8 @@ icy_alert_warning <- function(msg) {
 #' Displays an information message with blue info symbol when terminal supports it.
 #'
 #' @param msg Information message
-#' @export
-icy_alert_info <- function(msg) {
-  message(col_blue("i "), msg)
+.icy_alert_info <- function(msg) {
+  message(.apply_color("i ", "blue"), msg)
 }
 
 #' Danger alert message
@@ -114,9 +119,8 @@ icy_alert_info <- function(msg) {
 #' Displays a danger/error message with red X mark when terminal supports it.
 #'
 #' @param msg Danger message
-#' @export
-icy_alert_danger <- function(msg) {
-  message(col_red("✗ "), msg)
+.icy_alert_danger <- function(msg) {
+  message(.apply_color("✗ ", "red"), msg)
 }
 
 #' Bulleted list output
@@ -126,8 +130,7 @@ icy_alert_danger <- function(msg) {
 #' and outputs with basic bullet points.
 #'
 #' @param items Named vector of items to display
-#' @export
-icy_bullets <- function(items) {
+.icy_bullets <- function(items) {
   if (length(items) == 0) return(invisible())
   
   for (i in seq_along(items)) {
@@ -148,9 +151,8 @@ icy_bullets <- function(items) {
 #' Simple heading output with basic formatting.
 #'
 #' @param msg Heading text
-#' @export
-icy_h3 <- function(msg) {
-  message(col_bold(paste0("--- ", msg, " ---")))
+.icy_h3 <- function(msg) {
+  message(.apply_color(paste0("--- ", msg, " ---"), style = "bold"))
 }
 
 #' Enhanced information message (contextual integration)
@@ -161,12 +163,11 @@ icy_h3 <- function(msg) {
 #'
 #' @param msg Information message
 #' @param ... Additional message components
-#' @export
-icy_enhanced_inform <- function(msg, ...) {
+.icy_enhanced_inform <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_text(msg, ...)
   } else {
-    icy_inform(msg, ...)
+    .icy_inform(msg, ...)
   }
 }
 
@@ -178,12 +179,11 @@ icy_enhanced_inform <- function(msg, ...) {
 #'
 #' @param msg Alert message
 #' @param ... Additional arguments passed to underlying functions
-#' @export
-icy_alert <- function(msg, ...) {
+.icy_alert <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_alert(msg, ...)
   } else {
-    icy_alert_info(msg)
+    .icy_alert_info(msg)
   }
 }
 
@@ -195,8 +195,7 @@ icy_alert <- function(msg, ...) {
 #'
 #' @param msg Debug message
 #' @param ... Additional arguments passed to underlying functions
-#' @export
-icy_debug <- function(msg, ...) {
+.icy_debug <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_debug(msg, ...)
   } else {
@@ -212,8 +211,7 @@ icy_debug <- function(msg, ...) {
 #'
 #' @param msg Alert message
 #' @param type Type of alert ("info", "warning", "success", "danger")
-#' @export
-icy_enhanced_alert <- function(msg, type = "info") {
+.icy_enhanced_alert <- function(msg, type = "info") {
   if (requireNamespace("contextual", quietly = TRUE)) {
     switch(type,
       "info" = contextual::cx_alert(msg),
@@ -224,11 +222,11 @@ icy_enhanced_alert <- function(msg, type = "info") {
     )
   } else {
     switch(type,
-      "info" = icy_alert_info(msg),
-      "warning" = icy_alert_warning(msg),
-      "success" = icy_alert_success(msg),
-      "danger" = icy_alert_danger(msg),
-      icy_alert_info(msg)
+      "info" = .icy_alert_info(msg),
+      "warning" = .icy_alert_warning(msg),
+      "success" = .icy_alert_success(msg),
+      "danger" = .icy_alert_danger(msg),
+      .icy_alert_info(msg)
     )
   }
 }

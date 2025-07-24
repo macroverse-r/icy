@@ -14,7 +14,7 @@
 #' Pattern structure: `{package}{prefix}config{separator}{file}{extension}`
 #' where prefix, separator, and transform rules depend on the case format.
 #'
-#' @param package Character string with the package name used as filename prefix.
+#' @param package Character string with the package name used as filename prefix. Defaults to `get_package_name()` to detect the calling package.
 #' @param case_format Character string specifying the case format. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param file Character string specifying the file type suffix (e.g., "local", "template").
@@ -25,7 +25,7 @@
 #' @return Character string containing the generated filename pattern.
 #'
 #' @keywords internal
-.pattern <- function(package,
+.pattern <- function(package = get_package_name(),
                      case_format = "snake_case",
                      file = "local",
                      yml = FALSE) {
