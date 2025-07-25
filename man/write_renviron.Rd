@@ -12,7 +12,8 @@ write_renviron(
   overwrite = TRUE,
   validate = TRUE,
   allowed_vars = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  sync = "conservative"
 )
 }
 \arguments{
@@ -38,6 +39,14 @@ If NULL (default), the function will use the names from the package's YAML confi
 Only applies when a package name is provided and validate=TRUE.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
+
+\item{sync}{Character or logical. Controls session environment synchronization:
+\itemize{
+\item "conservative" (default): only sync variables already in session
+\item "all" or TRUE: sync all written variables to session
+\item "none" or FALSE: skip synchronization
+\item character vector: explicit list of variables to sync
+}}
 }
 \value{
 Invisibly returns NULL on success.

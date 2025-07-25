@@ -34,5 +34,14 @@ get_value <- function(name,
                        user = user,
                        yaml_file = yaml_file,
                        case_format = case_format)
+  
+  # Check if variable exists in config
+  if (!name %in% names(config)) {
+    .icy_abort(c(
+      paste0("Variable '", name, "' not found in ", origin, " configuration for package '", package, "'"),
+      "i" = paste0("Available variables: ", paste(names(config), collapse = ", "))
+    ))
+  }
+  
   return(config[[name]])
 }

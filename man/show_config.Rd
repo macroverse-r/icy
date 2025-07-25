@@ -8,7 +8,7 @@ show_config(
   package = get_package_name(),
   var_names = NULL,
   user = "default",
-  show_source = TRUE
+  display = "sources"
 )
 }
 \arguments{
@@ -19,8 +19,12 @@ If NULL (default), shows all variables defined in the configuration.}
 
 \item{user}{Character string for the user/section in the YAML file (default: "default").}
 
-\item{show_source}{Logical; whether to show the source of each value
-(e.g., ".Renviron", "local config", "not set"). Default is TRUE.}
+\item{display}{Character string specifying display mode:
+\itemize{
+\item "sources": Show variable names, values, and source information (default)
+\item "values": Show only variable names and values (no source info)
+\item "full": Show detailed information about all configuration sources
+}}
 }
 \value{
 Invisibly returns a data frame with variable names, values, and sources.
@@ -33,18 +37,17 @@ configuration state.
 }
 \examples{
 \dontrun{
-# Show all environment variables for a package
+# Show all environment variables with sources
 show_config("mypackage")
 
 # Show specific variables only
 show_config("mypackage", var_names = c("API_KEY", "DB_HOST"))
 
-# Show without source information
-show_config("mypackage", show_source = FALSE)
+# Show only values without source information
+show_config("mypackage", display = "values")
 
-# Capture the results for programmatic use
-status <- show_config("mypackage")
-unset_vars <- status$variable[status$source == "not set"]
+# Show full detailed information
+show_config("mypackage", display = "full")
 }
 
 }

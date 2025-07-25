@@ -32,6 +32,11 @@
 #'   If NULL (default), the function will use the names from the package's YAML configuration.
 #'   Only applies when a package name is provided and validate=TRUE.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
+#' @param sync Character or logical. Controls session environment synchronization:
+#'   - "conservative" (default): only sync variables already in session
+#'   - "all" or TRUE: sync all written variables to session  
+#'   - "none" or FALSE: skip synchronization
+#'   - character vector: explicit list of variables to sync
 #'   
 #' @return Invisibly returns NULL on success.
 #'
@@ -86,7 +91,8 @@ write_renviron <- function(var_list,
                            overwrite = TRUE,
                            validate = TRUE,
                            allowed_vars = NULL,
-                           verbose = FALSE) {
+                           verbose = FALSE,
+                           sync = "conservative") {
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
@@ -97,10 +103,16 @@ write_renviron <- function(var_list,
     .icy_abort("All elements in var_list must be named")
   }
   
+  # Capture current session variables before any changes (only for package mode)
+  original_session_vars <- character(0)
+  if (!is.null(package)) {
+    original_session_vars <- .get_current_session_vars(package, user)
+  }
+  
   # Delegate to the appropriate internal function based on whether a package is provided
   if (is.null(package)) {
     # Use the simple version for non-package variables
-    .write_simple_to_renviron(
+    result <- .write_simple_to_renviron(
       var_list = var_list,
       renviron_path = renviron_path,
       overwrite = overwrite,
@@ -108,7 +120,7 @@ write_renviron <- function(var_list,
     )
   } else {
     # Use the package-specific version with validation and grouping
-    .write_pkg_to_renviron(
+    result <- .write_pkg_to_renviron(
       var_list = var_list,
       package = package,
       user = user,
@@ -118,6 +130,11 @@ write_renviron <- function(var_list,
       verbose = verbose,
       allowed_vars = allowed_vars
     )
+  }
+  
+  # Apply sync logic to session environment variables (only for package mode)
+  if (length(result$written) > 0 && !is.null(package)) {
+    synced_vars <- .apply_sync(var_list, sync, original_session_vars, verbose = verbose)
   }
   
   return(invisible(NULL))

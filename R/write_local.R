@@ -15,6 +15,11 @@
 #' @param case_format Character string indicating the case format to use for filenames.
 #'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
+#' @param sync Character or logical. Controls session environment synchronization:
+#'   - "conservative" (default): only sync variables already in session
+#'   - "all" or TRUE: sync all written variables to session  
+#'   - "none" or FALSE: skip synchronization
+#'   - character vector: explicit list of variables to sync
 #'
 #' @return Invisibly returns NULL on success.
 #'
@@ -45,7 +50,8 @@ write_local <- function(var_list,
                         fn_local = NULL,
                         create_if_missing = TRUE,
                         case_format = "snake_case",
-                        verbose = FALSE) {
+                        verbose = FALSE,
+                        sync = "conservative") {
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
     .icy_abort("var_list must be a non-empty named list of environment variables")
@@ -54,6 +60,9 @@ write_local <- function(var_list,
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
     .icy_abort("All elements in var_list must be named")
   }
+  
+  # Capture current session variables before any changes
+  original_session_vars <- .get_current_session_vars(package, user)
   
   # Validate against template configuration
   template_config <- tryCatch({
@@ -163,6 +172,11 @@ write_local <- function(var_list,
     if (length(updated_vars) == 0 && length(new_vars) == 0) {
       .icy_alert_info("No changes made - all values were already up to date")
     }
+  }
+
+  # Apply sync logic to session environment variables
+  if (length(updated_vars) > 0 || length(new_vars) > 0) {
+    synced_vars <- .apply_sync(var_list, sync, original_session_vars, verbose = verbose)
   }
 
   return(invisible(NULL))

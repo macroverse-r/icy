@@ -36,12 +36,12 @@
 ### ✏️ Local Configuration Management
 | Function | Description |
 |----------|-------------|
-| `write_local()` | Write/update variables in local YAML configuration file |
+| `write_local()` | Write/update variables in local YAML configuration file with session sync options |
 
 ### 🌍 .Renviron File Management
 | Function | Description |
 |----------|-------------|
-| `write_renviron()` | Write/update variables in user's .Renviron file |
+| `write_renviron()` | Write/update variables in user's .Renviron file with session sync options |
 | `erase_renviron()` | Remove variables from .Renviron file |
 
 ### 🔄 R Session Environment Management
@@ -58,7 +58,7 @@
 ### 📊 Display & Validation Functions
 | Function | Description |
 |----------|-------------|
-| `show_config()` | Display current configuration values and their sources |
+| `show_config()` | Display configuration with multiple view modes (sources, values, full) |
 | `validate()` | Validate variable names against package template |
 
 ### 🔍 Package Discovery Functions
@@ -82,24 +82,66 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 devtools::install_github("macroverse-r/icy")
 ```
 
-## Quick Start: Understanding icy's Approach
+## Session Sync Behavior
 
-The `icy` package manages configuration through a **three-layer system**:
+Both `write_local()` and `write_renviron()` support session synchronization with these options:
 
-1. **📋 Template** (read-only blueprint) - Defines all possible variables and their defaults
-2. **📝 Local Config** (user-customizable) - User's package-specific settings 
-3. **🌍 .Renviron** (global environment) - System-wide environment variables
+- **`sync = "conservative"`** (default): Only sync variables already in session environment
+- **`sync = "all"`**: Sync all written variables to session environment  
+- **`sync = "none"`**: Skip session synchronization
+- **`sync = c("VAR1", "VAR2")`**: Sync only specified variables
 
-### Understanding the Configuration Flow
+When syncing, the new written values are placed in the session environment with highest priority, giving immediate effect regardless of .Renviron values.
+
+## Display Modes for show_config()
+
+The `show_config()` function supports multiple display modes:
+
+- **`display = "values"`** (default): Shows resolved values with their sources
+- **`display = "sources"`**: Shows configuration breakdown by source  
+- **`display = "full"`**: Shows all sources plus session environment section
+
+## Configuration System Overview
+
+The `icy` package provides flexible configuration management with **multiple optional layers**:
+
+### Core Usage: Template + Local Config (Recommended)
+
+**Most packages only need these two layers:**
+
+1. **📋 Template** (read-only blueprint) - Package author defines all possible variables
+2. **📝 Local Config** (user-customizable) - User's package-specific settings
+
+```r
+# Simple workflow - no environment variables needed
+config <- icy::get_config(origin = "local")  # Uses local config with template fallback
+api_key <- config$MY_PACKAGE_API_KEY
+```
+
+### Extended Usage: Full Priority System (Optional)
+
+For advanced scenarios, icy supports a **four-layer priority system**:
+
+1. **🚀 Session Environment** - Current R session variables (highest priority)
+2. **🌍 .Renviron** - Global user settings (affects all R sessions)  
+3. **📝 Local Config** - Package-specific user settings (main layer)
+4. **📋 Template** - Package defaults (lowest priority)
+
+```r
+# Advanced workflow with full priority resolution
+config <- icy::get_config(origin = "priority")  # Uses all available sources
+```
+
+### Configuration Flow
 
 ```
 Template (inst/package_config_template.yml)
     ↓ (copied on first use)
 Local Config (~/.local/share/R/package/package_config_local.yml)
-    ↓ (priority resolution)
-.Renviron (~/.Renviron)
-    ↓ (loaded into)
-R Session Environment Variables
+    ↓ (optionally enhanced by)
+.Renviron (~/.Renviron) [optional]
+    ↓ (optionally overridden by)  
+R Session Environment Variables [optional]
 ```
 
 ### Step 1: Create Your Package Template
@@ -328,25 +370,38 @@ Configuration changes don't automatically affect the current R session:
 api_key_before <- get_config(package = "dummy")$DUMMY_API_KEY
 print(api_key_before)  # "old-key"
 
-# Make changes
+# Case 1: Default behavior (sync = "conservative")
+# Only syncs variables already in session
 write_local(
   var_list = list(DUMMY_API_KEY = "new-key"),
   package = "dummy"
+  # sync = "conservative" is default
+)
+
+# Session updated immediately for DUMMY_API_KEY (was in session)
+api_key_new <- get_config(package = "dummy")$DUMMY_API_KEY
+print(api_key_new)  # "new-key"
+
+# Case 2: Manual sync control (sync = "none")
+write_local(
+  var_list = list(DUMMY_DEBUG = TRUE),
+  package = "dummy",
+  sync = "none"
 )
 
 # Configuration files updated, but R session not yet
-api_key_still_old <- get_config(package = "dummy")$DUMMY_API_KEY
-print(api_key_still_old)  # Still "old-key"
+debug_still_old <- get_config(package = "dummy")$DUMMY_DEBUG
+print(debug_still_old)  # Still old value
 
-# Sync to make changes active
-sync(package = "dummy")
+# Manual sync to make changes active
+icy::sync(package = "dummy", var_names = "DUMMY_DEBUG")
 
 # Now it's updated
-api_key_new <- get_config(package = "dummy")$DUMMY_API_KEY
-print(api_key_new)  # "new-key"
+debug_new <- get_config(package = "dummy")$DUMMY_DEBUG
+print(debug_new)  # TRUE
 ```
 
-**💡 Educational note:** Always `sync()` after making changes if you need them immediately!
+**💡 Educational note:** Use `sync = "conservative"` for immediate effect on session variables, or `sync = "none"` with manual `icy::sync()` for full control!
 
 ### Pattern 6: "I want to reset everything back to defaults"
 
@@ -395,14 +450,6 @@ print(c(local = local_path, template = template_path))
 
 **💡 Educational note:** Use `toggle_verbose()` and `toggle_debug()` when configuration isn't behaving as expected or during development phase.
 
-## Configuration Priority
-
-The package follows a clear priority hierarchy:
-
-1. **`.Renviron`** - Highest priority (global user settings)
-2. **Local Config** - Medium priority (package-specific user settings)
-
-When using `origin = "priority"`, values from higher priority sources override lower priority ones.
 
 ## File Naming Conventions
 

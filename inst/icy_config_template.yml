@@ -8,12 +8,10 @@
 default:
   ICY_VERBOSE: FALSE       # TRUE/FALSE to enable verbose output
   ICY_DEBUG: FALSE         # TRUE/FALSE to enable debug output
-  ICY_KING: "Renviron"
 
 
 # Configuration variable descriptions
 descriptions:
   ICY_VERBOSE: "Boolean variable. When set to TRUE, enables more detailed output for `icy` functions. Shows additional information about configuration operations, timing, and progress updates. Useful for understanding what the functions are doing during execution. Default value: FALSE"
   ICY_DEBUG: "Boolean variable. When set to TRUE, enables maximum diagnostic information: displays detailed internal state, variable values, and step-by-step execution data. Use this when troubleshooting problems or developing new features. Default value: FALSE"
-  ICY_KING: "Character string. Set what is the main reference to use as source of information to set the environment variables. Can take to values: `Renviron` or `config_local`. Default value: `Renviron`"
 

@@ -32,16 +32,21 @@ sync <- function(package = get_package_name(),
                  user = "default",
                  verbose = FALSE) {
     
-    # Get configuration with priority
-    config <- tryCatch({
-        get_config(
-            package = package,
-            origin = "priority",
-            user = user
-        )
-    }, error = function(e) {
-        .icy_abort(paste0("Could not load configuration for ", package, ": ", e$message))
-    })
+    # Get configuration from files only (not session) to sync session to match files
+    # Priority order: .Renviron > local config (but exclude session environment)
+    renviron_config <- tryCatch({
+        get_config(package = package, origin = "renviron", user = user)
+    }, error = function(e) list())
+    
+    local_config <- tryCatch({
+        get_config(package = package, origin = "local", user = user)
+    }, error = function(e) list())
+    
+    # Merge with .Renviron taking priority over local config
+    config <- local_config
+    for (var_name in names(renviron_config)) {
+        config[[var_name]] <- renviron_config[[var_name]]
+    }
     
     # If specific var_names provided, filter config
     if (!is.null(var_names)) {
@@ -65,7 +70,20 @@ sync <- function(package = get_package_name(),
     updated_vars <- character(0)
     for (var_name in names(config)) {
         old_value <- Sys.getenv(var_name, unset = NA)
-        new_value <- as.character(config[[var_name]])
+        new_value <- config[[var_name]]
+        
+        # Handle NULL values - skip setting environment variables for NULL config values
+        if (is.null(new_value)) {
+            next
+        }
+        
+        new_value <- as.character(new_value)
+        
+        if (verbose) {
+            .icy_text(paste0("Checking ", var_name, ": session='", 
+                           ifelse(is.na(old_value), "(not set)", old_value), 
+                           "', config='", new_value, "'"))
+        }
         
         if (is.na(old_value) || old_value != new_value) {
             # Use do.call to set environment variable
@@ -73,6 +91,12 @@ sync <- function(package = get_package_name(),
             names(args) <- var_name
             do.call(Sys.setenv, args)
             updated_vars <- c(updated_vars, var_name)
+            
+            if (verbose) {
+                .icy_text(paste0("Updated ", var_name, " from '", 
+                               ifelse(is.na(old_value), "(not set)", old_value), 
+                               "' to '", new_value, "'"))
+            }
         }
     }
     

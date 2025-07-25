@@ -9,32 +9,33 @@
 #' @param var_names Optional character vector of specific variable names to show.
 #'   If NULL (default), shows all variables defined in the configuration.
 #' @param user Character string for the user/section in the YAML file (default: "default").
-#' @param show_source Logical; whether to show the source of each value
-#'   (e.g., ".Renviron", "local config", "not set"). Default is TRUE.
+#' @param display Character string specifying display mode:
+#'   - "sources": Show variable names, values, and source information (default)
+#'   - "values": Show only variable names and values (no source info)
+#'   - "full": Show detailed information about all configuration sources
 #'
 #' @return Invisibly returns a data frame with variable names, values, and sources.
 #'
 #' @examples
 #' \dontrun{
-#' # Show all environment variables for a package
+#' # Show all environment variables with sources
 #' show_config("mypackage")
 #'
 #' # Show specific variables only
 #' show_config("mypackage", var_names = c("API_KEY", "DB_HOST"))
 #'
-#' # Show without source information
-#' show_config("mypackage", show_source = FALSE)
+#' # Show only values without source information
+#' show_config("mypackage", display = "values")
 #'
-#' # Capture the results for programmatic use
-#' status <- show_config("mypackage")
-#' unset_vars <- status$variable[status$source == "not set"]
+#' # Show full detailed information
+#' show_config("mypackage", display = "full")
 #' }
 #'
 #' @export
 show_config <- function(package = get_package_name(),
                         var_names = NULL,
                         user = "default",
-                        show_source = TRUE) {
+                        display = "sources") {
 
   # Get all possible variable names if not specified
   if (is.null(var_names)) {
@@ -117,38 +118,169 @@ show_config <- function(package = get_package_name(),
     }
   }
 
-  # Display results
-  .icy_h3(paste0("Environment variables for ", package, ":"))
+  # Validate display mode
+  valid_modes <- c("sources", "values", "full")
+  if (!display %in% valid_modes) {
+    .icy_abort(c(
+      paste0("Invalid display mode: ", display),
+      "i" = paste0("Valid modes are: ", paste(valid_modes, collapse = ", "))
+    ))
+  }
+
+  # Display results based on mode
+  if (display == "full") {
+    .show_config_full(package, status_df, renviron_config, local_config, user)
+  } else {
+    .show_config_standard(package, status_df, display)
+  }
+
+  return(invisible(status_df))
+}
+
+
+#' Standard display mode for show_config
+#' @keywords internal
+.show_config_standard <- function(package, status_df, display) {
+  .icy_h3(.apply_color(paste0("Environment variables for ", package, ":"), "blue", "bold"))
 
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
     value <- status_df$value[i]
     source <- status_df$source[i]
 
-    # Format display based on variable type and source
-    if (value == "(not set)") {
-      if (show_source) {
-        .icy_text(paste0(var, " = ", value))
-      } else {
-        .icy_text(paste0(var, " = ", value))
-      }
+    # Color-code the variable name
+    colored_var <- .apply_color(var, "cyan")
+    
+    # Color-code the value using consistent helper function
+    colored_value <- .format_value_with_color(var, value)
+
+    # Format source information
+    if (display == "sources" && value != "(not set)") {
+      source_color <- switch(source,
+        ".Renviron" = "red",
+        "local config" = "blue", 
+        "session" = "yellow",
+        "not set" = "grey",
+        "white"  # default
+      )
+      colored_source <- paste0(" [", .apply_color(source, source_color), "]")
+      .icy_text(paste0(colored_var, " = ", colored_value, colored_source))
     } else {
-      # Format paths with .file
-      if (grepl("_DIR$|_PATH$", var)) {
-        if (show_source) {
-          .icy_text(paste0(var, " = ", value, " [", source, "]"))
-        } else {
-          .icy_text(paste0(var, " = ", value))
-        }
-      } else {
-        if (show_source) {
-          .icy_text(paste0(var, " = ", value, " [", source, "]"))
-        } else {
-          .icy_text(paste0(var, " = ", value))
-        }
+      .icy_text(paste0(colored_var, " = ", colored_value))
+    }
+  }
+}
+
+
+#' Full display mode for show_config
+#' @keywords internal
+.show_config_full <- function(package, status_df, renviron_config, local_config, user) {
+  .icy_h3(.apply_color(paste0("Detailed configuration for ", package, ":"), "blue", "bold"))
+  
+  # Show template configuration
+  template_config <- tryCatch({
+    get_config(package = package, origin = "template", user = user)
+  }, error = function(e) list())
+  
+  if (length(template_config) > 0) {
+    .icy_text(.apply_color("Template Configuration:", "green", "bold"))
+    for (var in names(template_config)) {
+      value <- template_config[[var]]
+      colored_value <- .format_value_with_color(var, value, "(null)")
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
+    }
+    .icy_text("")
+  }
+  
+  # Show local configuration
+  if (length(local_config) > 0) {
+    .icy_text(.apply_color("Local Configuration:", "blue", "bold"))
+    for (var in names(local_config)) {
+      value <- local_config[[var]]
+      colored_value <- .format_value_with_color(var, value, "(null)")
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
+    }
+    .icy_text("")
+  }
+  
+  # Show .Renviron configuration
+  if (length(renviron_config) > 0) {
+    .icy_text(.apply_color(".Renviron Configuration:", "red", "bold"))
+    for (var in names(renviron_config)) {
+      value <- renviron_config[[var]]
+      colored_value <- .format_value_with_color(var, value)
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
+    }
+    .icy_text("")
+  }
+  
+  # Show session environment variables
+  session_vars <- list()
+  if (length(template_config) > 0) {
+    for (var in names(template_config)) {
+      session_value <- Sys.getenv(var, unset = NA)
+      if (!is.na(session_value)) {
+        session_vars[[var]] <- session_value
       }
     }
   }
+  
+  if (length(session_vars) > 0) {
+    .icy_text(.apply_color("Session Environment:", "yellow", "bold"))
+    for (var in names(session_vars)) {
+      value <- session_vars[[var]]
+      colored_value <- .format_value_with_color(var, value)
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
+    }
+    .icy_text("")
+  }
+  
+  # Show final resolved values
+  .icy_text(.apply_color("Final Resolved Values (Priority: Session > .Renviron > Local > Template):", "magenta", "bold"))
+  for (i in seq_len(nrow(status_df))) {
+    var <- status_df$variable[i]
+    value <- status_df$value[i] 
+    source <- status_df$source[i]
+    
+    # Use consistent value coloring
+    colored_value <- .format_value_with_color(var, value)
+    
+    source_color <- switch(source,
+      ".Renviron" = "red",
+      "local config" = "blue",
+      "session" = "yellow", 
+      "not set" = "grey",
+      "white"
+    )
+    
+    .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value, 
+                    " [", .apply_color(source, source_color), "]"))
+  }
+}
 
-  return(invisible(status_df))
+
+#' Format value with consistent color coding
+#' @keywords internal
+.format_value_with_color <- function(var, value, null_replacement = "(not set)") {
+  if (is.null(value)) {
+    return(.apply_color(null_replacement, "grey"))
+  }
+  
+  value_str <- as.character(value)
+  
+  if (value_str == null_replacement) {
+    return(.apply_color(value_str, "grey"))
+  } else if (grepl("_DIR$|_PATH$", var)) {
+    # File paths in green
+    return(.apply_color(value_str, "green"))
+  } else if (value_str %in% c("TRUE", "FALSE", "true", "false", "yes", "no")) {
+    # Boolean values in yellow
+    return(.apply_color(value_str, "yellow"))
+  } else if (grepl("^[0-9]+$", value_str)) {
+    # Numeric values in magenta
+    return(.apply_color(value_str, "magenta"))
+  } else {
+    # Regular text values (no color)
+    return(value_str)
+  }
 }

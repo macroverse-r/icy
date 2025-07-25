@@ -310,6 +310,47 @@ get_config <- function(package = get_package_name(),
     config[[var_name]] <- renviron_config[[var_name]]
   }
 
+  # Override with session environment variables (highest priority)
+  for (var_name in names(config)) {
+    session_value <- Sys.getenv(var_name, unset = NA)
+    if (!is.na(session_value)) {
+      # Convert session string back to appropriate type based on config file type
+      original_value <- config[[var_name]]
+      
+      if (is.logical(original_value)) {
+        # Convert to logical
+        config[[var_name]] <- .convert_to_logical(session_value)
+      } else if (is.numeric(original_value)) {
+        # Convert to numeric
+        converted <- suppressWarnings(as.numeric(session_value))
+        config[[var_name]] <- if (is.na(converted)) session_value else converted
+      } else {
+        # Keep as character
+        config[[var_name]] <- session_value
+      }
+    }
+  }
+
   return(config)
+}
+
+
+#' Convert string to logical value
+#' @keywords internal
+.convert_to_logical <- function(value) {
+  if (is.na(value) || value == "") {
+    return(NA)
+  }
+  
+  lower_value <- tolower(trimws(value))
+  
+  if (lower_value %in% c("true", "t", "yes", "y", "1")) {
+    return(TRUE)
+  } else if (lower_value %in% c("false", "f", "no", "n", "0")) {
+    return(FALSE)
+  } else {
+    # Return the original string if we can't convert
+    return(value)
+  }
 }
 
