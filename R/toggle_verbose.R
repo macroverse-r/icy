@@ -37,8 +37,8 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{toggle_debug) for toggling debug mode.
-#' \code{\link{get_config) for retrieving the config data.
+#' \code{\link{toggle_debug}} for toggling debug mode.
+#' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
 toggle_verbose <- function(package = get_package_name(),

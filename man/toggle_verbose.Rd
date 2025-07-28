@@ -54,6 +54,6 @@ toggle_verbose(package = "mypackage", verbose = FALSE)
 
 }
 \seealso{
-\code{\link{toggle_debug) for toggling debug mode.
-\code{\link{get_config) for retrieving the config data.
+\code{\link{toggle_debug}} for toggling debug mode.
+\code{\link{get_config}} for retrieving the config data.
 }

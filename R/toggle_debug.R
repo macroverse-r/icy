@@ -33,7 +33,7 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{get_config) for retrieving the config data.
+#' \code{\link{get_config}} for retrieving the config data.
 #'
 #' @export
 toggle_debug <- function(package = get_package_name(),

@@ -50,5 +50,5 @@ toggle_debug(package = "otherpackage", initial = FALSE)
 
 }
 \seealso{
-\code{\link{get_config) for retrieving the config data.
+\code{\link{get_config}} for retrieving the config data.
 }
