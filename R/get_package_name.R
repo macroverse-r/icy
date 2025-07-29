@@ -50,6 +50,15 @@ get_package_name <- function(verbose = FALSE,
   # Check if we're in the global environment
   calling_env <- parent.frame()
   if (identical(calling_env, globalenv())) {
+    # Before throwing an error, check if we're in a package directory
+    # This allows get_package_name() to work from R console when in a package directory
+    pkg_name_from_desc <- .get_package_name_from_description()
+    if (!is.null(pkg_name_from_desc) && .is_pkg_dir(package = pkg_name_from_desc)) {
+      if (verbose) {
+        .icy_alert_info(paste0("Called from global environment but in package directory: ", pkg_name_from_desc))
+      }
+      return(pkg_name_from_desc)
+    }
     .icy_stop("`get_package_name` seems to have been called from Global Environment.")
   }
   

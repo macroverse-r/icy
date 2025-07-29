@@ -4,11 +4,11 @@
 \alias{.is_pkg_dir}
 \title{Check if Current Directory is a Package Directory}
 \usage{
-.is_pkg_dir(package = get_package_name(), debug = FALSE)
+.is_pkg_dir(package = NULL, debug = FALSE)
 }
 \arguments{
-\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.
-If NULL and DESCRIPTION file exists, reads package name from DESCRIPTION.}
+\item{package}{Character string with the package name. If NULL (default),
+reads package name from DESCRIPTION file if it exists.}
 
 \item{debug}{Logical. If TRUE, displays debugging information about directory validation. Defaults to FALSE.}
 }

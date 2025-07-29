@@ -2,15 +2,16 @@
 % Please edit documentation in R/icy_messaging.R
 \name{.icy_text}
 \alias{.icy_text}
-\title{Plain text output}
+\title{Text output}
 \usage{
 .icy_text(msg, ...)
 }
 \arguments{
-\item{msg}{Text to output}
+\item{msg}{Text message}
 
-\item{...}{Additional arguments passed to cat()}
+\item{...}{Additional arguments passed to underlying functions}
 }
 \description{
-Outputs plain text using cat(). No special formatting or colors.
+Outputs text using contextual formatting when available.
+Falls back to base R message() which respects suppressMessages().
 }
