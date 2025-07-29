@@ -121,7 +121,7 @@ show_config <- function(package = get_package_name(),
   # Validate display mode
   valid_modes <- c("sources", "values", "full")
   if (!display %in% valid_modes) {
-    .icy_abort(c(
+    .icy_stop(c(
       paste0("Invalid display mode: ", display),
       "i" = paste0("Valid modes are: ", paste(valid_modes, collapse = ", "))
     ))

@@ -73,7 +73,7 @@ find_template <- function(package = get_package_name(),
       file = "template"
     )
     if (verbose) {
-      .icy_inform(paste0("tmpl_pattern = ", tmpl_pattern))
+      .icy_text(paste0("tmpl_pattern = ", tmpl_pattern))
     }
     tmpl_path <- .find_matching_pattern(
       package = package,
@@ -83,7 +83,7 @@ find_template <- function(package = get_package_name(),
     )
   }
   if (verbose) {
-    .icy_inform(paste0("tmpl_path = ", paste(tmpl_path, collapse = ", ")))
+    .icy_text(paste0("tmpl_path = ", paste(tmpl_path, collapse = ", ")))
   }
 
   # Return results

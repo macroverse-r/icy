@@ -27,7 +27,7 @@ NULL
     # Explicit list of variables to sync
     return(intersect(var_names, sync))
   } else {
-    .icy_abort("sync must be 'conservative', 'all', 'none', TRUE, FALSE, or character vector")
+    .icy_stop("sync must be 'conservative', 'all', 'none', TRUE, FALSE, or character vector")
   }
 }
 

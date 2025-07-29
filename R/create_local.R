@@ -88,13 +88,13 @@ create_local <- function(package = get_package_name(),
   )
 
   if (is.null(tmpl_path)) {
-    .icy_abort(paste0("No template config found for package ", package))
+    .icy_stop(paste0("No template config found for package ", package))
   }
   tmpl_config <- yaml::read_yaml(tmpl_path)
 
   # Extract the relevant section for local config
   if (!tmpl_section %in% names(tmpl_config)) {
-    .icy_abort(c(
+    .icy_stop(c(
       paste0("Component ", tmpl_section, " not found in template"),
       "i" = paste0("Available components: ", paste(names(tmpl_config), collapse = ", "))
     ))
@@ -119,9 +119,9 @@ create_local <- function(package = get_package_name(),
   if (verbose) {
     fun <- as.character(sys.call())
     .icy_text(paste0("From ", fun, ":"))
-    .icy_inform(paste0(" - fn_local = ", fn_local))
-    .icy_inform(paste0(" - package_dir = ", get_package_path(package = package)))
-    .icy_inform(paste0(" - local_path = ", local_path))
+    .icy_text(paste0(" - fn_local = ", fn_local))
+    .icy_text(paste0(" - package_dir = ", get_package_path(package = package)))
+    .icy_text(paste0(" - local_path = ", local_path))
   }
 
   # Create the directory if it doesn't exist

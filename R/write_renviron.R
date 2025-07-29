@@ -96,11 +96,11 @@ write_renviron <- function(var_list,
   
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
-    .icy_abort("var_list must be a non-empty named list of environment variables")
+    .icy_stop("var_list must be a non-empty named list of environment variables")
   }
   
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
-    .icy_abort("All elements in var_list must be named")
+    .icy_stop("All elements in var_list must be named")
   }
   
   # Capture current session variables before any changes (only for package mode)
@@ -148,7 +148,7 @@ write_renviron <- function(var_list,
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
-      .icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
+      .icy_stop(paste0("Failed to create .Renviron file at ", renviron_path))
     }
   }
   
@@ -226,7 +226,7 @@ write_renviron <- function(var_list,
   # Ensure the .Renviron file exists
   if (!file.exists(renviron_path)) {
     if (!file.create(renviron_path)) {
-      .icy_abort(paste0("Failed to create .Renviron file at ", renviron_path))
+      .icy_stop(paste0("Failed to create .Renviron file at ", renviron_path))
     }
   }
   

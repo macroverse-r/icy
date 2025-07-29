@@ -2,7 +2,7 @@
 #'
 #' Prompts the user to configure a boolean environment variable using
 #' TRUE/FALSE options, then writes the selected value to the specified 
-#' configuration location. This function is a specialized wrapper around qoption()
+#' configuration location. This function is a specialized wrapper around qconfig()
 #' that integrates with icy's template system for boolean variables.
 #'
 #' @param var_name Character string with the environment variable name (e.g., "DUMMY_VERBOSE").
@@ -23,7 +23,7 @@
 #'   The value is written to the specified configuration location before being returned.
 #'
 #' @details
-#' This function is a specialized version of qoption() designed specifically for
+#' This function is a specialized version of qconfig() designed specifically for
 #' boolean configuration variables. It:
 #' \itemize{
 #'   \item Uses TRUE/FALSE as fixed options (ignores template options section)
@@ -62,53 +62,13 @@
 qboolean <- function(var_name, package = get_package_name(), user = "default",
                      description = NULL, default = TRUE, allow_skip = TRUE, 
                      note = NULL, write = "local", verbose = FALSE) {
-  # Input validation
-  if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
-    .icy_abort("var_name must be a non-empty character string")
-  }
+  # Prepare boolean options with default first
+  options <- if (default) c("TRUE", "FALSE") else c("FALSE", "TRUE")
   
-  if (!is.logical(default) || length(default) != 1 || is.na(default)) {
-    .icy_abort("default must be TRUE or FALSE")
-  }
-  
-  if (!is.logical(allow_skip) || length(allow_skip) != 1 || is.na(allow_skip)) {
-    .icy_abort("allow_skip must be TRUE or FALSE")
-  }
-  
-  if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
-    .icy_abort("verbose must be TRUE or FALSE")
-  }
-  
-  # Prepare boolean options with default first (using yes/no for YAML compatibility)
-  if (default) {
-    boolean_options <- c("yes", "no")
-    display_options <- c("TRUE", "FALSE")
-  } else {
-    boolean_options <- c("no", "yes")
-    display_options <- c("FALSE", "TRUE")
-  }
-  
-  # Call qoption with boolean options and logical type
-  result <- qoption(
-    var_name = var_name,
-    package = package,
-    user = user,
-    description = description,
-    options = display_options,
-    allow_skip = allow_skip,
-    note = note,
-    arg_only = TRUE,  # Don't use template options for boolean
-    write = write,
-    type = "logical",  # Force logical type for proper YAML boolean
-    verbose = verbose
-  )
-  
-  # Convert result to logical or return NULL if skipped
-  if (is.null(result)) {
-    return(invisible(NULL))  # User skipped
-  } else {
-    # Convert TRUE/FALSE string back to logical for return value
-    logical_result <- if (result == "TRUE") TRUE else FALSE
-    return(invisible(logical_result))
-  }
+  # Call qconfig with logical type (automatic boolean behavior)
+  return(qconfig(
+    var_name = var_name, package = package, user = user, description = description,
+    options = options, allow_skip = allow_skip, note = note, 
+    arg_only = TRUE, write = write, type = "logical", verbose = verbose
+  ))
 }

@@ -36,10 +36,10 @@
       )
     },
     error = function(e) {
-      .icy_abort(paste0("Error locating package path: ", e$message))
+      .icy_stop(paste0("Error locating package path: ", e$message))
     }
   )
-  if (verbose) .icy_inform(paste0("package_dir = ", package_dir))
+  if (verbose) .icy_text(paste0("package_dir = ", package_dir))
 
   # Use list.files to recursively find yaml files
   yaml_files <- list.files(

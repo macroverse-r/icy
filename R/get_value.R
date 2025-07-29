@@ -37,7 +37,7 @@ get_value <- function(name,
   
   # Check if variable exists in config
   if (!name %in% names(config)) {
-    .icy_abort(c(
+    .icy_stop(c(
       paste0("Variable '", name, "' not found in ", origin, " configuration for package '", package, "'"),
       "i" = paste0("Available variables: ", paste(names(config), collapse = ", "))
     ))

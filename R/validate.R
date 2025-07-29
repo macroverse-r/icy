@@ -55,7 +55,7 @@ validate <- function(package = get_package_name(),
                 .icy_alert_warning(msg)
                 return(character(0))
             } else {
-                .icy_abort(msg)
+                .icy_stop(msg)
             }
         })
     }
@@ -68,7 +68,7 @@ validate <- function(package = get_package_name(),
                 .icy_alert_danger(msg)
                 return(FALSE)
             } else {
-                .icy_abort(msg)
+                .icy_stop(msg)
             }
         }
         value_names <- names(values)
@@ -81,7 +81,7 @@ validate <- function(package = get_package_name(),
                     .icy_alert_danger(msg)
                     return(FALSE)
                 } else {
-                    .icy_abort(msg)
+                    .icy_stop(msg)
                 }
             }
         } else {
@@ -106,7 +106,7 @@ validate <- function(package = get_package_name(),
             .icy_alert_warning(msg)
             validation_passed <- FALSE
         } else {
-            .icy_abort(msg)
+            .icy_stop(msg)
         }
     } else {
         validation_passed <- TRUE
@@ -124,7 +124,7 @@ validate <- function(package = get_package_name(),
                     .icy_alert_warning(msg)
                     validation_passed <- FALSE
                 } else {
-                    .icy_abort(msg)
+                    .icy_stop(msg)
                 }
             }
         }

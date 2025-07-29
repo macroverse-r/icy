@@ -50,7 +50,7 @@ get_package_name <- function(verbose = FALSE,
   # Check if we're in the global environment
   calling_env <- parent.frame()
   if (identical(calling_env, globalenv())) {
-    .icy_abort("`get_package_name` seems to have been called from Global Environment.")
+    .icy_stop("`get_package_name` seems to have been called from Global Environment.")
   }
   
   current_pkg <- utils::packageName()
@@ -96,7 +96,7 @@ get_package_name <- function(verbose = FALSE,
   
   # If we reach here, no non-current package was found
   if (verbose) {
-    .icy_inform(paste0("No non-", current_pkg, " package found, returning ", current_pkg))
+    .icy_text(paste0("No non-", current_pkg, " package found, returning ", current_pkg))
   }
   return(current_pkg)
 }

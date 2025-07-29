@@ -12,6 +12,8 @@
 ### Key Features
 
 - **Multi-source configuration**: Load from template, local config, or .Renviron files with priority resolution
+- **Interactive configuration**: User-friendly prompts with template integration for easy setup
+- **Type-aware YAML writing**: Automatic type conversion based on template specifications
 - **Flexible file discovery**: Support for different YAML file naming conventions (snake_case, camelCase, PascalCase, kebab-case)
 - **Environment variable management**: Write, update, and erase variables in .Renviron files
 - **Session synchronization**: Sync environment variables between .Renviron and current R session
@@ -43,6 +45,12 @@
 |----------|-------------|
 | `write_renviron()` | Write/update variables in user's .Renviron file with session sync options |
 | `erase_renviron()` | Remove variables from .Renviron file |
+
+### 🎛️ Interactive Configuration
+| Function | Description |
+|----------|-------------|
+| `qconfig()` | Interactive environment variable configuration with template integration |
+| `qboolean()` | Specialized interactive boolean variable configuration |
 
 ### 🔄 R Session Environment Management
 | Function | Description |
@@ -198,6 +206,12 @@ get_my_api_key <- function() {
   config <- icy::get_config(origin = "priority")  # Checks .Renviron > local
   return(config$DUMMY_API_KEY)
 }
+
+# Interactive configuration for users
+configure_package <- function() {
+  icy::qconfig("DUMMY_API_KEY")      # Interactive with template integration
+  icy::qboolean("DUMMY_VERBOSE")     # Boolean-specific interface
+}
 ```
 
 #### Strategy B: R Session Environment Variables
@@ -236,11 +250,15 @@ Note: `load_config()` runs `create_local()`.
 # User can see current settings
 icy::show_config(package = "dummy")
 
-# User can modify local settings
+# User can modify local settings (traditional approach)
 icy::write_local(
   package = "dummy",
   var_list = list(DUMMY_API_KEY = "my-real-key")
 )
+
+# Or use interactive configuration (user-friendly)
+icy::qconfig("DUMMY_API_KEY", package = "dummy")    # Prompts with template options
+icy::qboolean("DUMMY_VERBOSE", package = "dummy")   # TRUE/FALSE with nice interface
 
 # User can set global settings (affects all projects)
 icy::write_renviron(

@@ -16,21 +16,9 @@ NULL
 #'
 #' @param msg Main error message
 #' @param ... Additional arguments (currently unused, for compatibility)
-.icy_abort <- function(msg, ...) {
+.icy_stop <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
-    # Get the calling function (skip .icy_abort wrapper)
-    call_info <- sys.call(-1)
-    if (!is.null(call_info)) {
-      func_name <- as.character(call_info[[1]])
-      # Format message with function name and message
-      formatted_message <- paste0("in ", 
-                                  cli::style_bold(cli::col_blue(func_name)), 
-                                  "(): ", 
-                                  cli::col_red(msg))
-    } else {
-      formatted_message <- cli::col_red(msg)
-    }
-    cli::cli_abort(c("x" = formatted_message), call = NULL, ...)
+    contextual::cx_stop(msg, .call_level = -2, ...)
   } else {
     stop(.apply_color(paste0("✗ ", msg), "red"), call. = FALSE)
   }
@@ -52,34 +40,19 @@ NULL
   }
 }
 
-#' Information message
+#' Text output
 #'
 #' @description
-#' Displays an information message using base R message().
-#' Plain text output, no special formatting.
+#' Outputs text using contextual formatting when available.
+#' Falls back to base R message() which respects suppressMessages().
 #'
-#' @param msg Information message
-#' @param ... Additional arguments (currently unused, for compatibility)
-.icy_inform <- function(msg, ...) {
-  if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_text(msg, ...)
-  } else {
-    message(msg)
-  }
-}
-
-#' Plain text output
-#'
-#' @description
-#' Outputs plain text using cat(). No special formatting or colors.
-#'
-#' @param msg Text to output
-#' @param ... Additional arguments passed to cat()
+#' @param msg Text message
+#' @param ... Additional arguments passed to underlying functions
 .icy_text <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_text(msg, ...)
   } else {
-    cat(msg, "\n", sep = "")
+    message(msg)
   }
 }
 
@@ -155,21 +128,6 @@ NULL
   message(.apply_color(paste0("--- ", msg, " ---"), style = "bold"))
 }
 
-#' Enhanced information message (contextual integration)
-#'
-#' @description
-#' Enhanced version of icy_inform that uses contextual package
-#' for rich formatting when available, falls back to basic message otherwise.
-#'
-#' @param msg Information message
-#' @param ... Additional message components
-.icy_enhanced_inform <- function(msg, ...) {
-  if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_text(msg, ...)
-  } else {
-    .icy_inform(msg, ...)
-  }
-}
 
 #' Generic alert message
 #'
@@ -203,30 +161,3 @@ NULL
   }
 }
 
-#' Enhanced alert message (contextual integration)
-#'
-#' @description
-#' Enhanced version of alert messages that uses contextual package
-#' for rich formatting when available.
-#'
-#' @param msg Alert message
-#' @param type Type of alert ("info", "warning", "success", "danger")
-.icy_enhanced_alert <- function(msg, type = "info") {
-  if (requireNamespace("contextual", quietly = TRUE)) {
-    switch(type,
-      "info" = contextual::cx_alert(msg),
-      "warning" = contextual::cx_warn(msg),
-      "success" = contextual::cx_success(msg),
-      "danger" = contextual::cx_stop(msg),
-      contextual::cx_alert(msg)
-    )
-  } else {
-    switch(type,
-      "info" = .icy_alert_info(msg),
-      "warning" = .icy_alert_warning(msg),
-      "success" = .icy_alert_success(msg),
-      "danger" = .icy_alert_danger(msg),
-      .icy_alert_info(msg)
-    )
-  }
-}

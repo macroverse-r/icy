@@ -54,11 +54,11 @@ write_local <- function(var_list,
                         sync = "conservative") {
   # Input validation
   if (!is.list(var_list) || length(var_list) == 0) {
-    .icy_abort("var_list must be a non-empty named list of environment variables")
+    .icy_stop("var_list must be a non-empty named list of environment variables")
   }
 
   if (is.null(names(var_list)) || any(names(var_list) == "")) {
-    .icy_abort("All elements in var_list must be named")
+    .icy_stop("All elements in var_list must be named")
   }
   
   # Capture current session variables before any changes
@@ -68,7 +68,7 @@ write_local <- function(var_list,
   template_config <- tryCatch({
     get_config(package = package, origin = "template", user = user)
   }, error = function(e) {
-    .icy_abort(paste0("Could not read template configuration: ", e$message))
+    .icy_stop(paste0("Could not read template configuration: ", e$message))
   })
   
   template_vars <- names(template_config)
@@ -79,7 +79,7 @@ write_local <- function(var_list,
                        paste(invalid_vars, collapse = ", "), "\n\n",
                        "Valid template variables:\n  ", 
                        paste(template_vars, collapse = ", "))
-    .icy_abort(error_msg)
+    .icy_stop(error_msg)
   }
 
   # Find local config file
@@ -100,7 +100,7 @@ write_local <- function(var_list,
       )
       .icy_alert_info(paste0("Created new local config file: ", local_path))
     } else {
-      .icy_abort(c(
+      .icy_stop(c(
         paste0("No local configuration file found for package ", package),
         "i" = "Set create_if_missing = TRUE to create one automatically"
       ))
