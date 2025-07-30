@@ -40,6 +40,23 @@ NULL
   }
 }
 
+#' Generic alert message
+#'
+#' @description
+#' Generic alert function that uses contextual formatting when available.
+#' Falls back to info alert when contextual is not available.
+#'
+#' @param msg Alert message
+#' @param ... Additional arguments passed to underlying functions
+.icy_alert <- function(msg, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_alert(msg, ...)
+  } else {
+    message(.apply_color("! ", "yellow"), msg)
+  }
+}
+
+
 #' Text output
 #'
 #' @description
@@ -56,94 +73,69 @@ NULL
   }
 }
 
-#' Success alert message
+#' Success message
 #'
 #' @description
-#' Displays a success message with green checkmark when terminal supports it.
+#' Displays a success message using contextual formatting when available.
+#' Falls back to green checkmark with terminal color support.
 #'
 #' @param msg Success message
-.icy_alert_success <- function(msg) {
-  message(.apply_color("✓ ", "green"), msg)
+#' @param ... Additional arguments passed to underlying functions
+.icy_success <- function(msg, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_success(msg, ...)
+  } else {
+    message(.apply_color("✓ ", "green"), msg)
+  }
 }
 
-#' Warning alert message
-#'
-#' @description
-#' Displays a warning message with yellow exclamation mark when terminal supports it.
-#'
-#' @param msg Warning message
-.icy_alert_warning <- function(msg) {
-  message(.apply_color("! ", "yellow"), msg)
-}
-
-#' Information alert message
-#'
-#' @description
-#' Displays an information message with blue info symbol when terminal supports it.
-#'
-#' @param msg Information message
-.icy_alert_info <- function(msg) {
-  message(.apply_color("i ", "blue"), msg)
-}
-
-#' Danger alert message
-#'
-#' @description
-#' Displays a danger/error message with red X mark when terminal supports it.
-#'
-#' @param msg Danger message
-.icy_alert_danger <- function(msg) {
-  message(.apply_color("✗ ", "red"), msg)
-}
 
 #' Bulleted list output
 #'
 #' @description
-#' Simple implementation of bulleted list. Takes a named vector
-#' and outputs with basic bullet points.
+#' Displays a bulleted list using contextual formatting when available.
+#' Falls back to simple bullet points with basic formatting.
 #'
 #' @param items Named vector of items to display
-.icy_bullets <- function(items) {
-  if (length(items) == 0) return(invisible())
-  
-  for (i in seq_along(items)) {
-    name <- names(items)[i]
-    value <- items[i]
+#' @param ... Additional arguments passed to underlying functions
+.icy_bullets <- function(items, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_bullets(items, ...)
+  } else {
+    if (length(items) == 0) return(invisible())
     
-    if (is.null(name) || name == "") {
-      cat("• ", value, "\n", sep = "")
-    } else {
-      cat("• ", name, ": ", value, "\n", sep = "")
+    for (i in seq_along(items)) {
+      name <- names(items)[i]
+      value <- items[i]
+      
+      if (is.null(name) || name == "") {
+        cat("• ", value, "\n", sep = "")
+      } else {
+        cat("• ", name, ": ", value, "\n", sep = "")
+      }
     }
   }
 }
 
-#' Heading 3 style output
+#' Title heading
 #'
 #' @description
-#' Simple heading output with basic formatting.
+#' Displays a title heading using contextual formatting when available.
+#' Falls back to bold formatting with dashes.
 #'
-#' @param msg Heading text
-.icy_h3 <- function(msg) {
-  message(.apply_color(paste0("--- ", msg, " ---"), style = "bold"))
-}
-
-
-#' Generic alert message
-#'
-#' @description
-#' Generic alert function that uses contextual formatting when available.
-#' Falls back to info alert when contextual is not available.
-#'
-#' @param msg Alert message
+#' @param msg Title text
 #' @param ... Additional arguments passed to underlying functions
-.icy_alert <- function(msg, ...) {
+.icy_title <- function(msg, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_alert(msg, ...)
+    contextual::cx_title(msg, level_adjust = -2, ...)
   } else {
-    .icy_alert_info(msg)
+    message(.apply_color(paste0("==== ", msg, " ===="),
+                         color = "blue",
+                         style = "bold"))
   }
 }
+
+
 
 #' Debug message
 #'

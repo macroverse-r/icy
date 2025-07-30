@@ -4,12 +4,14 @@
 \alias{.icy_bullets}
 \title{Bulleted list output}
 \usage{
-.icy_bullets(items)
+.icy_bullets(items, ...)
 }
 \arguments{
 \item{items}{Named vector of items to display}
+
+\item{...}{Additional arguments passed to underlying functions}
 }
 \description{
-Simple implementation of bulleted list. Takes a named vector
-and outputs with basic bullet points.
+Displays a bulleted list using contextual formatting when available.
+Falls back to simple bullet points with basic formatting.
 }

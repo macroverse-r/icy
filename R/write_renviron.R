@@ -189,13 +189,13 @@ write_renviron <- function(var_list,
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      .icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
+      .icy_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
     }
   }
   
   # Report skipped variables
   if (length(existing_vars) > 0 && !overwrite && verbose) {
-    .icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
+    .icy_alert(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
   }
   
   return(list(
@@ -313,13 +313,13 @@ write_renviron <- function(var_list,
   if (length(written_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      .icy_alert_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
+      .icy_success(paste0("Wrote ", length(written_vars), " variable", if(length(written_vars) > 1) "s" else "", " to .Renviron: ", paste(written_vars, collapse = ", ")))
     }
   }
   
   # Report skipped variables
   if (length(existing_vars) > 0 && !overwrite && verbose) {
-    .icy_alert_info(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
+    .icy_alert(paste0("Skipped (overwrite=FALSE): ", paste(existing_vars, collapse = ", ")))
   }
   
   return(list(

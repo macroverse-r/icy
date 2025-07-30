@@ -78,7 +78,7 @@ find_local <- function(package = get_package_name(),
     } else {
         # Multiple files found - return first but warn if verbose
         if (verbose) {
-            .icy_alert_warning(paste0("Multiple files found, returning first: ", matching_files[1]))
+            .icy_warn(paste0("Multiple files found, returning first: ", matching_files[1]))
         }
         return(matching_files[1])
     }

@@ -82,15 +82,11 @@ toggle_verbose <- function(package = get_package_name(),
 
   # Show message if verbose parameter is TRUE
   if (verbose) {
-    # Prepare status message with colored output
-    verbose_status <- if (new_value) {
-      .apply_color("enabled", "green")
-    } else {
-      .apply_color("disabled", "red")
-    }
+    # Prepare status message
+    verbose_status <- if (new_value) "enabled" else "disabled"
 
     # Display success message
-    .icy_alert_success(
+    .icy_success(
       paste0(
         "Verbose mode for ", package, " ",
         verbose_status,

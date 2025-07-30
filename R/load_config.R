@@ -152,10 +152,10 @@ load_config <- function(package = get_package_name(),
     # Show success message
     if (verbose) {
       var_names <- names(config)
-      .icy_alert_success(paste0("Loaded ", length(var_names), " env. variable", if(length(var_names) > 1) "s" else "", ": ", paste(var_names, collapse = ", ")))
+      .icy_success(paste0("Loaded ", length(var_names), " env. variable", if(length(var_names) > 1) "s" else "", ": ", paste(var_names, collapse = ", ")))
     }
   } else {
-    if (verbose) .icy_alert_info("No environment variables to load")
+    if (verbose) .icy_alert("No environment variables to load")
   }
 
   # Return the configuration invisibly

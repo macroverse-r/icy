@@ -55,13 +55,13 @@ sync <- function(package = get_package_name(),
         # Check for missing variables
         missing_vars <- setdiff(var_names, names(config))
         if (length(missing_vars) > 0 && verbose) {
-            .icy_alert_warning(paste0("Variables not found in configuration: ", paste(missing_vars, collapse = ", ")))
+            .icy_warn(paste0("Variables not found in configuration: ", paste(missing_vars, collapse = ", ")))
         }
     }
     
     if (length(config) == 0) {
         if (verbose) {
-            .icy_alert_info("No variables to sync")
+            .icy_alert("No variables to sync")
         }
         return(invisible(TRUE))
     }
@@ -102,12 +102,12 @@ sync <- function(package = get_package_name(),
     
     if (verbose) {
         if (length(updated_vars) > 0) {
-            .icy_alert_success(paste0("Updated ", length(updated_vars), " environment variable", if(length(updated_vars) > 1) "s" else ""))
+            .icy_success(paste0("Updated ", length(updated_vars), " environment variable", if(length(updated_vars) > 1) "s" else ""))
             
             # Show current values
             show_config(package = package, var_names = names(config))
         } else {
-            .icy_alert_info("All variables already up to date")
+            .icy_alert("All variables already up to date")
         }
     }
     

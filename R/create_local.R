@@ -77,7 +77,7 @@ create_local <- function(package = get_package_name(),
     }
     return(invisible(existing))
   } else if (verbose && !is.null(existing) && overwrite) {
-    .icy_alert_danger(paste0("Overwriting existing local config YAML file: ", existing))
+    .icy_warn(paste0("Overwriting existing local config YAML file: ", existing))
   }
 
   # Read template
@@ -134,7 +134,7 @@ create_local <- function(package = get_package_name(),
   yaml::write_yaml(local_config, local_path)
 
   if (verbose) {
-    .icy_alert_success(paste0("Created local config file: ", local_path))
+    .icy_success(paste0("Created local config file: ", local_path))
   }
 
   return(local_path)

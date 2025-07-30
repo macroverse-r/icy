@@ -84,11 +84,11 @@ erase_renviron <- function(var_names,
   if (length(erased_vars) > 0) {
     writeLines(lines, renviron_path)
     if (verbose) {
-      .icy_alert_success(paste0("Erased ", length(erased_vars), " variable", if(length(erased_vars) > 1) "s" else "", " from .Renviron: ", paste(erased_vars, collapse = ", ")))
+      .icy_success(paste0("Erased ", length(erased_vars), " variable", if(length(erased_vars) > 1) "s" else "", " from .Renviron: ", paste(erased_vars, collapse = ", ")))
     }
   } else {
     if (verbose) {
-      .icy_alert_info("No variables found to erase")
+      .icy_alert("No variables found to erase")
     }
   }
   

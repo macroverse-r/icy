@@ -51,14 +51,14 @@ get_description <- function(package = get_package_name(),
     )
   }, error = function(e) {
     if (verbose) {
-      .icy_alert_warning(paste0("Could not find template file for package '", package, "': ", e$message))
+      .icy_warn(paste0("Could not find template file for package '", package, "': ", e$message))
     }
     return(NULL)
   })
 
   if (is.null(template_path)) {
     if (verbose) {
-      .icy_alert_warning(paste0("No template file found for package '", package, "'"))
+      .icy_warn(paste0("No template file found for package '", package, "'"))
     }
     return(NULL)
   }
@@ -68,7 +68,7 @@ get_description <- function(package = get_package_name(),
     yaml::read_yaml(template_path)
   }, error = function(e) {
     if (verbose) {
-      .icy_alert_warning(paste0("Could not read template file '", template_path, "': ", e$message))
+      .icy_warn(paste0("Could not read template file '", template_path, "': ", e$message))
     }
     return(NULL)
   })
@@ -82,7 +82,7 @@ get_description <- function(package = get_package_name(),
   
   if (is.null(descriptions) || length(descriptions) == 0) {
     if (verbose) {
-      .icy_alert_info(paste0("No descriptions section found in template file for package '", package, "'"))
+      .icy_alert(paste0("No descriptions section found in template file for package '", package, "'"))
     }
     return(NULL)
   }
@@ -92,7 +92,7 @@ get_description <- function(package = get_package_name(),
     description <- descriptions[[var_name]]
     if (is.null(description)) {
       if (verbose) {
-        .icy_alert_warning(paste0("No description found for variable '", var_name, "'"))
+        .icy_warn(paste0("No description found for variable '", var_name, "'"))
       }
       return(NULL)
     }
@@ -101,7 +101,7 @@ get_description <- function(package = get_package_name(),
 
   # Return all descriptions
   if (verbose) {
-    .icy_alert_success(paste0("Retrieved ", length(descriptions), " variable description", 
+    .icy_success(paste0("Retrieved ", length(descriptions), " variable description", 
                              if(length(descriptions) > 1) "s" else "", 
                              " from package '", package, "'"))
   }

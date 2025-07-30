@@ -60,7 +60,7 @@ NULL
     }
     
     if (verbose) {
-      .icy_alert_info(paste0("Synced ", length(vars_to_sync), " variable", 
+      .icy_alert(paste0("Synced ", length(vars_to_sync), " variable", 
                             if(length(vars_to_sync) > 1) "s" else "", 
                             " to session: ", paste(vars_to_sync, collapse = ", ")))
     }

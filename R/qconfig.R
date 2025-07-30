@@ -226,34 +226,58 @@
 #' @param type Variable type
 #' @return Raw result value or NULL if skipped
 #' @keywords internal
-.do_interactive_config <- function(var_name, description, options, allow_skip, note, write, package, user, verbose, type) {
+.do_interactive_config <- function(var_name,
+                                   description,
+                                   options, allow_skip,
+                                   note, write, package,
+                                   user, verbose,
+                                   type) {
+  
   # Display description if available
   if (!is.null(description) && nchar(description) > 0) {
-    cat("\n")
-    .icy_alert_info(paste0("Configuring ", var_name))
-    cat(.wrap_text(description), "\n\n")
-  } else {
-    cat("\n")
-    .icy_alert_info(paste0("Configuring ", var_name))
-    cat("\n")
+    wrapped_description <- .wrap_text(description)
+    .icy_title("Description")
+    .icy_text(wrapped_description)
+  }
+  
+  # Display type information if available
+  if (!is.null(type) && nchar(type) > 0) {
+    type_display <- switch(type,
+      "character" = "Text string",
+      "integer" = "Integer number",
+      "numeric" = "Numeric value",
+      "logical" = "Boolean (TRUE/FALSE)",
+      type  # fallback to raw type name
+    )
+    .icy_text("")
+    .icy_text(paste0("Type: ", .apply_color(type_display, color = "yellow")))
+  }
+  
+  # Add blank line after description/type section
+  if (!is.null(description) || !is.null(type)) {
+    .icy_text("")
   }
   
   # Display note if provided
   if (!is.null(note) && nchar(note) > 0) {
-    cat(.wrap_text(paste0("Note: ", note)), "\n\n")
+    .icy_text(.wrap_text(paste0("Note: ", note)))
+    .icy_text("")
   }
   
   # Handle case with no options (manual text input)
   if (is.null(options) || length(options) == 0) {
     if (allow_skip) {
-      cat("Enter value (or press Enter to skip): ")
+      prompt_text <- "Enter value (or press Enter to skip):"
     } else {
-      cat("Enter value: ")
+      prompt_text <- "Enter value:"
     }
     
+    # Use proper readline with prompt
+    .icy_title(prompt_text)
     user_input <- readline()
     
     if (allow_skip && nchar(user_input) == 0) {
+      .icy_warn("Skipped configuration")
       return(NULL)  # User skipped
     }
     
@@ -267,33 +291,39 @@
       .icy_stop("Failed to write configuration")
     }
     
+    .icy_success(paste0("Set ", var_name, " = ", user_input))
     return(user_input)
   }
   
   # Handle case with options
-  cat("Select an option:\n")
-  for (i in seq_along(options)) {
-    cat(sprintf("  %d. %s\n", i, options[i]))
-  }
+  .icy_title("Selection")
   
-  if (allow_skip) {
-    cat("  0. Skip (press Enter)\n")
-  }
+  # Create numbered bullets for options
+  .icy_text("Select an option:")
+  # bullet_items <- setNames(options, seq_along(options))
+  # if (allow_skip) {
+  #   bullet_items <- c(setNames("Skip (press Enter)", "0"), bullet_items)
+  # }
+  .icy_bullets(options, bullet = "1:")
   
-  cat("\n")
+  .icy_text("")
   
   # Get user selection
   repeat {
     if (allow_skip) {
-      cat("Enter your choice (1-", length(options), " or 0 to skip): ", sep = "")
+      prompt_reminder <- paste0("(1-", length(options), " or 0/Enter to keep current config)")
     } else {
-      cat("Enter your choice (1-", length(options), "): ", sep = "")
+      prompt_reminder <- paste0("(1-", length(options), ")")
     }
+    prompt_text <- paste0("Enter your choice: ", .apply_color(prompt_reminder, color = "gray"))
+
     
+    .icy_text(prompt_text, indentation = FALSE)
     user_input <- readline()
     
     # Handle skip case
     if (allow_skip && (nchar(user_input) == 0 || user_input == "0")) {
+      .icy_alert("Skipped configuration")
       return(NULL)  # User skipped
     }
     
@@ -309,9 +339,10 @@
         .icy_stop("Failed to write configuration")
       }
       
+      .icy_success(paste0("Selected ", selected_value, " for ", var_name))
       return(selected_value)
     } else {
-      .icy_alert_warning("Invalid selection. Please try again.")
+      .icy_warn("Invalid selection. Please try again.")
     }
   }
 }
@@ -366,6 +397,10 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
                     note = NULL, arg_only = FALSE, write = "local", type = NULL, verbose = FALSE) {
   
+  # Display section header
+  .icy_title(var_name)
+
+  # .icy_title("test second title same level")
   # Validate and normalize parameters
   params <- .validate_and_normalize_qconfig_params(
     var_name, package, user, description, options, allow_skip, 
@@ -391,7 +426,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     final_options <- template_data$options
   }
   
-  # Perform interactive configuration
+  # Perform interactive configuration (pass final_type for display)
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
                                        params$allow_skip, params$note, params$write, 
                                        params$package, params$user, params$verbose, final_type)
@@ -475,7 +510,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
         config_list[[var_name]] <- converted_value
         write_local(var_list = config_list, package = package, user = user)
         if (verbose) {
-          .icy_alert_success(paste0("Written ", var_name, " to local config"))
+          .icy_success(paste0("Written ", var_name, " to local config"))
         }
         TRUE
       },
@@ -485,7 +520,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
         config_list[[var_name]] <- as.character(value)
         write_renviron(var_list = config_list)
         if (verbose) {
-          .icy_alert_success(paste0("Written ", var_name, " to ~/.Renviron"))
+          .icy_success(paste0("Written ", var_name, " to ~/.Renviron"))
         }
         TRUE
       },
@@ -493,13 +528,13 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
         # Sys.setenv always stores as strings, so use original value
         do.call(Sys.setenv, setNames(list(as.character(value)), var_name))
         if (verbose) {
-          .icy_alert_success(paste0("Set ", var_name, " in current session"))
+          .icy_success(paste0("Set ", var_name, " in current session"))
         }
         TRUE
       }
     )
   }, error = function(e) {
-    .icy_alert_warning(paste0("Failed to write ", var_name, ": ", e$message))
+    .icy_warn(paste0("Failed to write ", var_name, ": ", e$message))
     FALSE
   })
 }

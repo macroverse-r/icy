@@ -87,14 +87,11 @@ toggle_debug <- function(package = get_package_name(),
     should_print <- !(!is.null(current_config[[verbose_var]]) && !as.logical(current_config[[verbose_var]]))
     
     if (should_print) {
-      # Prepare status message with colored output
-      debug_status <- if (new_value) 
-        .apply_color("enabled", "green") 
-      else 
-        .apply_color("disabled", "red")
+      # Prepare status message
+      debug_status <- if (new_value) "enabled" else "disabled"
       
       # Display success message
-      .icy_alert_success(
+      .icy_success(
         paste0(
           "Debug mode for ", package, " ", 
           debug_status, 

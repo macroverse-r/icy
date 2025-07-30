@@ -55,7 +55,7 @@ get_package_name <- function(verbose = FALSE,
     pkg_name_from_desc <- .get_package_name_from_description()
     if (!is.null(pkg_name_from_desc) && .is_pkg_dir(package = pkg_name_from_desc)) {
       if (verbose) {
-        .icy_alert_info(paste0("Called from global environment but in package directory: ", pkg_name_from_desc))
+        .icy_alert(paste0("Called from global environment but in package directory: ", pkg_name_from_desc))
       }
       return(pkg_name_from_desc)
     }
@@ -66,7 +66,7 @@ get_package_name <- function(verbose = FALSE,
   found_current_pkg <- TRUE  # We know level 0 is always current_pkg
   
   if (verbose) {
-    .icy_alert_info(paste0("Level 0: ", current_pkg, " (skipping)"))
+    .icy_alert(paste0("Level 0: ", current_pkg, " (skipping)"))
   }
   
   for (i in 1:max_levels) {  # Start at 1, not 0
@@ -79,25 +79,25 @@ get_package_name <- function(verbose = FALSE,
         if (pkg_name != current_pkg) {
           # Found a different package - return immediately
           if (verbose) {
-            .icy_alert_success(paste0("First non-", current_pkg, " package found at level ", i, ": ", pkg_name))
+            .icy_success(paste0("First non-", current_pkg, " package found at level ", i, ": ", pkg_name))
           }
           return(pkg_name)
         } else {
           # Found current package again - continue searching
           if (verbose) {
-            .icy_alert_info(paste0("Level ", i, ": ", current_pkg, " (skipping)"))
+            .icy_alert(paste0("Level ", i, ": ", current_pkg, " (skipping)"))
           }
         }
       } else {
         # NULL or empty - we've reached the end of the call stack
         if (verbose) {
-          .icy_alert_warning(paste0("Level ", i, ": NULL or empty (end of call stack)"))
+          .icy_warn(paste0("Level ", i, ": NULL or empty (end of call stack)"))
         }
         return(current_pkg)  # Stop here - no point checking further levels
       }
     }, error = function(e) {
       if (verbose) {
-        .icy_alert_warning(paste0("Level ", i, ": Error - ", e$message, " (end of call stack)"))
+        .icy_warn(paste0("Level ", i, ": Error - ", e$message, " (end of call stack)"))
       }
       return(current_pkg)  # Stop on error too - we've gone too far
     })
