@@ -20,60 +20,34 @@
 - **Validation**: Validate environment variable names against package templates
 - **User-friendly utilities**: Toggle debug/verbose modes, display configurations, and more
 
-## Core Functions by Category
+## Core Functions
 
-### 🚀 Setup Functions (Package Initialization)
+### Setup & Package Discovery
 | Function | Description |
 |----------|-------------|
 | `create_local()` | Create local configuration file from template (used in `.onLoad()`) |
 | `load_config()` | Load configuration into R session environment variables (used in `.onLoad()`) |
-
-### 📖 Configuration Reading Functions
-| Function | Works With | Description |
-|----------|------------|-------------|
-| `get_config()` | Template, Local Config, .Renviron | Load configuration from any source with priority resolution |
-| `find_local()` | Local Config | Find existing local configuration files |
-| `find_template()` | Template | Find package template configuration files |
-
-### ✏️ Local Configuration Management
-| Function | Description |
-|----------|-------------|
-| `write_local()` | Write/update variables in local YAML configuration file with session sync options |
-
-### 🌍 .Renviron File Management
-| Function | Description |
-|----------|-------------|
-| `write_renviron()` | Write/update variables in user's .Renviron file with session sync options |
-| `erase_renviron()` | Remove variables from .Renviron file |
-
-### 🎛️ Interactive Configuration
-| Function | Description |
-|----------|-------------|
-| `qconfig()` | Interactive environment variable configuration with template integration and automatic type detection |
-
-### 🔄 R Session Environment Management
-| Function | Description |
-|----------|-------------|
-| `sync()` | Synchronize environment variables between files and current R session |
-
-### 🔧 Toggle & Configuration Utilities
-| Function | Description |
-|----------|-------------|
-| `toggle_debug()` | Toggle package debug mode in local configuration |
-| `toggle_verbose()` | Toggle package verbose mode in local configuration |
-
-### 📊 Display & Validation Functions
-| Function | Description |
-|----------|-------------|
-| `show_config()` | Display configuration with multiple view modes (sources, values, full) |
-| `validate()` | Validate variable names against package template |
-
-### 🔍 Package Discovery Functions
-| Function | Description |
-|----------|-------------|
 | `get_package_name()` | Automatically detect calling package name |
 | `get_package_path()` | Get package directory path (user or installation) |
 | `get_renviron_path()` | Get path to user's .Renviron file |
+
+### Configuration Management
+| Function | Description |
+|----------|-------------|
+| `get_config()` | Load configuration from any source with priority resolution |
+| `find_local()` / `find_template()` | Find existing local/template configuration files |
+| `write_local()` | Write/update variables in local YAML configuration with session sync options |
+| `write_renviron()` | Write/update variables in .Renviron file with session sync options |
+| `erase_renviron()` | Remove variables from .Renviron file |
+| `qconfig()` | Interactive configuration with template integration and automatic type detection |
+
+### Utilities & Display
+| Function | Description |
+|----------|-------------|
+| `show_config()` | Display configuration with multiple view modes: `"values"` (default, shows resolved values with sources), `"sources"` (breakdown by source), `"full"` (all sources plus session environment) |
+| `validate()` | Validate variable names against package template |
+| `sync()` | Synchronize environment variables between files and current R session |
+| `toggle_debug()` / `toggle_verbose()` | Toggle package debug/verbose modes in local configuration |
 
 ## Installation
 
@@ -89,24 +63,6 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 devtools::install_github("macroverse-r/icy")
 ```
 
-## Session Sync Behavior
-
-Both `write_local()` and `write_renviron()` support session synchronization with these options:
-
-- **`sync = "conservative"`** (default): Only sync variables already in session environment
-- **`sync = "all"`**: Sync all written variables to session environment  
-- **`sync = "none"`**: Skip session synchronization
-- **`sync = c("VAR1", "VAR2")`**: Sync only specified variables
-
-When syncing, the new written values are placed in the session environment with highest priority, giving immediate effect regardless of .Renviron values.
-
-## Display Modes for show_config()
-
-The `show_config()` function supports multiple display modes:
-
-- **`display = "values"`** (default): Shows resolved values with their sources
-- **`display = "sources"`**: Shows configuration breakdown by source  
-- **`display = "full"`**: Shows all sources plus session environment section
 
 ## Configuration System Overview
 
@@ -212,6 +168,15 @@ configure_package <- function() {
   icy::qconfig("DUMMY_VERBOSE")      # Automatic boolean detection (TRUE/FALSE options)
 }
 ```
+
+Both `write_local()` and `write_renviron()` support session synchronization options:
+
+- **`sync = "conservative"`** (default): Only sync variables already in session environment
+- **`sync = "all"`**: Sync all written variables to session environment  
+- **`sync = "none"`**: Skip session synchronization
+- **`sync = c("VAR1", "VAR2")`**: Sync only specified variables
+
+When syncing, the new written values are placed in the session environment with highest priority, giving immediate effect regardless of .Renviron values.
 
 #### Strategy B: R Session Environment Variables
 **When to use:** You want traditional `Sys.getenv()` / `Sys.setenv()` behavior.
