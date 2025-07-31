@@ -84,11 +84,13 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Read template data using modular functions 
   template_description <- .get_description(params$var_name, params$package)
   template_type <- .get_type(params$var_name, params$package)  # Already normalized boolean→logical
-  template_options <- .get_options(params$var_name, params$package)
+  template_options <- .get_option(params$var_name, params$package)
+  template_note <- .get_note(params$var_name, params$package)
   
   # Determine final values (argument > template > none)
   final_description <- if (!is.null(params$description)) params$description else template_description
   final_type <- if (!is.null(params$type)) params$type else template_type
+  final_note <- if (!is.null(params$note)) params$note else template_note
   
   # Apply automatic boolean behavior AFTER reading template type
   if (!is.null(final_type) && final_type == "logical" && is.null(params$options)) {
@@ -112,7 +114,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   
   # Perform interactive configuration (pass final_type for display)
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
-                                       params$allow_skip, params$note, params$write, 
+                                       params$allow_skip, final_note, params$write, 
                                        params$package, params$user, params$verbose, final_type)
   
   # Convert to proper type and return
@@ -186,90 +188,6 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   ))
 }
 
-#' Get Description for Variable from Template
-#'
-#' Internal helper function to get shortened description for a variable from template.
-#' Returns only the first sentence to keep descriptions concise.
-#'
-#' @param var_name Variable name
-#' @param package Package name
-#' @return Character string with shortened description, or NULL if not found
-#' @keywords internal
-.get_description <- function(var_name, package) {
-  tryCatch({
-    descriptions_config <- get_config(package = package, origin = "template", user = "descriptions")
-    
-    if (!is.null(descriptions_config) && var_name %in% names(descriptions_config)) {
-      full_description <- descriptions_config[[var_name]]
-      
-      # Split on ". " and take first sentence only
-      first_sentence <- strsplit(full_description, "\\. ", fixed = FALSE)[[1]][1]
-      
-      # Add period back if it was removed by splitting
-      if (!grepl("\\.$", first_sentence)) {
-        first_sentence <- paste0(first_sentence, ".")
-      }
-      
-      return(first_sentence)
-    }
-    
-    return(NULL)
-  }, error = function(e) {
-    return(NULL)
-  })
-}
-
-#' Get Type for Variable from Template
-#'
-#' Internal helper function to get type for a variable from template.
-#' Handles boolean → logical normalization.
-#'
-#' @param var_name Variable name
-#' @param package Package name
-#' @return Character string with normalized type, or NULL if not found
-#' @keywords internal
-.get_type <- function(var_name, package) {
-  tryCatch({
-    types_config <- get_config(package = package, origin = "template", user = "types")
-    
-    if (!is.null(types_config) && var_name %in% names(types_config)) {
-      type <- types_config[[var_name]]
-      
-      # Normalize boolean types to logical
-      if (!is.null(type) && type %in% c("boolean", "bool")) {
-        type <- "logical"
-      }
-      
-      return(type)
-    }
-    
-    return(NULL)
-  }, error = function(e) {
-    return(NULL)
-  })
-}
-
-#' Get Options for Variable from Template
-#'
-#' Internal helper function to get options for a variable from template.
-#'
-#' @param var_name Variable name
-#' @param package Package name
-#' @return Character vector with options, or NULL if not found
-#' @keywords internal
-.get_options <- function(var_name, package) {
-  tryCatch({
-    options_config <- get_config(package = package, origin = "template", user = "options")
-    
-    if (!is.null(options_config) && var_name %in% names(options_config)) {
-      return(as.character(options_config[[var_name]]))
-    }
-    
-    return(NULL)
-  }, error = function(e) {
-    return(NULL)
-  })
-}
 
 #' Handle Skip Input
 #'
@@ -315,6 +233,21 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     wrapped_description <- description
     .icy_title("Description", auto_number = FALSE)
     .icy_text(wrapped_description)
+  }
+  
+  # Display current value if available
+  current_value <- tryCatch({
+    get_value(var_name, package = package, user = user)
+  }, error = function(e) NULL)
+  
+  if (!is.null(current_value)) {
+    .icy_text("")
+    current_display <- if (is.logical(current_value)) {
+      toupper(as.character(current_value))  # TRUE/FALSE in caps
+    } else {
+      as.character(current_value)
+    }
+    .icy_text(paste0("Current value: ", .apply_color(current_display, color = "cyan")))
   }
   
   # Display type information if available
