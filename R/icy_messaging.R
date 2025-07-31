@@ -20,7 +20,7 @@ NULL
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_stop(msg, .call_level = -2, ...)
   } else {
-    stop(.apply_color(paste0("✗ ", msg), "red"), call. = FALSE)
+    stop(.apply_color(paste0("\u2717 ", msg), "red"), call. = FALSE)
   }
 }
 
@@ -85,7 +85,7 @@ NULL
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_success(msg, ...)
   } else {
-    message(.apply_color("✓ ", "green"), msg)
+    message(.apply_color("\u2713 ", "green"), msg)
   }
 }
 
@@ -109,9 +109,9 @@ NULL
       value <- items[i]
       
       if (is.null(name) || name == "") {
-        cat("• ", value, "\n", sep = "")
+        cat("\u2022 ", value, "\n", sep = "")
       } else {
-        cat("• ", name, ": ", value, "\n", sep = "")
+        cat("\u2022 ", name, ": ", value, "\n", sep = "")
       }
     }
   }
@@ -149,7 +149,7 @@ NULL
   if (requireNamespace("contextual", quietly = TRUE)) {
     contextual::cx_inform(msg, ...)
   } else {
-    message(.apply_color("ℹ ", "blue"), msg)
+    message(.apply_color("\u2139 ", "blue"), msg)
   }
 }
 

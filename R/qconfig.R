@@ -66,23 +66,59 @@
 #' optional_var <- qconfig("DUMMY_OPTIONAL", allow_skip = TRUE)
 #' # Can return NULL if user skips, no configuration is written
 #' }
-#'
-#' Validate and Normalize qconfig Parameters
-#'
-#' Internal helper function to validate input parameters and apply type-specific logic.
-#'
-#' @param var_name Variable name
-#' @param package Package name
-#' @param user User section
-#' @param description Description text
-#' @param options Option values
-#' @param allow_skip Allow skip flag
-#' @param note Note text
-#' @param arg_only Argument only flag
-#' @param write Write destination
-#' @param type Variable type
-#' @param verbose Verbose flag
-#' @return List of validated and normalized parameters
+#' @export
+qconfig <- function(var_name, package = get_package_name(), user = "default",
+                    description = NULL, options = NULL, allow_skip = TRUE, 
+                    note = NULL, arg_only = FALSE, write = "local", type = NULL, verbose = FALSE) {
+  
+  # Display section header
+  # .icy_title(var_name)
+
+  # .icy_title("test second title same level")
+  # Validate and normalize parameters
+  params <- .validate_and_normalize_qconfig_params(
+    var_name, package, user, description, options, allow_skip, 
+    note, arg_only, write, type, verbose
+  )
+  
+  # Read template data using modular functions 
+  template_description <- .get_description(params$var_name, params$package)
+  template_type <- .get_type(params$var_name, params$package)  # Already normalized boolean→logical
+  template_options <- .get_options(params$var_name, params$package)
+  
+  # Determine final values (argument > template > none)
+  final_description <- if (!is.null(params$description)) params$description else template_description
+  final_type <- if (!is.null(params$type)) params$type else template_type
+  
+  # Apply automatic boolean behavior AFTER reading template type
+  if (!is.null(final_type) && final_type == "logical" && is.null(params$options)) {
+    # Automatically set TRUE/FALSE options for boolean types
+    final_options <- c("TRUE", "FALSE")
+    arg_only <- TRUE  # Force arg_only for boolean types to prevent template conflicts
+  } else {
+    # Determine final options (merge or arg_only)
+    final_options <- NULL
+    if (!is.null(params$options)) {
+      final_options <- as.character(params$options)
+      if (!params$arg_only && !is.null(template_options)) {
+        # Merge: argument options first, then template options (remove duplicates)
+        final_options <- unique(c(final_options, template_options))
+      }
+    } else if (!is.null(template_options)) {
+      final_options <- template_options
+    }
+    arg_only <- params$arg_only
+  }
+  
+  # Perform interactive configuration (pass final_type for display)
+  raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
+                                       params$allow_skip, params$note, params$write, 
+                                       params$package, params$user, params$verbose, final_type)
+  
+  # Convert to proper type and return
+  return(.convert_return_value(raw_result, final_type))
+}
+
 #' @keywords internal
 .validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, verbose) {
   # Input validation
@@ -421,58 +457,6 @@
   return(invisible(converted_value))
 }
 
-#' @export
-qconfig <- function(var_name, package = get_package_name(), user = "default",
-                    description = NULL, options = NULL, allow_skip = TRUE, 
-                    note = NULL, arg_only = FALSE, write = "local", type = NULL, verbose = FALSE) {
-  
-  # Display section header
-  # .icy_title(var_name)
-
-  # .icy_title("test second title same level")
-  # Validate and normalize parameters
-  params <- .validate_and_normalize_qconfig_params(
-    var_name, package, user, description, options, allow_skip, 
-    note, arg_only, write, type, verbose
-  )
-  
-  # Read template data using modular functions 
-  template_description <- .get_description(params$var_name, params$package)
-  template_type <- .get_type(params$var_name, params$package)  # Already normalized boolean→logical
-  template_options <- .get_options(params$var_name, params$package)
-  
-  # Determine final values (argument > template > none)
-  final_description <- if (!is.null(params$description)) params$description else template_description
-  final_type <- if (!is.null(params$type)) params$type else template_type
-  
-  # Apply automatic boolean behavior AFTER reading template type
-  if (!is.null(final_type) && final_type == "logical" && is.null(params$options)) {
-    # Automatically set TRUE/FALSE options for boolean types
-    final_options <- c("TRUE", "FALSE")
-    arg_only <- TRUE  # Force arg_only for boolean types to prevent template conflicts
-  } else {
-    # Determine final options (merge or arg_only)
-    final_options <- NULL
-    if (!is.null(params$options)) {
-      final_options <- as.character(params$options)
-      if (!params$arg_only && !is.null(template_options)) {
-        # Merge: argument options first, then template options (remove duplicates)
-        final_options <- unique(c(final_options, template_options))
-      }
-    } else if (!is.null(template_options)) {
-      final_options <- template_options
-    }
-    arg_only <- params$arg_only
-  }
-  
-  # Perform interactive configuration (pass final_type for display)
-  raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
-                                       params$allow_skip, params$note, params$write, 
-                                       params$package, params$user, params$verbose, final_type)
-  
-  # Convert to proper type and return
-  return(.convert_return_value(raw_result, final_type))
-}
 
 #' Write Configuration Value
 #'
@@ -514,7 +498,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       },
       "session" = {
         # Sys.setenv always stores as strings, so use original value
-        do.call(Sys.setenv, setNames(list(as.character(value)), var_name))
+        do.call(Sys.setenv, stats::setNames(list(as.character(value)), var_name))
         if (verbose) {
           .icy_success(paste0("Set ", var_name, " in current session"))
         }
