@@ -284,12 +284,37 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     }
     
     selected_value <- user_input
-    success_msg <- .format_success_message(var_name, user_input)
+    success_msg <- .format_success_message(var_name, user_input, write)
     
   } else {
     # Options selection case
     .icy_text("Select an option:")
-    .icy_bullets(options, bullet = "1:")
+    
+    # Format options with current value indicator
+    formatted_options <- character(length(options))
+    for (i in seq_along(options)) {
+      option_value <- options[i]
+      
+      # Check if this option matches the current value
+      if (!is.null(current_value)) {
+        # Handle different value types for comparison
+        current_display <- if (is.logical(current_value)) {
+          toupper(as.character(current_value))
+        } else {
+          as.character(current_value)
+        }
+        
+        if (option_value == current_display) {
+          formatted_options[i] <- paste0(option_value, " ", .apply_color("(current value)", "grey"))
+        } else {
+          formatted_options[i] <- option_value
+        }
+      } else {
+        formatted_options[i] <- option_value
+      }
+    }
+    
+    .icy_bullets(formatted_options, bullet = "1:")
     .icy_text("")
     
     # Get user selection with retry loop
@@ -312,7 +337,26 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       
       if (!is.na(selection) && selection >= 1 && selection <= length(options)) {
         selected_value <- options[selection]
-        success_msg <- .format_success_message(var_name, selected_value)
+        
+        # Check if selected value is the current value
+        is_current_value <- FALSE
+        if (!is.null(current_value)) {
+          current_display <- if (is.logical(current_value)) {
+            toupper(as.character(current_value))
+          } else {
+            as.character(current_value)
+          }
+          is_current_value <- (selected_value == current_display)
+        }
+        
+        if (is_current_value) {
+          success_msg <- paste0("Kept current value for ", var_name, ": ", selected_value)
+          # Don't write - just return the current value
+          .icy_success(success_msg)
+          return(selected_value)
+        } else {
+          success_msg <- .format_success_message(var_name, selected_value, write)
+        }
         break
       } else {
         .icy_alert("Invalid selection. Please try again.")
@@ -490,8 +534,17 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
 #'
 #' @param var_name Variable name
 #' @param value Selected or entered value
+#' @param write Write location ("local", "renviron", "session")
 #' @return Formatted success message
 #' @keywords internal
-.format_success_message <- function(var_name, value) {
-  paste0("Set ", var_name, " to ", value)
+.format_success_message <- function(var_name, value, write) {
+  # Map write locations to display names
+  location_display <- switch(write,
+    "local" = "local config",
+    "renviron" = ".Renviron", 
+    "session" = "session",
+    write  # fallback
+  )
+  
+  paste0("Set ", var_name, " to ", value, " in ", location_display)
 }

@@ -181,9 +181,55 @@ setup <- function(package = get_package_name(), user = "default", write = "local
   
   # Summary
   configured_count <- sum(!sapply(results, is.null))
+  skipped_count <- sum(sapply(results, is.null))
+  
   .icy_text("")
   .icy_title("Setup Complete", auto_number = FALSE)
-  .icy_success(paste0("Configured ", configured_count, "/", length(var_names), " variables"))
+  
+  if (configured_count > 0) {
+    .icy_success(paste0("Configured ", configured_count, " variable(s) for ", package))
+  }
+  
+  if (skipped_count > 0) {
+    .icy_inform(paste0("Skipped ", skipped_count, " variable(s)"))
+  }
+  
+  # Show current configuration status
+  if (configured_count > 0) {
+    .icy_text("")
+    write_location <- switch(write,
+      "local" = "local configuration file",
+      "renviron" = "~/.Renviron file", 
+      "session" = "current R session",
+      write
+    )
+    
+    .icy_text(paste0("Settings written to: ", .apply_color(write_location, "cyan")))
+    .icy_text("")
+
+    # Internal function to automatically update title depth
+    in_show_config <- function() {
+      .icy_title("Current Configuration", auto_number = FALSE)
+      # Show only the variables that were part of this setup
+      show_config(package = package, var_names = var_names, user = user, display = "sources")
+    }
+    in_show_config()
+    
+    # Show helpful next steps
+    in_show_next <- function() {
+
+      .icy_text("")
+      .icy_title("Next Steps", auto_number = FALSE)
+      .icy_text("You can:")
+      .icy_bullets(c(
+                     paste0("View all settings: ", .apply_color(paste0("show_config(package = \"", package, "\")"), "yellow")),
+                     paste0("Modify a setting: ", .apply_color(paste0("qconfig(\"VARIABLE_NAME\", package = \"", package, "\")"), "yellow")),
+                     paste0("Run setup again: ", .apply_color(paste0("setup(package = \"", package, "\")"), "yellow"))
+                     ), bullet = "dot")
+    }
+    in_show_next()
+    
+  }
   
   return(invisible(results))
 }

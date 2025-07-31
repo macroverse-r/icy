@@ -4,12 +4,14 @@
 \alias{.format_success_message}
 \title{Format Success Message}
 \usage{
-.format_success_message(var_name, value)
+.format_success_message(var_name, value, write)
 }
 \arguments{
 \item{var_name}{Variable name}
 
 \item{value}{Selected or entered value}
+
+\item{write}{Write location ("local", "renviron", "session")}
 }
 \value{
 Formatted success message

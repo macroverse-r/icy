@@ -232,7 +232,7 @@ show_config <- function(package = get_package_name(),
   }
   
   # Show final resolved values
-  .icy_text(.apply_color("Session Values (Priority: Session > .Renviron > Local > Template):", "blue", "bold"))
+  .icy_text(.apply_color("ICY Final Values (Priority: Session > .Renviron > Local > Template):", "blue", "bold"))
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
     value <- status_df$value[i] 
