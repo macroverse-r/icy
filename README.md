@@ -49,8 +49,7 @@
 ### 🎛️ Interactive Configuration
 | Function | Description |
 |----------|-------------|
-| `qconfig()` | Interactive environment variable configuration with template integration |
-| `qboolean()` | Specialized interactive boolean variable configuration |
+| `qconfig()` | Interactive environment variable configuration with template integration and automatic type detection |
 
 ### 🔄 R Session Environment Management
 | Function | Description |
@@ -210,7 +209,7 @@ get_my_api_key <- function() {
 # Interactive configuration for users
 configure_package <- function() {
   icy::qconfig("DUMMY_API_KEY")      # Interactive with template integration
-  icy::qboolean("DUMMY_VERBOSE")     # Boolean-specific interface
+  icy::qconfig("DUMMY_VERBOSE")      # Automatic boolean detection (TRUE/FALSE options)
 }
 ```
 
@@ -258,7 +257,7 @@ icy::write_local(
 
 # Or use interactive configuration (user-friendly)
 icy::qconfig("DUMMY_API_KEY", package = "dummy")    # Prompts with template options
-icy::qboolean("DUMMY_VERBOSE", package = "dummy")   # TRUE/FALSE with nice interface
+icy::qconfig("DUMMY_VERBOSE", package = "dummy")    # Automatic TRUE/FALSE options for boolean types
 
 # User can set global settings (affects all projects)
 icy::write_renviron(
