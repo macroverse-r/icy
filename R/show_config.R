@@ -141,15 +141,13 @@ show_config <- function(package = get_package_name(),
 #' Standard display mode for show_config
 #' @keywords internal
 .show_config_standard <- function(package, status_df, display) {
-  .icy_title(paste0("Environment variables for ", package, ":"))
-
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
     value <- status_df$value[i]
     source <- status_df$source[i]
 
-    # Variable name without direct coloring
-    colored_var <- var
+    # Color-code the variable name
+    colored_var <- .apply_color(var, "cyan")
     
     # Color-code the value using consistent helper function
     colored_value <- .format_value_with_color(var, value)
@@ -157,13 +155,13 @@ show_config <- function(package = get_package_name(),
     # Format source information
     if (display == "sources" && value != "(not set)") {
       source_color <- switch(source,
-        ".Renviron" = "red",
+        ".Renviron" = "magenta",
         "local config" = "blue", 
         "session" = "yellow",
-        "not set" = "grey",
-        "white"  # default
+        "not set" = "gray",
+        "cyan"  # default
       )
-      colored_source <- paste0(" [", source, "]")
+      colored_source <- paste0(" [", .apply_color(source, source_color), "]")
       .icy_text(paste0(colored_var, " = ", colored_value, colored_source))
     } else {
       .icy_text(paste0(colored_var, " = ", colored_value))
@@ -175,41 +173,39 @@ show_config <- function(package = get_package_name(),
 #' Full display mode for show_config
 #' @keywords internal
 .show_config_full <- function(package, status_df, renviron_config, local_config, user) {
-  .icy_title(paste0("Detailed configuration for ", package, ":"))
-  
   # Show template configuration
   template_config <- tryCatch({
     get_config(package = package, origin = "template", user = user)
   }, error = function(e) list())
   
   if (length(template_config) > 0) {
-    .icy_text("Template Configuration:")
+    .icy_text(.apply_color("Template Configuration:", "green", "bold"))
     for (var in names(template_config)) {
       value <- template_config[[var]]
       colored_value <- .format_value_with_color(var, value, "(null)")
-      .icy_text(paste0("  ", var, " = ", colored_value))
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
     }
     .icy_text("")
   }
   
   # Show local configuration
   if (length(local_config) > 0) {
-    .icy_text("Local Configuration:")
+    .icy_text(.apply_color("Local Configuration:", "magenta", "bold"))
     for (var in names(local_config)) {
       value <- local_config[[var]]
       colored_value <- .format_value_with_color(var, value, "(null)")
-      .icy_text(paste0("  ", var, " = ", colored_value))
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
     }
     .icy_text("")
   }
   
   # Show .Renviron configuration
   if (length(renviron_config) > 0) {
-    .icy_text(".Renviron Configuration:")
+    .icy_text(.apply_color(".Renviron Configuration:", "red", "bold"))
     for (var in names(renviron_config)) {
       value <- renviron_config[[var]]
       colored_value <- .format_value_with_color(var, value)
-      .icy_text(paste0("  ", var, " = ", colored_value))
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
     }
     .icy_text("")
   }
@@ -226,17 +222,17 @@ show_config <- function(package = get_package_name(),
   }
   
   if (length(session_vars) > 0) {
-    .icy_text("Session Environment:")
+    .icy_text(.apply_color("Session Environment:", "yellow", "bold"))
     for (var in names(session_vars)) {
       value <- session_vars[[var]]
       colored_value <- .format_value_with_color(var, value)
-      .icy_text(paste0("  ", var, " = ", colored_value))
+      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
     }
     .icy_text("")
   }
   
   # Show final resolved values
-  .icy_text("Final Resolved Values (Priority: Session > .Renviron > Local > Template):")
+  .icy_text(.apply_color("Session Values (Priority: Session > .Renviron > Local > Template):", "blue", "bold"))
   for (i in seq_len(nrow(status_df))) {
     var <- status_df$variable[i]
     value <- status_df$value[i] 
@@ -246,15 +242,15 @@ show_config <- function(package = get_package_name(),
     colored_value <- .format_value_with_color(var, value)
     
     source_color <- switch(source,
-      ".Renviron" = "red",
+      ".Renviron" = "magenta",
       "local config" = "blue",
       "session" = "yellow", 
-      "not set" = "grey",
-      "white"
+      "not set" = "gray",
+      "cyan"
     )
     
-    .icy_text(paste0("  ", var, " = ", colored_value, 
-                    " [", source, "]"))
+    .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value, 
+                    " [", .apply_color(source, source_color), "]"))
   }
 }
 
@@ -263,11 +259,24 @@ show_config <- function(package = get_package_name(),
 #' @keywords internal
 .format_value_with_color <- function(var, value, null_replacement = "(not set)") {
   if (is.null(value)) {
-    return(null_replacement)
+    return(.apply_color(null_replacement, "grey"))
   }
   
   value_str <- as.character(value)
   
-  # Return the value as-is without color formatting
-  return(value_str)
+  if (value_str == null_replacement) {
+    return(.apply_color(value_str, "grey"))
+  } else if (grepl("_DIR$|_PATH$", var)) {
+    # File paths in green
+    return(.apply_color(value_str, "green"))
+  } else if (value_str %in% c("TRUE", "FALSE", "true", "false", "yes", "no")) {
+    # Boolean values in orange (256-color)
+    return(.apply_color(value_str, "orange"))
+  } else if (grepl("^[0-9]+$", value_str)) {
+    # Numeric values in magenta
+    return(.apply_color(value_str, "magenta"))
+  } else {
+    # Regular text values with quotes in brown
+    return(.apply_color(paste0("'", value_str, "'"), "brown"))
+  }
 }

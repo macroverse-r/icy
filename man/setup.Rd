@@ -10,6 +10,10 @@ setup(
   write = "local",
   skip_configured = FALSE,
   vars = NULL,
+  allow_skip = TRUE,
+  type = NULL,
+  note = NULL,
+  arg_only = FALSE,
   verbose = FALSE
 )
 }
@@ -26,7 +30,19 @@ Options: "local" (default, writes to local YAML config), "renviron" (writes to ~
 non-default values configured. Set to FALSE to reconfigure all variables.}
 
 \item{vars}{Character vector of variable names to configure. If NULL (default),
-configures all variables from template.}
+configures all variables from template. Also controls the order of configuration.}
+
+\item{allow_skip}{Logical scalar or vector. Controls whether users can skip individual variables.
+If scalar, applies to all variables. If vector, must match length of variables to configure.}
+
+\item{type}{Character scalar or vector. Specifies expected type for variables.
+If scalar, applies to all. If vector, must match length of variables. See \code{qconfig()} for valid types.}
+
+\item{note}{Character scalar or vector. Additional notes to display for each variable.
+If scalar, same note for all. If vector, must match length of variables.}
+
+\item{arg_only}{Logical scalar or vector. If TRUE, only uses provided options and ignores template options.
+If scalar, applies to all. If vector, must match length of variables.}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }
@@ -53,14 +69,26 @@ for interactive configuration using qconfig(). It provides:
 # Full package setup
 setup()
 
-# Setup specific variables only
-setup(vars = c("DUMMY_API_KEY", "DUMMY_VERBOSE"))
+# Setup specific variables in custom order
+setup(vars = c("DUMMY_API_KEY", "DUMMY_VERBOSE", "DUMMY_TIMEOUT"))
 
 # Reconfigure all variables including those already set
 setup(skip_configured = FALSE)
 
 # Write to .Renviron instead of local config
 setup(write = "renviron")
+
+# Don't allow skipping for critical variables
+setup(vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST", "DUMMY_VERBOSE"),
+      allow_skip = c(FALSE, FALSE, TRUE))
+
+# Add custom notes for specific variables
+setup(vars = c("DUMMY_API_KEY", "DUMMY_TIMEOUT"),
+      note = c("Contact admin@example.com for API key", "Default is 30 seconds"))
+
+# Force specific types
+setup(vars = c("DUMMY_PORT", "DUMMY_VERBOSE"),
+      type = c("integer", "logical"))
 }
 
 }

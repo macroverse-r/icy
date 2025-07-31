@@ -189,21 +189,6 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
 }
 
 
-#' Handle Skip Input
-#'
-#' Internal helper function to handle skip logic consistently.
-#'
-#' @param user_input User input string
-#' @param allow_skip Whether skipping is allowed
-#' @return NULL if skipped, FALSE if not skipped
-#' @keywords internal
-.handle_skip_input <- function(user_input, allow_skip) {
-  if (allow_skip && nchar(user_input) == 0) {
-    .icy_inform("Skipped configuration")
-    return(NULL)
-  }
-  return(FALSE)  # Not skipped
-}
 
 #' Perform Interactive Configuration
 #'
@@ -299,7 +284,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     }
     
     selected_value <- user_input
-    success_msg <- paste0("Set ", var_name, " = ", user_input)
+    success_msg <- .format_success_message(var_name, user_input)
     
   } else {
     # Options selection case
@@ -327,7 +312,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       
       if (!is.na(selection) && selection >= 1 && selection <= length(options)) {
         selected_value <- options[selection]
-        success_msg <- paste0("Selected ", selected_value, " for ", var_name)
+        success_msg <- .format_success_message(var_name, selected_value)
         break
       } else {
         .icy_alert("Invalid selection. Please try again.")
@@ -483,3 +468,30 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   )
 }
 
+#' Handle Skip Input
+#'
+#' Internal helper function to handle skip logic consistently.
+#'
+#' @param user_input User input string
+#' @param allow_skip Whether skipping is allowed
+#' @return NULL if skipped, FALSE if not skipped
+#' @keywords internal
+.handle_skip_input <- function(user_input, allow_skip) {
+  if (allow_skip && nchar(user_input) == 0) {
+    .icy_inform("Skipped configuration")
+    return(NULL)
+  }
+  return(FALSE)  # Not skipped
+}
+
+#' Format Success Message
+#'
+#' Internal helper function to format consistent success messages.
+#'
+#' @param var_name Variable name
+#' @param value Selected or entered value
+#' @return Formatted success message
+#' @keywords internal
+.format_success_message <- function(var_name, value) {
+  paste0("Set ", var_name, " to ", value)
+}

@@ -50,7 +50,11 @@ NULL
     cyan = 36,
     white = 37,
     grey = 90,
-    gray = 90
+    gray = 90,
+    # 256-color mode colors
+    orange = "38;5;208",  # True orange
+    yellow256 = "38;5;220",  # Better yellow
+    brown = "38;5;130"   # Brown for strings
   )
   
   # ANSI style codes
@@ -64,7 +68,14 @@ NULL
   
   # Apply color
   if (!is.null(color) && color %in% names(colors)) {
-    result <- paste0("\033[", colors[[color]], "m", result, "\033[39m")
+    color_code <- colors[[color]]
+    if (is.numeric(color_code)) {
+      # Standard 8/16 color mode
+      result <- paste0("\033[", color_code, "m", result, "\033[39m")
+    } else {
+      # 256-color mode
+      result <- paste0("\033[", color_code, "m", result, "\033[39m")
+    }
   }
   
   # Apply style
