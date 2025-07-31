@@ -137,6 +137,22 @@ NULL
 
 
 
+#' Informational message
+#'
+#' @description
+#' Informational message function that uses contextual formatting when available.
+#' Falls back to simple message with info symbol when contextual is not available.
+#'
+#' @param msg Informational message
+#' @param ... Additional arguments passed to underlying functions
+.icy_inform <- function(msg, ...) {
+  if (requireNamespace("contextual", quietly = TRUE)) {
+    contextual::cx_inform(msg, ...)
+  } else {
+    message(.apply_color("ℹ ", "blue"), msg)
+  }
+}
+
 #' Debug message
 #'
 #' @description

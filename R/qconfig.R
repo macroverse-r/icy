@@ -130,19 +130,9 @@
     .icy_stop("verbose must be TRUE or FALSE")
   }
   
-  # Normalize type parameter
+  # Normalize type parameter (boolean logic moved to main function)
   if (!is.null(type) && type %in% c("boolean", "bool")) {
     type <- "logical"
-  }
-  
-  # Apply automatic boolean behavior
-  if (!is.null(type) && type == "logical") {
-    # If user didn't provide options, set default TRUE/FALSE
-    if (is.null(options)) {
-      options <- c("TRUE", "FALSE")
-    }
-    # Force arg_only for boolean types to prevent template conflicts
-    arg_only <- TRUE
   }
   
   return(list(
@@ -160,54 +150,105 @@
   ))
 }
 
-#' Read Template Data for Variable
+#' Get Description for Variable from Template
 #'
-#' Internal helper function to read template data for a specific variable.
+#' Internal helper function to get shortened description for a variable from template.
+#' Returns only the first sentence to keep descriptions concise.
 #'
 #' @param var_name Variable name
 #' @param package Package name
-#' @return List with description, options, and type from template
+#' @return Character string with shortened description, or NULL if not found
 #' @keywords internal
-.read_template_data <- function(var_name, package) {
-  template_data <- list(description = NULL, options = NULL, type = NULL)
-  
+.get_description <- function(var_name, package) {
   tryCatch({
-    # Get template configuration
-    template_config <- get_config(package = package, origin = "template", user = "default")
+    descriptions_config <- get_config(package = package, origin = "template", user = "descriptions")
     
-    # Read descriptions section if available
-    descriptions_config <- tryCatch({
-      get_config(package = package, origin = "template", user = "descriptions")
-    }, error = function(e) NULL)
-    
-    # Read options section if available  
-    options_config <- tryCatch({
-      get_config(package = package, origin = "template", user = "options")
-    }, error = function(e) NULL)
-    
-    # Read types section if available
-    types_config <- tryCatch({
-      get_config(package = package, origin = "template", user = "types")
-    }, error = function(e) NULL)
-    
-    # Extract data for this variable
     if (!is.null(descriptions_config) && var_name %in% names(descriptions_config)) {
-      template_data$description <- descriptions_config[[var_name]]
+      full_description <- descriptions_config[[var_name]]
+      
+      # Split on ". " and take first sentence only
+      first_sentence <- strsplit(full_description, "\\. ", fixed = FALSE)[[1]][1]
+      
+      # Add period back if it was removed by splitting
+      if (!grepl("\\.$", first_sentence)) {
+        first_sentence <- paste0(first_sentence, ".")
+      }
+      
+      return(first_sentence)
     }
     
-    if (!is.null(options_config) && var_name %in% names(options_config)) {
-      template_data$options <- as.character(options_config[[var_name]])
-    }
+    return(NULL)
+  }, error = function(e) {
+    return(NULL)
+  })
+}
+
+#' Get Type for Variable from Template
+#'
+#' Internal helper function to get type for a variable from template.
+#' Handles boolean → logical normalization.
+#'
+#' @param var_name Variable name
+#' @param package Package name
+#' @return Character string with normalized type, or NULL if not found
+#' @keywords internal
+.get_type <- function(var_name, package) {
+  tryCatch({
+    types_config <- get_config(package = package, origin = "template", user = "types")
     
     if (!is.null(types_config) && var_name %in% names(types_config)) {
-      template_data$type <- types_config[[var_name]]
+      type <- types_config[[var_name]]
+      
+      # Normalize boolean types to logical
+      if (!is.null(type) && type %in% c("boolean", "bool")) {
+        type <- "logical"
+      }
+      
+      return(type)
     }
     
+    return(NULL)
   }, error = function(e) {
-    # Template data not available - return empty data
+    return(NULL)
   })
-  
-  return(template_data)
+}
+
+#' Get Options for Variable from Template
+#'
+#' Internal helper function to get options for a variable from template.
+#'
+#' @param var_name Variable name
+#' @param package Package name
+#' @return Character vector with options, or NULL if not found
+#' @keywords internal
+.get_options <- function(var_name, package) {
+  tryCatch({
+    options_config <- get_config(package = package, origin = "template", user = "options")
+    
+    if (!is.null(options_config) && var_name %in% names(options_config)) {
+      return(as.character(options_config[[var_name]]))
+    }
+    
+    return(NULL)
+  }, error = function(e) {
+    return(NULL)
+  })
+}
+
+#' Handle Skip Input
+#'
+#' Internal helper function to handle skip logic consistently.
+#'
+#' @param user_input User input string
+#' @param allow_skip Whether skipping is allowed
+#' @return NULL if skipped, FALSE if not skipped
+#' @keywords internal
+.handle_skip_input <- function(user_input, allow_skip) {
+  if (allow_skip && nchar(user_input) == 0) {
+    .icy_inform("Skipped configuration")
+    return(NULL)
+  }
+  return(FALSE)  # Not skipped
 }
 
 #' Perform Interactive Configuration
@@ -235,8 +276,8 @@
   
   # Display description if available
   if (!is.null(description) && nchar(description) > 0) {
-    wrapped_description <- .wrap_text(description)
-    .icy_title("Description")
+    wrapped_description <- description
+    .icy_title("Description", auto_number = FALSE)
     .icy_text(wrapped_description)
   }
   
@@ -260,91 +301,79 @@
   
   # Display note if provided
   if (!is.null(note) && nchar(note) > 0) {
-    .icy_text(.wrap_text(paste0("Note: ", note)))
+    .icy_text(paste0("Note: ", note))
     .icy_text("")
   }
   
-  # Handle case with no options (manual text input)
+  # Title
+  .icy_title("Selection", auto_number = FALSE)
+
+  # Get user input based on whether options are available
   if (is.null(options) || length(options) == 0) {
+    # Manual text input case
     if (allow_skip) {
-      prompt_text <- "Enter value (or press Enter to skip):"
+      prompt_reminder <- "(or press Enter to keep current config)"
     } else {
-      prompt_text <- "Enter value:"
+      prompt_reminder <- ""
     }
+    prompt_text <- paste0("Enter value: ", .apply_color(prompt_reminder, color = "gray"))
     
-    # Use proper readline with prompt
-    .icy_title(prompt_text)
+    .icy_text(prompt_text)
     user_input <- readline()
     
-    if (allow_skip && nchar(user_input) == 0) {
-      .icy_warn("Skipped configuration")
-      return(NULL)  # User skipped
-    }
+    # Handle skip case for manual input
+    if (is.null(.handle_skip_input(user_input, allow_skip))) return(NULL)
     
+    # Validate input for manual entry
     if (!allow_skip && nchar(user_input) == 0) {
       .icy_stop("A value is required")
     }
     
-    # Write the configuration
-    success <- .write_config_value(var_name, user_input, write, package, user, verbose, type)
-    if (!success) {
-      .icy_stop("Failed to write configuration")
-    }
+    selected_value <- user_input
+    success_msg <- paste0("Set ", var_name, " = ", user_input)
     
-    .icy_success(paste0("Set ", var_name, " = ", user_input))
-    return(user_input)
-  }
-  
-  # Handle case with options
-  .icy_title("Selection")
-  
-  # Create numbered bullets for options
-  .icy_text("Select an option:")
-  # bullet_items <- setNames(options, seq_along(options))
-  # if (allow_skip) {
-  #   bullet_items <- c(setNames("Skip (press Enter)", "0"), bullet_items)
-  # }
-  .icy_bullets(options, bullet = "1:")
-  
-  .icy_text("")
-  
-  # Get user selection
-  repeat {
-    if (allow_skip) {
-      prompt_reminder <- paste0("(1-", length(options), " or 0/Enter to keep current config)")
-    } else {
-      prompt_reminder <- paste0("(1-", length(options), ")")
-    }
-    prompt_text <- paste0("Enter your choice: ", .apply_color(prompt_reminder, color = "gray"))
-
+  } else {
+    # Options selection case
+    .icy_text("Select an option:")
+    .icy_bullets(options, bullet = "1:")
+    .icy_text("")
     
-    .icy_text(prompt_text, indentation = FALSE)
-    user_input <- readline()
-    
-    # Handle skip case
-    if (allow_skip && (nchar(user_input) == 0 || user_input == "0")) {
-      .icy_alert("Skipped configuration")
-      return(NULL)  # User skipped
-    }
-    
-    # Try to parse selection
-    selection <- suppressWarnings(as.integer(user_input))
-    
-    if (!is.na(selection) && selection >= 1 && selection <= length(options)) {
-      selected_value <- options[selection]
-      
-      # Write the configuration
-      success <- .write_config_value(var_name, selected_value, write, package, user, verbose, type)
-      if (!success) {
-        .icy_stop("Failed to write configuration")
+    # Get user selection with retry loop
+    repeat {
+      if (allow_skip) {
+        prompt_reminder <- paste0("(1-", length(options), " or Enter to keep current config)")
+      } else {
+        prompt_reminder <- paste0("(1-", length(options), ")")
       }
+      prompt_text <- paste0("Enter your choice: ", .apply_color(prompt_reminder, color = "gray"))
       
-      .icy_success(paste0("Selected ", selected_value, " for ", var_name))
-      return(selected_value)
-    } else {
-      .icy_warn("Invalid selection. Please try again.")
+      .icy_text(prompt_text, indentation = FALSE)
+      user_input <- readline()
+      
+      # Handle skip case inside the loop
+      if (is.null(.handle_skip_input(user_input, allow_skip))) return(NULL)
+      
+      # Try to parse selection
+      selection <- suppressWarnings(as.integer(user_input))
+      
+      if (!is.na(selection) && selection >= 1 && selection <= length(options)) {
+        selected_value <- options[selection]
+        success_msg <- paste0("Selected ", selected_value, " for ", var_name)
+        break
+      } else {
+        .icy_alert("Invalid selection. Please try again.")
+      }
     }
   }
+  
+  # Common write and success handling for both paths
+  success <- .write_config_value(var_name, selected_value, write, package, user, verbose, type)
+  if (!success) {
+    .icy_stop("Failed to write configuration")
+  }
+  
+  .icy_success(success_msg)
+  return(selected_value)
 }
 
 #' Convert Return Value to Proper Type
@@ -398,7 +427,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
                     note = NULL, arg_only = FALSE, write = "local", type = NULL, verbose = FALSE) {
   
   # Display section header
-  .icy_title(var_name)
+  # .icy_title(var_name)
 
   # .icy_title("test second title same level")
   # Validate and normalize parameters
@@ -407,23 +436,33 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     note, arg_only, write, type, verbose
   )
   
-  # Read template configuration 
-  template_data <- .read_template_data(params$var_name, params$package)
+  # Read template data using modular functions 
+  template_description <- .get_description(params$var_name, params$package)
+  template_type <- .get_type(params$var_name, params$package)  # Already normalized boolean→logical
+  template_options <- .get_options(params$var_name, params$package)
   
   # Determine final values (argument > template > none)
-  final_description <- if (!is.null(params$description)) params$description else template_data$description
-  final_type <- if (!is.null(params$type)) params$type else template_data$type
+  final_description <- if (!is.null(params$description)) params$description else template_description
+  final_type <- if (!is.null(params$type)) params$type else template_type
   
-  # Determine final options (merge or arg_only)
-  final_options <- NULL
-  if (!is.null(params$options)) {
-    final_options <- as.character(params$options)
-    if (!params$arg_only && !is.null(template_data$options)) {
-      # Merge: argument options first, then template options (remove duplicates)
-      final_options <- unique(c(final_options, template_data$options))
+  # Apply automatic boolean behavior AFTER reading template type
+  if (!is.null(final_type) && final_type == "logical" && is.null(params$options)) {
+    # Automatically set TRUE/FALSE options for boolean types
+    final_options <- c("TRUE", "FALSE")
+    arg_only <- TRUE  # Force arg_only for boolean types to prevent template conflicts
+  } else {
+    # Determine final options (merge or arg_only)
+    final_options <- NULL
+    if (!is.null(params$options)) {
+      final_options <- as.character(params$options)
+      if (!params$arg_only && !is.null(template_options)) {
+        # Merge: argument options first, then template options (remove duplicates)
+        final_options <- unique(c(final_options, template_options))
+      }
+    } else if (!is.null(template_options)) {
+      final_options <- template_options
     }
-  } else if (!is.null(template_data$options)) {
-    final_options <- template_data$options
+    arg_only <- params$arg_only
   }
   
   # Perform interactive configuration (pass final_type for display)
@@ -433,57 +472,6 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   
   # Convert to proper type and return
   return(.convert_return_value(raw_result, final_type))
-}
-
-#' Wrap Text to Specified Width
-#'
-#' Internal helper function to wrap text to a specified width, respecting word boundaries.
-#'
-#' @param text Text to wrap
-#' @param width Maximum width (defaults to 120, but adjusts to terminal width if smaller)
-#'
-#' @return Wrapped text string
-#' @keywords internal
-.wrap_text <- function(text, width = 120) {
-  # Get terminal width if available, otherwise use default
-  terminal_width <- tryCatch({
-    if (interactive() && requireNamespace("cli", quietly = TRUE)) {
-      cli::console_width()
-    } else {
-      getOption("width", 80)
-    }
-  }, error = function(e) 80)
-  
-  # Use smaller of requested width or terminal width (with some margin)
-  effective_width <- min(width, terminal_width - 4)
-  
-  # Simple word wrapping
-  if (nchar(text) <= effective_width) {
-    return(text)
-  }
-  
-  words <- strsplit(text, " ")[[1]]
-  lines <- character(0)
-  current_line <- ""
-  
-  for (word in words) {
-    test_line <- if (current_line == "") word else paste(current_line, word)
-    
-    if (nchar(test_line) <= effective_width) {
-      current_line <- test_line
-    } else {
-      if (current_line != "") {
-        lines <- c(lines, current_line)
-      }
-      current_line <- word
-    }
-  }
-  
-  if (current_line != "") {
-    lines <- c(lines, current_line)
-  }
-  
-  return(paste(lines, collapse = "\n"))
 }
 
 #' Write Configuration Value
@@ -548,6 +536,11 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
 #' @return Converted value
 #' @keywords internal
 .convert_by_type <- function(value, type) {
+  # Handle NULL type - return value as-is
+  if (is.null(type)) {
+    return(value)
+  }
+  
   # Convert based on specified type
   switch(type,
     "character" = as.character(value),
