@@ -16,6 +16,10 @@
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param inherit Character string specifying a user section to inherit values from.
+#'   If NULL (default), no inheritance is applied. When specified, values from the
+#'   inherit section are used as defaults, which can be overridden by the main user section.
+#'   Only works with "template" and "local" origins.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Named list of environment variable configurations.
@@ -30,6 +34,10 @@
 #'
 #' # Get configuration with priority resolution
 #' config <- get_config(package = "mypackage", origin = "priority")
+#'
+#' # Get production config with defaults inherited from default section
+#' prod_config <- get_config(package = "mypackage", user = "production", 
+#'                          inherit = "default", origin = "template")
 #' }
 #'
 #' @export
@@ -38,6 +46,7 @@ get_config <- function(package = get_package_name(),
                        user = "default",
                        yaml_file = NULL,
                        case_format = "snake_case",
+                       inherit = NULL,
                        verbose = FALSE) {
 
   # Validate origin parameter
@@ -80,6 +89,44 @@ get_config <- function(package = get_package_name(),
       case_format = case_format,
       verbose = verbose
     )
+  }
+
+  # Apply inheritance if requested
+  if (!is.null(inherit) && inherit != user && origin %in% c("template", "local")) {
+    if (verbose) {
+      .icy_text(paste0("Applying inheritance from section '", inherit, "' to '", user, "'"))
+    }
+    
+    # Get the base config to inherit from
+    base_config <- if (origin == "template") {
+      .get_config_template(
+        package = package,
+        user = inherit,
+        yaml_file = yaml_file,
+        case_format = case_format,
+        verbose = FALSE
+      )
+    } else {
+      .get_config_local(
+        package = package,
+        user = inherit,
+        yaml_file = yaml_file,
+        case_format = case_format,
+        verbose = FALSE
+      )
+    }
+    
+    # Merge configs: current config values override base config
+    # Only add keys from base that don't exist in current config
+    # We need to preserve NULL values, so we'll build a new list
+    merged_config <- config
+    for (key in names(base_config)) {
+      if (!(key %in% names(config))) {
+        # Use single bracket assignment to preserve NULL values
+        merged_config[key] <- base_config[key]
+      }
+    }
+    config <- merged_config
   }
 
   return(config)

@@ -10,6 +10,7 @@ get_config(
   user = "default",
   yaml_file = NULL,
   case_format = "snake_case",
+  inherit = NULL,
   verbose = FALSE
 )
 }
@@ -33,6 +34,11 @@ the function will search for the appropriate file based on the origin.}
 searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
+\item{inherit}{Character string specifying a user section to inherit values from.
+If NULL (default), no inheritance is applied. When specified, values from the
+inherit section are used as defaults, which can be overridden by the main user section.
+Only works with "template" and "local" origins.}
+
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }
 \value{
@@ -53,6 +59,10 @@ local_config <- get_config(package = "mypackage", origin = "local")
 
 # Get configuration with priority resolution
 config <- get_config(package = "mypackage", origin = "priority")
+
+# Get production config with defaults inherited from default section
+prod_config <- get_config(package = "mypackage", user = "production", 
+                         inherit = "default", origin = "template")
 }
 
 }
