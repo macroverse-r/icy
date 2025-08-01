@@ -63,6 +63,7 @@ get_package_name <- function(verbose = FALSE,
   }
   
   current_pkg <- utils::packageName()
+  pkg_name_from_desc <- .get_package_name_from_description()
   found_current_pkg <- TRUE  # We know level 0 is always current_pkg
   
   if (verbose) {
@@ -91,15 +92,25 @@ get_package_name <- function(verbose = FALSE,
       } else {
         # NULL or empty - we've reached the end of the call stack
         if (verbose) {
-          .icy_warn(paste0("Level ", i, ": NULL or empty (end of call stack)"))
+          .icy_alert(paste0("Level ", i, ": NULL or empty (end of call stack)"))
         }
-        return(current_pkg)  # Stop here - no point checking further levels
+        # Stop here - no point checking further levels
+        if (is.null(pkg_name_from_desc)) {
+          return(current_pkg)
+        } else {
+          return(pkg_name_from_desc)
+        }
       }
     }, error = function(e) {
       if (verbose) {
         .icy_warn(paste0("Level ", i, ": Error - ", e$message, " (end of call stack)"))
       }
-      return(current_pkg)  # Stop on error too - we've gone too far
+      # Stop on error too - we've gone too far
+      if (is.null(pkg_name_from_desc)) {
+        return(current_pkg)
+      } else {
+        return(pkg_name_from_desc)
+      }
     })
   }
   

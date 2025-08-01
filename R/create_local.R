@@ -38,7 +38,7 @@
 #' }
 #'
 #' @export
-create_local <- function(package = get_package_name(),
+create_local <- function(package = get_package_name(verbose = FALSE),
                          fn_local = NULL,
                          fn_tmpl = NULL,
                          tmpl_section = "default",

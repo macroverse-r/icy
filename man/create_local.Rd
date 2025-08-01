@@ -5,7 +5,7 @@
 \title{Create Local Configuration File}
 \usage{
 create_local(
-  package = get_package_name(),
+  package = get_package_name(verbose = FALSE),
   fn_local = NULL,
   fn_tmpl = NULL,
   tmpl_section = "default",
