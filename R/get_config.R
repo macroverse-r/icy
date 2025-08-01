@@ -105,14 +105,23 @@ get_config <- function(package = get_package_name(),
       return(list()) # Return empty list if no local config exists
     }
   } else {
-    # If yaml_file is provided, check if it exists
+    # If yaml_file is provided, use pattern matching
     if (!file.exists(yaml_file)) {
-      if (!grepl("[/\\\\]", yaml_file)) {
-        # Just a filename, try to find it in package
-        yaml_file <- file.path(get_package_path(package = package), yaml_file)
-      }
-      if (!file.exists(yaml_file)) {
-        .icy_stop(paste0("YAML file not found: ", yaml_file))
+      # Try pattern matching
+      matching_files <- .find_matching_pattern(
+        package = package,
+        fn_pattern = yaml_file,
+        user_dir = TRUE,
+        verbose = verbose
+      )
+      
+      if (length(matching_files) == 0) {
+        .icy_stop(paste0("Local YAML file not found: ", yaml_file))
+      } else if (length(matching_files) > 1) {
+        .icy_warn(paste0("Multiple files found matching '", yaml_file, "'. Using: ", matching_files[1]))
+        yaml_file <- matching_files[1]
+      } else {
+        yaml_file <- matching_files[1]
       }
     }
   }
@@ -167,14 +176,23 @@ get_config <- function(package = get_package_name(),
       .icy_stop(paste0("No template configuration file found for package ", package))
     }
   } else {
-    # If yaml_file is provided, check if it exists
+    # If yaml_file is provided, use pattern matching
     if (!file.exists(yaml_file)) {
-      if (!grepl("[/\\\\]", yaml_file)) {
-        # Just a filename, try to find it in package
-        yaml_file <- file.path(get_package_path(package = package, user_dir = FALSE), yaml_file)
-      }
-      if (!file.exists(yaml_file)) {
+      # Try pattern matching
+      matching_files <- .find_matching_pattern(
+        package = package,
+        fn_pattern = yaml_file,
+        user_dir = FALSE,  # Templates are in package installation dir
+        verbose = verbose
+      )
+      
+      if (length(matching_files) == 0) {
         .icy_stop(paste0("Template YAML file not found: ", yaml_file))
+      } else if (length(matching_files) > 1) {
+        .icy_warn(paste0("Multiple files found matching '", yaml_file, "'. Using: ", matching_files[1]))
+        yaml_file <- matching_files[1]
+      } else {
+        yaml_file <- matching_files[1]
       }
     }
   }
