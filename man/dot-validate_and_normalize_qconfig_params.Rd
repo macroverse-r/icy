@@ -17,6 +17,7 @@
   type,
   allow_custom,
   allow_create_dir,
+  resolve_paths,
   verbose
 )
 }
@@ -44,6 +45,8 @@
 \item{allow_custom}{Allow custom input flag}
 
 \item{allow_create_dir}{Allow directory creation flag}
+
+\item{resolve_paths}{Path resolution mode}
 
 \item{verbose}{Verbose flag}
 }

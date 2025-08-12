@@ -16,7 +16,8 @@
   verbose,
   type,
   allow_custom,
-  allow_create_dir
+  allow_create_dir,
+  resolve_paths
 )
 }
 \arguments{
@@ -43,6 +44,8 @@
 \item{allow_custom}{Whether to allow custom input when options exist}
 
 \item{allow_create_dir}{Whether to allow directory creation for path types}
+
+\item{resolve_paths}{Path resolution mode ("ask", "static", "dynamic")}
 }
 \value{
 Raw result value or NULL if skipped

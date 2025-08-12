@@ -16,6 +16,7 @@
 #' @param type Variable type
 #' @param allow_custom Whether to allow custom input when options exist
 #' @param allow_create_dir Whether to allow directory creation for path types
+#' @param resolve_paths Path resolution mode ("ask", "static", "dynamic")
 #' @return Raw result value or NULL if skipped
 #' @keywords internal
 .do_interactive_config <- function(var_name,
@@ -23,7 +24,7 @@
                                    options, allow_skip,
                                    note, write, package,
                                    user, verbose,
-                                   type, allow_custom, allow_create_dir) {
+                                   type, allow_custom, allow_create_dir, resolve_paths) {
   
   # Display description if available
   if (!is.null(description) && nchar(description) > 0) {
@@ -155,18 +156,54 @@
     }
     
     .icy_bullets(formatted_options, bullet = "1:")
+    
+    # Add helpful tip for path types with suffix support
+    if (type == "path" && resolve_paths == "ask") {
+      # Check if any options contain keywords
+      keyword_indices <- which(sapply(options, .is_special_keyword))
+      if (length(keyword_indices) > 0) {
+        # Use the first keyword option number for examples
+        example_num <- keyword_indices[1]
+        example_keyword <- options[example_num]
+        example_resolved <- .resolve_special_path(example_keyword, package)
+        
+        # Make resolved path absolute for display
+        example_absolute <- tryCatch({
+          normalizePath(example_resolved, mustWork = FALSE)
+        }, error = function(e) example_resolved)
+        
+        .icy_text("")
+        .icy_text(.apply_color("Tip: Add 's' for static or 'd' for dynamic resolution:", "gray"))
+        .icy_text(.apply_color(paste0("  - '", example_num, "s' = store ", example_absolute, " (this exact path)"), "gray"))
+        .icy_text(.apply_color(paste0("  - '", example_num, "d' = store '", example_keyword, "' (resolve at runtime, adjusts to system)"), "gray"))
+      }
+    }
     .icy_text("")
     
     # Get user selection with retry loop
     repeat {
-      if (allow_custom && allow_skip) {
-        prompt_reminder <- paste0("(1-", length(options), ", 'c' for custom, or Enter to keep current config)")
-      } else if (allow_custom && !allow_skip) {
-        prompt_reminder <- paste0("(1-", length(options), " or 'c' for custom)")
-      } else if (!allow_custom && allow_skip) {
-        prompt_reminder <- paste0("(1-", length(options), " or Enter to keep current config)")
+      # Clean prompt text without redundant suffix explanations
+      if (type == "path" && resolve_paths == "ask") {
+        if (allow_custom && allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), ", 'c' for custom, or Enter to keep current config)")
+        } else if (allow_custom && !allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), " or 'c' for custom)")
+        } else if (!allow_custom && allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), " or Enter to keep current config)")
+        } else {
+          prompt_reminder <- paste0("(1-", length(options), ")")
+        }
       } else {
-        prompt_reminder <- paste0("(1-", length(options), ")")
+        # Standard prompt text for non-path types or when resolution mode is fixed
+        if (allow_custom && allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), ", 'c' for custom, or Enter to keep current config)")
+        } else if (allow_custom && !allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), " or 'c' for custom)")
+        } else if (!allow_custom && allow_skip) {
+          prompt_reminder <- paste0("(1-", length(options), " or Enter to keep current config)")
+        } else {
+          prompt_reminder <- paste0("(1-", length(options), ")")
+        }
       }
       prompt_text <- paste0("Enter your choice: ", .apply_color(prompt_reminder, color = "gray"))
       
@@ -226,8 +263,10 @@
         break
       }
       
-      # Try to parse selection
-      selection <- suppressWarnings(as.integer(user_input))
+      # Parse selection with potential suffix
+      parsed_input <- .parse_selection_input(user_input)
+      selection <- parsed_input$selection
+      selected_mode <- parsed_input$mode
       
       if (!is.na(selection) && selection >= 1 && selection <= length(options)) {
         selected_value <- options[selection]
@@ -250,30 +289,119 @@
           return(selected_value)
         }
         
-        # For path types, resolve special paths and validate selected option
+        # For path types, handle resolution mode and validate
         if (!is.null(type) && type == "path") {
-          # First resolve any special keywords or template variables
-          resolved_path <- .resolve_special_path(selected_value, package)
-          
-          path_result <- .process_path_input(resolved_path, allow_create_dir = allow_create_dir)
-          if (!path_result$success) {
-            # Show error and continue the loop to let user try again
-            if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
-              .icy_alert(path_result$message)
+          # Determine final resolution mode
+          final_resolution_mode <- if (selected_mode != "ask") {
+            selected_mode  # User specified with suffix (s/d)
+          } else if (resolve_paths != "ask") {
+            resolve_paths  # Global setting (static/dynamic)
+          } else if (.is_special_keyword(selected_value)) {
+            # Ask user for resolution mode only for keyword options
+            .icy_text("")
+            resolved_path <- .resolve_special_path(selected_value, package)
+            .icy_success(paste0("You selected: ", selected_value, " (", resolved_path, ")"))
+            .icy_text("How should this be stored?")
+            
+            # Format resolution options and use icy_bullets with no additional bullet formatting
+            resolution_options <- c(
+              "s" = paste0("Store resolved path: ", resolved_path, " (static - always this exact location)"),
+              "d" = paste0("Store keyword: '", selected_value, "' (dynamic - adjusts to current system)")
+            )
+            
+            # Use icy_bullets with no bullet symbols, just the names
+            .icy_bullets(resolution_options, bullet = "none")
+            .icy_text("")
+            
+            repeat {
+              .icy_text("Enter your choice: ('s'=static, 'd'=dynamic, or 'b' to go back)", indentation = FALSE)
+              resolution_choice <- trimws(tolower(readline()))
+              
+              if (resolution_choice == "s") {
+                break_mode <- "static"
+                break
+              } else if (resolution_choice == "d") {
+                break_mode <- "dynamic"
+                break
+              } else if (resolution_choice == "b") {
+                # Go back to option selection
+                .icy_text("")
+                break_mode <- "back"
+                break
+              } else {
+                .icy_alert("Invalid selection. Please enter 's', 'd', or 'b' to go back.")
+              }
             }
-            next  # Continue the option selection loop
+            break_mode
+          } else {
+            "static"  # Non-keyword paths are always static
           }
-          selected_value <- path_result$path
+          
+          # Check if user chose to go back
+          if (exists("break_mode") && break_mode == "back") {
+            next  # Continue the outer option selection loop
+          }
+          
+          # Process based on resolution mode
+          if (final_resolution_mode == "dynamic" && .is_special_keyword(selected_value)) {
+            # Store the keyword as-is for runtime resolution
+            # Still validate it can be resolved currently
+            test_resolved <- .resolve_special_path(selected_value, package)
+            test_result <- .process_path_input(test_resolved, allow_create_dir = allow_create_dir)
+            if (!test_result$success) {
+              if (!is.null(test_result$message) && nchar(test_result$message) > 0) {
+                .icy_alert(paste0("Keyword validation failed: ", test_result$message))
+              }
+              next
+            }
+            # Keep original keyword for dynamic resolution
+            final_value <- selected_value
+          } else {
+            # Static resolution - resolve and validate now
+            resolved_path <- .resolve_special_path(selected_value, package)
+            path_result <- .process_path_input(resolved_path, allow_create_dir = allow_create_dir)
+            if (!path_result$success) {
+              if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
+                .icy_alert(path_result$message)
+              }
+              next
+            }
+            final_value <- path_result$path
+          }
+          
+          selected_value <- final_value
         }
         
-        success_msg <- .format_success_message(var_name, selected_value, write)
+        # Enhanced success message for path resolution modes
+        if (!is.null(type) && type == "path" && exists("final_resolution_mode")) {
+          if (final_resolution_mode == "dynamic" && .is_special_keyword(selected_value)) {
+            success_msg <- paste0("Set ", var_name, " to ", selected_value, " (dynamic) in ", 
+                                 switch(write, "local" = "local config", "renviron" = ".Renviron", "session" = "session"))
+          } else {
+            success_msg <- paste0("Set ", var_name, " to ", selected_value, " (static) in ", 
+                                 switch(write, "local" = "local config", "renviron" = ".Renviron", "session" = "session"))
+          }
+        } else {
+          success_msg <- .format_success_message(var_name, selected_value, write)
+        }
         break
       } else {
-        if (allow_custom) {
-          .icy_alert(paste0("Invalid selection. Please enter a number (1-", 
-                           length(options), ") or 'c' for custom."))
+        # Enhanced error messages with suffix guidance
+        if (type == "path" && resolve_paths == "ask") {
+          if (allow_custom) {
+            .icy_alert(paste0("Invalid selection. Please enter a number (1-", 
+                             length(options), "), 'c' for custom, or add 's'/'d' suffix (e.g., '3s', '5d')."))
+          } else {
+            .icy_alert(paste0("Invalid selection. Please enter a number (1-", 
+                             length(options), ") or add 's'/'d' suffix (e.g., '3s', '5d')."))
+          }
         } else {
-          .icy_alert("Invalid selection. Please try again.")
+          if (allow_custom) {
+            .icy_alert(paste0("Invalid selection. Please enter a number (1-", 
+                             length(options), ") or 'c' for custom."))
+          } else {
+            .icy_alert("Invalid selection. Please try again.")
+          }
         }
       }
     }

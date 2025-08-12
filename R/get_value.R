@@ -43,5 +43,21 @@ get_value <- function(name,
     ))
   }
   
-  return(config[[name]])
+  raw_value <- config[[name]]
+  
+  # Handle dynamic keyword resolution for path types
+  # If the value is a special keyword, resolve it at runtime
+  if (is.character(raw_value) && length(raw_value) == 1 && .is_special_keyword(raw_value)) {
+    tryCatch({
+      resolved_value <- .resolve_special_path(raw_value, package)
+      # Clean the resolved path
+      clean_path <- clean_dir_path(resolved_value, check_exists = FALSE, create_if_missing = FALSE)
+      return(clean_path)
+    }, error = function(e) {
+      .icy_warn(paste0("Could not resolve dynamic keyword '", raw_value, "': ", e$message))
+      return(raw_value)  # Return original value if resolution fails
+    })
+  }
+  
+  return(raw_value)
 }

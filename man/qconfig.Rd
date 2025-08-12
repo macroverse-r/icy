@@ -17,6 +17,7 @@ qconfig(
   type = NULL,
   allow_custom = NULL,
   allow_create_dir = TRUE,
+  resolve_paths = "ask",
   verbose = FALSE
 )
 }
@@ -58,6 +59,11 @@ When TRUE, users can enter 'c' to provide custom input alongside predefined opti
 \item{allow_create_dir}{Logical. Whether to allow interactive directory creation for path types.
 Defaults to TRUE. When TRUE and type is "path", users are prompted to create non-existent directories.
 When FALSE, non-existent paths result in retry prompts. Only affects "path" types.}
+
+\item{resolve_paths}{Character string specifying how path keywords should be resolved.
+Options: "ask" (default, prompt user for static vs dynamic), "static" (resolve immediately),
+"dynamic" (store keywords for runtime resolution). Users can also use suffix notation:
+"8s" for static, "8d" for dynamic, "8" to ask (when resolve_paths="ask").}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }

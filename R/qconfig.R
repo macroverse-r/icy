@@ -32,6 +32,10 @@
 #' @param allow_create_dir Logical. Whether to allow interactive directory creation for path types.
 #'   Defaults to TRUE. When TRUE and type is "path", users are prompted to create non-existent directories.
 #'   When FALSE, non-existent paths result in retry prompts. Only affects "path" types.
+#' @param resolve_paths Character string specifying how path keywords should be resolved.
+#'   Options: "ask" (default, prompt user for static vs dynamic), "static" (resolve immediately),
+#'   "dynamic" (store keywords for runtime resolution). Users can also use suffix notation:
+#'   "8s" for static, "8d" for dynamic, "8" to ask (when resolve_paths="ask").
 #' @param verbose Logical. If TRUE, displays confirmation messages. Defaults to FALSE.
 #'
 #' @return The selected option value, or NULL if allow_skip = TRUE and user skips.
@@ -103,7 +107,7 @@
 qconfig <- function(var_name, package = get_package_name(), user = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
                     note = NULL, arg_only = FALSE, write = "local", type = NULL, 
-                    allow_custom = NULL, allow_create_dir = TRUE, verbose = FALSE) {
+                    allow_custom = NULL, allow_create_dir = TRUE, resolve_paths = "ask", verbose = FALSE) {
   
   # Display section header
   # .icy_title(var_name)
@@ -112,7 +116,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Validate and normalize parameters
   params <- .validate_and_normalize_qconfig_params(
     var_name, package, user, description, options, allow_skip, 
-    note, arg_only, write, type, allow_custom, allow_create_dir, verbose
+    note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, verbose
   )
   
   # Read template data using modular functions 
@@ -153,7 +157,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
                                        params$allow_skip, final_note, params$write, 
                                        params$package, params$user, params$verbose, final_type, 
-                                       final_allow_custom, params$allow_create_dir)
+                                       final_allow_custom, params$allow_create_dir, params$resolve_paths)
   
   # Convert to proper type and return
   return(.convert_return_value(raw_result, final_type))

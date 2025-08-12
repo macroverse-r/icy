@@ -64,10 +64,11 @@
 #' @param type Variable type
 #' @param allow_custom Allow custom input flag
 #' @param allow_create_dir Allow directory creation flag
+#' @param resolve_paths Path resolution mode
 #' @param verbose Verbose flag
 #' @return List of validated and normalized parameters
 #' @keywords internal
-.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, verbose) {
+.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, verbose) {
   # Input validation
   if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
     .icy_stop("var_name must be a non-empty character string")
@@ -117,6 +118,10 @@
     .icy_stop("allow_create_dir must be TRUE or FALSE")
   }
   
+  if (!is.character(resolve_paths) || length(resolve_paths) != 1 || !resolve_paths %in% c("ask", "static", "dynamic")) {
+    .icy_stop("resolve_paths must be one of: 'ask', 'static', 'dynamic'")
+  }
+  
   if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
     .icy_stop("verbose must be TRUE or FALSE")
   }
@@ -142,6 +147,7 @@
     type = type,
     allow_custom = allow_custom,
     allow_create_dir = allow_create_dir,
+    resolve_paths = resolve_paths,
     verbose = verbose
   ))
 }
@@ -400,6 +406,56 @@
   
   # Path exists, return success
   return(list(path = cleaned_path, success = TRUE, message = NULL))
+}
+
+#' Check if Value Contains Special Path Keywords
+#'
+#' Internal helper function to detect if a value contains special path keywords
+#' that can be resolved dynamically at runtime.
+#'
+#' @param value Character string to check for keywords
+#' @return Logical indicating whether the value contains special keywords
+#' @keywords internal
+.is_special_keyword <- function(value) {
+  if (!is.character(value) || length(value) != 1) {
+    return(FALSE)
+  }
+  
+  # Direct keywords
+  direct_keywords <- c("home", "cache", "config", "data", "tempdir", "getwd", ".", "..")
+  if (value %in% direct_keywords) {
+    return(TRUE)
+  }
+  
+  # Path combinations with keywords (e.g., "home|Documents", "cache/logs")
+  if (grepl("^(home|cache|config|data|tempdir|getwd|\\.|\\.\\.)[|/\\\\]", value)) {
+    return(TRUE)
+  }
+  
+  return(FALSE)
+}
+
+#' Parse Selection Input with Resolution Mode Suffixes
+#'
+#' Internal helper function to parse user input that may contain resolution
+#' mode suffixes (s for static, d for dynamic).
+#'
+#' @param input Character string with user input (e.g., "8", "7s", "3d")
+#' @return List with selection number and resolution mode
+#' @keywords internal
+.parse_selection_input <- function(input) {
+  input <- trimws(input)
+  
+  # Check for suffix patterns (number followed by s or d)
+  if (grepl("^[0-9]+[sd]$", input)) {
+    number <- as.integer(gsub("[sd]$", "", input))
+    mode <- if (endsWith(input, "s")) "static" else "dynamic"
+    return(list(selection = number, mode = mode))
+  }
+  
+  # Regular selection number - will ask if needed
+  number <- suppressWarnings(as.integer(input))
+  return(list(selection = number, mode = "ask"))
 }
 
 #' Determine Allow Custom Setting
