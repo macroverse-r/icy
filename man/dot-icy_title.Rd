@@ -4,7 +4,7 @@
 \alias{.icy_title}
 \title{Title heading}
 \usage{
-.icy_title(msg, ...)
+.icy_title(msg, level_adjust = 0, ...)
 }
 \arguments{
 \item{msg}{Title text}

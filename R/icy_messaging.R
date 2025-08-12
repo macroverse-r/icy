@@ -125,12 +125,12 @@ NULL
 #'
 #' @param msg Title text
 #' @param ... Additional arguments passed to underlying functions
-.icy_title <- function(msg, ...) {
+.icy_title <- function(msg, level_adjust = 0, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
     # Use level_adjust = -1 to compensate for the call stack perspective difference
     # between .icy_title() and cx_title(). This ensures .icy_title() behaves 
     # exactly like cx_title() when called directly from the same context.
-    contextual::cx_title(msg, level_adjust = -1, ...)
+    contextual::cx_title(msg, level_adjust = level_adjust - 1, ...)
   } else {
     message(.apply_color(paste0("==== ", msg, " ===="),
                          color = "blue",

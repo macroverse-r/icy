@@ -14,7 +14,9 @@
   package,
   user,
   verbose,
-  type
+  type,
+  allow_custom,
+  allow_create_dir
 )
 }
 \arguments{
@@ -37,6 +39,10 @@
 \item{verbose}{Verbose flag}
 
 \item{type}{Variable type}
+
+\item{allow_custom}{Whether to allow custom input when options exist}
+
+\item{allow_create_dir}{Whether to allow directory creation for path types}
 }
 \value{
 Raw result value or NULL if skipped

@@ -15,6 +15,8 @@ qconfig(
   arg_only = FALSE,
   write = "local",
   type = NULL,
+  allow_custom = NULL,
+  allow_create_dir = TRUE,
   verbose = FALSE
 )
 }
@@ -46,7 +48,16 @@ Options: "local" (default, writes to local YAML config), "renviron" (writes to ~
 
 \item{type}{Character string specifying the expected type for the variable.
 If NULL (default), uses type from template file. If not found in template, keeps value as-is.
-Possible values: "character", "integer", "numeric", "logical".}
+Possible values: "character", "integer", "numeric", "logical", "path", "dir".
+For "path"/"dir" types, directory paths are automatically cleaned and validated using clean_dir_path().}
+
+\item{allow_custom}{Logical. Whether to allow custom input when predefined options exist.
+If NULL (default), uses smart defaults: FALSE for "logical" types, TRUE for all other types.
+When TRUE, users can enter 'c' to provide custom input alongside predefined options.}
+
+\item{allow_create_dir}{Logical. Whether to allow interactive directory creation for path types.
+Defaults to TRUE. When TRUE and type is "path", users are prompted to create non-existent directories.
+When FALSE, non-existent paths result in retry prompts. Only affects "path" types.}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }
@@ -96,5 +107,31 @@ timeout <- qconfig("DUMMY_TIMEOUT", options = c("30", "60", "120"))
 # Skip functionality - no writing occurs
 optional_var <- qconfig("DUMMY_OPTIONAL", allow_skip = TRUE)
 # Can return NULL if user skips, no configuration is written
+
+# Directory path configuration with automatic cleaning
+data_dir <- qconfig("DUMMY_DATA_DIR", type = "path")
+# Shows "Type: Directory path", validates and cleans user input
+# User enters: "/home/user/data/" -> cleaned to: "/home/user/data"
+
+# Directory path with predefined options 
+cache_dir <- qconfig("DUMMY_CACHE_DIR", type = "dir", 
+                     options = c("/tmp/cache", "~/.cache", "/var/cache"))
+# Selected option is automatically cleaned and validated
+# User can also enter 'c' to provide custom directory path (default for path types)
+
+# Boolean type with strict options only
+verbose <- qconfig("DUMMY_VERBOSE", options = c("TRUE", "FALSE"))
+# No custom input allowed by default for logical types
+
+# Force custom input for any type
+api_key <- qconfig("DUMMY_API_KEY", allow_custom = TRUE)
+# Even with predefined options, user can enter 'c' for custom value
+
+# Directory creation control
+data_dir <- qconfig("DATA_DIR", type = "path")  # allow_create_dir = TRUE (default)
+# User prompted to create non-existent directories
+
+strict_dir <- qconfig("LOG_DIR", type = "path", allow_create_dir = FALSE)
+# User must provide existing directories only
 }
 }

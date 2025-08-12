@@ -24,7 +24,14 @@
 #'   "session" (sets in current R session only using Sys.setenv).
 #' @param type Character string specifying the expected type for the variable.
 #'   If NULL (default), uses type from template file. If not found in template, keeps value as-is.
-#'   Possible values: "character", "integer", "numeric", "logical".
+#'   Possible values: "character", "integer", "numeric", "logical", "path", "dir".
+#'   For "path"/"dir" types, directory paths are automatically cleaned and validated using clean_dir_path().
+#' @param allow_custom Logical. Whether to allow custom input when predefined options exist.
+#'   If NULL (default), uses smart defaults: FALSE for "logical" types, TRUE for all other types.
+#'   When TRUE, users can enter 'c' to provide custom input alongside predefined options.
+#' @param allow_create_dir Logical. Whether to allow interactive directory creation for path types.
+#'   Defaults to TRUE. When TRUE and type is "path", users are prompted to create non-existent directories.
+#'   When FALSE, non-existent paths result in retry prompts. Only affects "path" types.
 #' @param verbose Logical. If TRUE, displays confirmation messages. Defaults to FALSE.
 #'
 #' @return The selected option value, or NULL if allow_skip = TRUE and user skips.
@@ -65,11 +72,38 @@
 #' # Skip functionality - no writing occurs
 #' optional_var <- qconfig("DUMMY_OPTIONAL", allow_skip = TRUE)
 #' # Can return NULL if user skips, no configuration is written
+#'
+#' # Directory path configuration with automatic cleaning
+#' data_dir <- qconfig("DUMMY_DATA_DIR", type = "path")
+#' # Shows "Type: Directory path", validates and cleans user input
+#' # User enters: "/home/user/data/" -> cleaned to: "/home/user/data"
+#'
+#' # Directory path with predefined options 
+#' cache_dir <- qconfig("DUMMY_CACHE_DIR", type = "dir", 
+#'                      options = c("/tmp/cache", "~/.cache", "/var/cache"))
+#' # Selected option is automatically cleaned and validated
+#' # User can also enter 'c' to provide custom directory path (default for path types)
+#'
+#' # Boolean type with strict options only
+#' verbose <- qconfig("DUMMY_VERBOSE", options = c("TRUE", "FALSE"))
+#' # No custom input allowed by default for logical types
+#'
+#' # Force custom input for any type
+#' api_key <- qconfig("DUMMY_API_KEY", allow_custom = TRUE)
+#' # Even with predefined options, user can enter 'c' for custom value
+#'
+#' # Directory creation control
+#' data_dir <- qconfig("DATA_DIR", type = "path")  # allow_create_dir = TRUE (default)
+#' # User prompted to create non-existent directories
+#'
+#' strict_dir <- qconfig("LOG_DIR", type = "path", allow_create_dir = FALSE)
+#' # User must provide existing directories only
 #' }
 #' @export
 qconfig <- function(var_name, package = get_package_name(), user = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
-                    note = NULL, arg_only = FALSE, write = "local", type = NULL, verbose = FALSE) {
+                    note = NULL, arg_only = FALSE, write = "local", type = NULL, 
+                    allow_custom = NULL, allow_create_dir = TRUE, verbose = FALSE) {
   
   # Display section header
   # .icy_title(var_name)
@@ -78,7 +112,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Validate and normalize parameters
   params <- .validate_and_normalize_qconfig_params(
     var_name, package, user, description, options, allow_skip, 
-    note, arg_only, write, type, verbose
+    note, arg_only, write, type, allow_custom, allow_create_dir, verbose
   )
   
   # Read template data using modular functions 
@@ -112,17 +146,21 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     arg_only <- params$arg_only
   }
   
+  # Determine final allow_custom setting
+  final_allow_custom <- .determine_allow_custom(final_type, params$allow_custom)
+  
   # Perform interactive configuration (pass final_type for display)
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
                                        params$allow_skip, final_note, params$write, 
-                                       params$package, params$user, params$verbose, final_type)
+                                       params$package, params$user, params$verbose, final_type, 
+                                       final_allow_custom, params$allow_create_dir)
   
   # Convert to proper type and return
   return(.convert_return_value(raw_result, final_type))
 }
 
 #' @keywords internal
-.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, verbose) {
+.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, verbose) {
   # Input validation
   if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
     .icy_stop("var_name must be a non-empty character string")
@@ -160,8 +198,16 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     .icy_stop("write must be one of: 'local', 'renviron', 'session'")
   }
   
-  if (!is.null(type) && (!is.character(type) || length(type) != 1 || !type %in% c("character", "integer", "numeric", "logical", "boolean"))) {
-    .icy_stop("type must be NULL or one of: 'character', 'integer', 'numeric', 'logical', 'boolean'")
+  if (!is.null(type) && (!is.character(type) || length(type) != 1 || !type %in% c("character", "integer", "numeric", "logical", "boolean", "dir", "path"))) {
+    .icy_stop("type must be NULL or one of: 'character', 'integer', 'numeric', 'logical', 'boolean', 'dir', 'path'")
+  }
+  
+  if (!is.null(allow_custom) && (!is.logical(allow_custom) || length(allow_custom) != 1 || is.na(allow_custom))) {
+    .icy_stop("allow_custom must be NULL, TRUE or FALSE")
+  }
+  
+  if (!is.logical(allow_create_dir) || length(allow_create_dir) != 1 || is.na(allow_create_dir)) {
+    .icy_stop("allow_create_dir must be TRUE or FALSE")
   }
   
   if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
@@ -171,6 +217,9 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Normalize type parameter (boolean logic moved to main function)
   if (!is.null(type) && type %in% c("boolean", "bool")) {
     type <- "logical"
+  }
+  if (!is.null(type) && type == "dir") {
+    type <- "path"
   }
   
   return(list(
@@ -184,6 +233,8 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     arg_only = arg_only,
     write = write,
     type = type,
+    allow_custom = allow_custom,
+    allow_create_dir = allow_create_dir,
     verbose = verbose
   ))
 }
@@ -204,6 +255,8 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
 #' @param user User section
 #' @param verbose Verbose flag
 #' @param type Variable type
+#' @param allow_custom Whether to allow custom input when options exist
+#' @param allow_create_dir Whether to allow directory creation for path types
 #' @return Raw result value or NULL if skipped
 #' @keywords internal
 .do_interactive_config <- function(var_name,
@@ -211,12 +264,12 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
                                    options, allow_skip,
                                    note, write, package,
                                    user, verbose,
-                                   type) {
+                                   type, allow_custom, allow_create_dir) {
   
   # Display description if available
   if (!is.null(description) && nchar(description) > 0) {
     wrapped_description <- description
-    .icy_title("Description", auto_number = FALSE)
+    .icy_title("Description", auto_number = FALSE, level_adjust = -1)
     .icy_text(wrapped_description)
   }
   
@@ -242,6 +295,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       "integer" = "Integer number",
       "numeric" = "Numeric value",
       "logical" = "Boolean (TRUE/FALSE)",
+      "path" = "Directory path",
       type  # fallback to raw type name
     )
     .icy_text("")
@@ -260,11 +314,13 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   }
   
   # Title
-  .icy_title("Selection", auto_number = FALSE)
+  .icy_title("Selection", auto_number = FALSE, level_adjust = -1)
 
   # Get user input based on whether options are available
   if (is.null(options) || length(options) == 0) {
     # Manual text input case
+    is_manual_input <- TRUE
+    
     if (allow_skip) {
       prompt_reminder <- "(or press Enter to keep current config)"
     } else {
@@ -288,7 +344,13 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     
   } else {
     # Options selection case
-    .icy_text("Select an option:")
+    is_manual_input <- FALSE
+    
+    if (allow_custom) {
+      .icy_text("Select an option or enter custom value:")
+    } else {
+      .icy_text("Select an option:")
+    }
     
     # Format options with current value indicator
     formatted_options <- character(length(options))
@@ -319,7 +381,11 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
     
     # Get user selection with retry loop
     repeat {
-      if (allow_skip) {
+      if (allow_custom && allow_skip) {
+        prompt_reminder <- paste0("(1-", length(options), ", 'c' for custom, or Enter to keep current config)")
+      } else if (allow_custom && !allow_skip) {
+        prompt_reminder <- paste0("(1-", length(options), " or 'c' for custom)")
+      } else if (!allow_custom && allow_skip) {
         prompt_reminder <- paste0("(1-", length(options), " or Enter to keep current config)")
       } else {
         prompt_reminder <- paste0("(1-", length(options), ")")
@@ -331,6 +397,55 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       
       # Handle skip case inside the loop
       if (is.null(.handle_skip_input(user_input, allow_skip))) return(NULL)
+      
+      # Handle custom input case
+      if (allow_custom && tolower(trimws(user_input)) == "c") {
+        # Switch to manual input mode
+        if (type == "path") {
+          # Path type with validation and retry loop
+          repeat {
+            .icy_text("Enter custom directory path:")
+            custom_input <- readline()
+            
+            # Handle skip for custom input (though unlikely)
+            if (is.null(.handle_skip_input(custom_input, allow_skip))) return(NULL)
+            
+            if (nchar(trimws(custom_input)) == 0) {
+              .icy_alert("Path cannot be empty")
+              next
+            }
+            
+            # Process path input
+            path_result <- .process_path_input(custom_input, allow_create_dir = allow_create_dir)
+            
+            if (path_result$success) {
+              selected_value <- path_result$path
+              success_msg <- .format_success_message(var_name, selected_value, write)
+              break
+            } else {
+              # Show error message only if there is one (for format errors)
+              if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
+                .icy_alert(path_result$message)
+              }
+            }
+          }
+        } else {
+          # Regular custom input for non-path types
+          .icy_text("Enter custom value:")
+          custom_input <- readline()
+          
+          # Handle skip for custom input
+          if (is.null(.handle_skip_input(custom_input, allow_skip))) return(NULL)
+          
+          if (!allow_skip && nchar(trimws(custom_input)) == 0) {
+            .icy_stop("A value is required")
+          }
+          
+          selected_value <- custom_input
+          success_msg <- .format_success_message(var_name, selected_value, write)
+        }
+        break
+      }
       
       # Try to parse selection
       selection <- suppressWarnings(as.integer(user_input))
@@ -354,14 +469,43 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
           # Don't write - just return the current value
           .icy_success(success_msg)
           return(selected_value)
-        } else {
-          success_msg <- .format_success_message(var_name, selected_value, write)
         }
+        
+        # For path types, validate selected option
+        if (!is.null(type) && type == "path") {
+          path_result <- .process_path_input(selected_value, allow_create_dir = allow_create_dir)
+          if (!path_result$success) {
+            # Show error and continue the loop to let user try again
+            if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
+              .icy_alert(path_result$message)
+            }
+            next  # Continue the option selection loop
+          }
+          selected_value <- path_result$path
+        }
+        
+        success_msg <- .format_success_message(var_name, selected_value, write)
         break
       } else {
-        .icy_alert("Invalid selection. Please try again.")
+        if (allow_custom) {
+          .icy_alert(paste0("Invalid selection. Please enter a number (1-", 
+                           length(options), ") or 'c' for custom."))
+        } else {
+          .icy_alert("Invalid selection. Please try again.")
+        }
       }
     }
+  }
+  
+  # Apply path processing for manual input only (options already validated in loop)
+  if (!is.null(type) && type == "path" && is_manual_input) {
+    path_result <- .process_path_input(selected_value, allow_create_dir = allow_create_dir)
+    if (!path_result$success) {
+      .icy_stop(paste0("Manual path input is invalid: ", path_result$message))
+    }
+    selected_value <- path_result$path
+    # Update success message to show cleaned path
+    success_msg <- .format_success_message(var_name, selected_value, write)
   }
   
   # Common write and success handling for both paths
@@ -547,4 +691,116 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   )
   
   paste0("Set ", var_name, " to ", value, " in ", location_display)
+}
+
+#' Process Path Input
+#'
+#' Internal helper function to clean and validate directory path input with interactive directory creation.
+#'
+#' @param path_input Character string with user-provided path input
+#' @param allow_create_dir Logical; whether to allow interactive directory creation if missing
+#' @return List with cleaned path, success status, and error message
+#' @keywords internal
+.process_path_input <- function(path_input, allow_create_dir = TRUE) {
+  # Handle empty input
+  if (is.null(path_input) || nchar(trimws(path_input)) == 0) {
+    return(list(path = NULL, success = FALSE, message = "Path cannot be empty"))
+  }
+  
+  # Clean path format first (without existence check)
+  cleaned_path <- tryCatch({
+    clean_dir_path(path_input, check_exists = FALSE, create_if_missing = FALSE)
+  }, error = function(e) {
+    return(NULL)
+  })
+  
+  # Handle invalid path format
+  if (is.null(cleaned_path)) {
+    return(list(path = NULL, success = FALSE, message = "Invalid path format"))
+  }
+  
+  # Check if directory exists
+  if (!dir.exists(cleaned_path)) {
+    if (allow_create_dir) {
+      # Interactive prompt for directory creation
+      .icy_text("")
+      .icy_alert(paste0("Path does not exist: ", cleaned_path))
+      .icy_text("Do you want to create it?")
+      .icy_text("  1: Yes, create directory")
+      .icy_text("  0: No, try different path (or Enter)")
+      .icy_text("")
+      
+      repeat {
+        .icy_text("Enter your choice: (0-1)", indentation = FALSE)
+        user_choice <- readline()
+        
+        # Handle empty input (default to 0/no)
+        if (nchar(trimws(user_choice)) == 0) {
+          return(list(path = NULL, success = FALSE, message = ""))
+        }
+        
+        # Parse choice
+        choice <- suppressWarnings(as.integer(user_choice))
+        
+        if (!is.na(choice) && choice == 1) {
+          # Attempt to create directory
+          dir_created <- tryCatch({
+            dir.create(cleaned_path, recursive = TRUE, showWarnings = FALSE)
+          }, error = function(e) {
+            FALSE
+          })
+          
+          if (dir_created) {
+            .icy_success(paste0("Created directory: ", cleaned_path))
+            return(list(path = cleaned_path, success = TRUE, message = NULL))
+          } else {
+            .icy_alert(paste0("Could not create directory: ", cleaned_path))
+            return(list(path = NULL, success = FALSE, message = ""))
+          }
+        } else if (!is.na(choice) && choice == 0) {
+          # User chose not to create
+          return(list(path = NULL, success = FALSE, message = ""))
+        } else {
+          # Invalid selection
+          .icy_alert("Invalid selection. Please enter 0 or 1.")
+        }
+      }
+    } else {
+      # No creation allowed
+      return(list(path = NULL, success = FALSE, message = "Path does not exist"))
+    }
+  }
+  
+  # Path exists, return success
+  return(list(path = cleaned_path, success = TRUE, message = NULL))
+}
+
+#' Determine Allow Custom Setting
+#'
+#' Internal helper function to determine if custom input should be allowed
+#' based on variable type when allow_custom is NULL.
+#'
+#' @param type Variable type (e.g., "logical", "path", "character", etc.)
+#' @param allow_custom User-specified allow_custom parameter
+#' @return Logical value indicating whether custom input should be allowed
+#' @keywords internal
+.determine_allow_custom <- function(type, allow_custom) {
+  # If explicitly set, use that value
+  if (!is.null(allow_custom)) {
+    return(allow_custom)
+  }
+  
+  # Smart defaults based on type
+  if (is.null(type)) {
+    return(TRUE)  # Default when no type information
+  }
+  
+  switch(type,
+    "logical" = FALSE,  # Boolean values should be TRUE/FALSE only
+    "path" = TRUE,      # Users often need custom directory paths  
+    "character" = TRUE, # Users may need custom text input
+    "integer" = TRUE,   # Users may need custom numeric values
+    "numeric" = TRUE,   # Users may need custom numeric values
+    TRUE                # Default to allowing custom input
+  )
 }

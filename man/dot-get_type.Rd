@@ -15,6 +15,6 @@
 Character string with normalized type, or NULL if not found
 }
 \description{
-Handles boolean → logical normalization.
+Handles boolean → logical and dir → path normalization.
 }
 \keyword{internal}

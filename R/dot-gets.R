@@ -51,17 +51,22 @@
 
 #' Get Type for Variable from Template
 #'
-#' Handles boolean → logical normalization.
+#' Handles boolean → logical and dir → path normalization.
 #'
 #' @param var_name Variable name
 #' @param package Package name
 #' @return Character string with normalized type, or NULL if not found
 #' @keywords internal
 .get_type <- function(var_name, package) {
-  # Processor to normalize boolean types
+  # Processor to normalize types
   normalize_type <- function(type) {
-    if (!is.null(type) && type %in% c("boolean", "bool")) {
-      return("logical")
+    if (!is.null(type)) {
+      if (type %in% c("boolean", "bool")) {
+        return("logical")
+      }
+      if (type == "dir") {
+        return("path")
+      }
     }
     return(type)
   }
