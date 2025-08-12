@@ -63,12 +63,16 @@
 clean_dir_path <- function(path,
                             check_exists = TRUE,
                             create_if_missing = FALSE) {
-  # Remove trailing slashes and normalize path separators
-  clean_path <- sub("/*$", "", path)
+  # Use R built-in functions for comprehensive path cleaning
+  expanded_path <- path.expand(path)                                    # Handle ~
+  normalized_path <- normalizePath(expanded_path, mustWork = FALSE)     # Handle relatives, separators  
   
-  # On Windows, ensure consistent path separators by replacing \ with /
-  if (.Platform$OS.type == "windows") {
-    clean_path <- gsub("\\\\", "/", clean_path)
+  # Remove trailing slashes using regex (more reliable for this specific task)
+  # Special handling for root directory to prevent empty string
+  if (normalized_path == "/") {
+    clean_path <- "/"
+  } else {
+    clean_path <- sub("/*$", "", normalized_path)
   }
   
   # Check if directory exists if requested
