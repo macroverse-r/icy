@@ -90,54 +90,6 @@ clean_dir_path <- function(path,
   return(clean_path)
 }
 
-#' Resolve Special Path Keywords
-#'
-#' Internal function to resolve special keywords in paths.
-#' Handles keywords like "home", "cache", "config", "data", "tempdir", "getwd", ".", "..".
-#'
-#' @param path_string Character string containing path with potential keywords or variables
-#' @param package Character string with package name for package-specific cache directories
-#' @return Resolved path string with platform-appropriate paths
-#' @keywords internal
-.resolve_special_path <- function(path_string, package = NULL) {
-  # Helper function to resolve keywords
-  .resolve_keyword <- function(keyword) {
-    switch(keyword,
-      "home" = path.expand("~"),
-      "cache" = tools::R_user_dir(package, "cache"),
-      "config" = tools::R_user_dir(package, "config"), 
-      "data" = tools::R_user_dir(package, "data"),
-      "tempdir" = tempdir(),
-      "getwd" = getwd(),
-      "." = getwd(),           # Current directory (same as getwd)
-      ".." = dirname(getwd()), # Parent directory
-      keyword  # Return unchanged if not a special keyword
-    )
-  }
-  
-  # Handle path combinations (e.g., "home|Documents", "home/Documents", "home\\Documents") 
-  if (grepl("[|/\\\\]", path_string)) {
-    # Determine which separator is used and split accordingly
-    if (grepl("\\|", path_string)) {
-      parts <- strsplit(path_string, "\\|")[[1]]
-    } else if (grepl("/", path_string)) {
-      parts <- strsplit(path_string, "/")[[1]]
-    } else if (grepl("\\\\", path_string)) {
-      parts <- strsplit(path_string, "\\\\")[[1]]
-    }
-    
-    base_path <- .resolve_keyword(parts[1])
-    # Join with remaining parts
-    if (length(parts) > 1) {
-      return(do.call(file.path, c(list(base_path), parts[-1])))
-    } else {
-      return(base_path)
-    }
-  }
-  
-  # Handle single keywords
-  return(.resolve_keyword(path_string))
-}
 
 
 
