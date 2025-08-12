@@ -124,6 +124,7 @@ NULL
 #' Falls back to bold formatting with dashes.
 #'
 #' @param msg Title text
+#' @param level_adjust Numeric adjustment for contextual title level positioning (default 0)
 #' @param ... Additional arguments passed to underlying functions
 .icy_title <- function(msg, level_adjust = 0, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
