@@ -359,12 +359,18 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
       
       # For path types, resolve special paths for display
       display_value <- if (!is.null(type) && type == "path") {
-        resolved <- .resolve_special_path(option_value)
-        # If resolved path is different from original, show both
-        if (resolved != option_value) {
-          paste0(resolved, .apply_color(paste0(" (", option_value, ")"), "gray"))
+        resolved <- .resolve_special_path(option_value, package)
+        
+        # Also resolve relative paths to absolute paths for display
+        absolute_path <- tryCatch({
+          normalizePath(resolved, mustWork = FALSE)
+        }, error = function(e) resolved)
+        
+        # Show absolute path with original in parentheses if they differ
+        if (absolute_path != option_value) {
+          paste0(absolute_path, .apply_color(paste0(" (", option_value, ")"), "gray"))
         } else {
-          resolved
+          absolute_path
         }
       } else {
         option_value
@@ -429,7 +435,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
             }
             
             # Resolve special paths and process path input
-            resolved_custom_input <- .resolve_special_path(custom_input)
+            resolved_custom_input <- .resolve_special_path(custom_input, package)
             path_result <- .process_path_input(resolved_custom_input, allow_create_dir = allow_create_dir)
             
             if (path_result$success) {
@@ -488,7 +494,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
         # For path types, resolve special paths and validate selected option
         if (!is.null(type) && type == "path") {
           # First resolve any special keywords or template variables
-          resolved_path <- .resolve_special_path(selected_value)
+          resolved_path <- .resolve_special_path(selected_value, package)
           
           path_result <- .process_path_input(resolved_path, allow_create_dir = allow_create_dir)
           if (!path_result$success) {
@@ -517,7 +523,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Apply path processing for manual input only (options already validated in loop)
   if (!is.null(type) && type == "path" && is_manual_input) {
     # First resolve any special keywords or template variables
-    resolved_manual_input <- .resolve_special_path(selected_value)
+    resolved_manual_input <- .resolve_special_path(selected_value, package)
     path_result <- .process_path_input(resolved_manual_input, allow_create_dir = allow_create_dir)
     if (!path_result$success) {
       .icy_stop(paste0("Manual path input is invalid: ", path_result$message))

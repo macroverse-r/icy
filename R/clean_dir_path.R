@@ -90,109 +90,54 @@ clean_dir_path <- function(path,
   return(clean_path)
 }
 
-#' Resolve Special Path Keywords and Template Variables
+#' Resolve Special Path Keywords
 #'
-#' Internal function to resolve special keywords and template variables in paths.
-#' Handles both simple keywords (e.g., "documents", "cache") and template syntax
-#' (e.g., "$HOME|config", "$CACHE|myapp").
+#' Internal function to resolve special keywords in paths.
+#' Handles keywords like "home", "cache", "config", "data", "tempdir", "getwd", ".", "..".
 #'
 #' @param path_string Character string containing path with potential keywords or variables
+#' @param package Character string with package name for package-specific cache directories
 #' @return Resolved path string with platform-appropriate paths
 #' @keywords internal
-.resolve_special_path <- function(path_string) {
-  # First handle template variables (e.g., $HOME|config)
-  if (grepl("\\$", path_string)) {
-    path_string <- .resolve_template_variables(path_string)
+.resolve_special_path <- function(path_string, package = NULL) {
+  # Helper function to resolve keywords
+  .resolve_keyword <- function(keyword) {
+    switch(keyword,
+      "home" = path.expand("~"),
+      "cache" = tools::R_user_dir(package, "cache"),
+      "config" = tools::R_user_dir(package, "config"), 
+      "data" = tools::R_user_dir(package, "data"),
+      "tempdir" = tempdir(),
+      "getwd" = getwd(),
+      "." = getwd(),           # Current directory (same as getwd)
+      ".." = dirname(getwd()), # Parent directory
+      keyword  # Return unchanged if not a special keyword
+    )
   }
   
-  # Then handle special keywords
-  switch(path_string,
-    "documents" = .resolve_documents_path(),
-    "cache" = .resolve_cache_path(), 
-    "tempdir" = tempdir(),
-    "getwd" = getwd(),
-    path_string  # Return processed string if not a keyword
-  )
+  # Handle path combinations (e.g., "home|Documents", "home/Documents", "home\\Documents") 
+  if (grepl("[|/\\\\]", path_string)) {
+    # Determine which separator is used and split accordingly
+    if (grepl("\\|", path_string)) {
+      parts <- strsplit(path_string, "\\|")[[1]]
+    } else if (grepl("/", path_string)) {
+      parts <- strsplit(path_string, "/")[[1]]
+    } else if (grepl("\\\\", path_string)) {
+      parts <- strsplit(path_string, "\\\\")[[1]]
+    }
+    
+    base_path <- .resolve_keyword(parts[1])
+    # Join with remaining parts
+    if (length(parts) > 1) {
+      return(do.call(file.path, c(list(base_path), parts[-1])))
+    } else {
+      return(base_path)
+    }
+  }
+  
+  # Handle single keywords
+  return(.resolve_keyword(path_string))
 }
 
-#' Resolve Template Variables in Path Strings
-#'
-#' Internal function to resolve template variables like $HOME, $CACHE, $TEMP
-#' and convert | separators to platform-appropriate path separators.
-#'
-#' @param path_string Character string with template variables
-#' @return Resolved path string
-#' @keywords internal
-.resolve_template_variables <- function(path_string) {
-  # Replace $HOME
-  if (grepl("\\$HOME", path_string)) {
-    home_path <- if (.Platform$OS.type == "windows") {
-      Sys.getenv("USERPROFILE") 
-    } else {
-      path.expand("~")
-    }
-    path_string <- gsub("\\$HOME", home_path, path_string)
-  }
-  
-  # Replace $CACHE  
-  if (grepl("\\$CACHE", path_string)) {
-    cache_path <- if (.Platform$OS.type == "windows") {
-      Sys.getenv("LOCALAPPDATA")
-    } else if (Sys.info()["sysname"] == "Darwin") {
-      file.path(path.expand("~"), "Library", "Caches")
-    } else {
-      file.path(path.expand("~"), ".cache")
-    }
-    path_string <- gsub("\\$CACHE", cache_path, path_string)
-  }
-  
-  # Replace $TEMP
-  if (grepl("\\$TEMP", path_string)) {
-    temp_path <- if (.Platform$OS.type == "windows") {
-      Sys.getenv("TEMP")
-    } else {
-      "/tmp"
-    }
-    path_string <- gsub("\\$TEMP", temp_path, path_string)
-  }
-  
-  # Convert | to proper path separators
-  path_string <- gsub("\\|", .Platform$file.sep, path_string)
-  
-  return(path_string)
-}
 
-#' Resolve Documents Path Cross-Platform
-#'
-#' Internal function to find the Documents folder across different platforms.
-#'
-#' @return Path to Documents folder, or home directory as fallback
-#' @keywords internal
-.resolve_documents_path <- function() {
-  candidates <- c(
-    file.path(Sys.getenv("USERPROFILE"), "Documents"),      # Windows
-    file.path(Sys.getenv("USERPROFILE"), "My Documents"),   # Windows (older)
-    file.path(path.expand("~"), "Documents"),               # Unix/Linux/macOS
-    file.path(path.expand("~"), "My Documents")             # Unix (rare)
-  )
-  for (path in candidates) {
-    if (dir.exists(path)) return(path)
-  }
-  return(path.expand("~"))  # Fallback to home
-}
 
-#' Resolve Cache Path Cross-Platform
-#'
-#' Internal function to get platform-appropriate cache directory.
-#'
-#' @return Path to cache directory
-#' @keywords internal
-.resolve_cache_path <- function() {
-  if (.Platform$OS.type == "windows") {
-    file.path(Sys.getenv("LOCALAPPDATA"), "R", "cache")
-  } else if (Sys.info()["sysname"] == "Darwin") {
-    file.path(path.expand("~"), "Library", "Caches", "R") 
-  } else {
-    file.path(path.expand("~"), ".cache", "R")
-  }
-}

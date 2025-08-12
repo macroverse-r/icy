@@ -2,19 +2,20 @@
 % Please edit documentation in R/clean_dir_path.R
 \name{.resolve_special_path}
 \alias{.resolve_special_path}
-\title{Resolve Special Path Keywords and Template Variables}
+\title{Resolve Special Path Keywords}
 \usage{
-.resolve_special_path(path_string)
+.resolve_special_path(path_string, package = NULL)
 }
 \arguments{
 \item{path_string}{Character string containing path with potential keywords or variables}
+
+\item{package}{Character string with package name for package-specific cache directories}
 }
 \value{
 Resolved path string with platform-appropriate paths
 }
 \description{
-Internal function to resolve special keywords and template variables in paths.
-Handles both simple keywords (e.g., "documents", "cache") and template syntax
-(e.g., "$HOME|config", "$CACHE|myapp").
+Internal function to resolve special keywords in paths.
+Handles keywords like "home", "cache", "config", "data", "tempdir", "getwd", ".", "..".
 }
 \keyword{internal}
