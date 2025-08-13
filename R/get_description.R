@@ -7,7 +7,7 @@
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_name Character string specifying a specific variable name to get description for.
 #'   If NULL (default), returns descriptions for all variables.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param yaml_file Character string with the name or path to the template YAML file. If NULL,
 #'   the function will search for the appropriate template file.
 #' @param case_format Character string indicating the case format to use for
@@ -36,7 +36,7 @@
 #' @export
 get_description <- function(package = get_package_name(),
                            var_name = NULL,
-                           user = "default",
+                           section = "default",
                            yaml_file = NULL,
                            case_format = "snake_case",
                            verbose = FALSE) {

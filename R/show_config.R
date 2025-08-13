@@ -8,7 +8,7 @@
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_names Optional character vector of specific variable names to show.
 #'   If NULL (default), shows all variables defined in the configuration.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param display Character string specifying display mode:
 #'   - "sources": Show variable names, values, and source information (default)
 #'   - "values": Show only variable names and values (no source info)
@@ -38,7 +38,7 @@
 #' @export
 show_config <- function(package = get_package_name(),
                         var_names = NULL,
-                        user = "default",
+                        section = "default",
                         display = "sources",
                         fn_tmpl = NULL,
                         fn_local = NULL) {
@@ -50,7 +50,7 @@ show_config <- function(package = get_package_name(),
       {
         names(get_config(package = package,
                          origin = "template",
-                         user = user,
+                         section = section,
                          yaml_file = fn_tmpl))
       },
       error = function(e) NULL
@@ -59,7 +59,7 @@ show_config <- function(package = get_package_name(),
     # Also get from local config
     local_vars <- tryCatch(
       {
-        names(get_config(package = package, origin = "local", user = user, yaml_file = fn_local))
+        names(get_config(package = package, origin = "local", section = section, yaml_file = fn_local))
       },
       error = function(e) NULL
     )
@@ -83,14 +83,14 @@ show_config <- function(package = get_package_name(),
   # Get values from different sources
   renviron_config <- tryCatch(
     {
-      get_config(package = package, origin = "renviron", user = user)
+      get_config(package = package, origin = "renviron", section = section)
     },
     error = function(e) list()
   )
 
   local_config <- tryCatch(
     {
-      get_config(package = package, origin = "local", user = user, yaml_file = fn_local)
+      get_config(package = package, origin = "local", section = section, yaml_file = fn_local)
     },
     error = function(e) list()
   )
@@ -136,7 +136,7 @@ show_config <- function(package = get_package_name(),
 
   # Display results based on mode
   if (display == "full") {
-    .show_config_full(package, status_df, renviron_config, local_config, user)
+    .show_config_full(package, status_df, renviron_config, local_config, section)
   } else {
     .show_config_standard(package, status_df, display)
   }
@@ -179,10 +179,10 @@ show_config <- function(package = get_package_name(),
 
 #' Full display mode for show_config
 #' @keywords internal
-.show_config_full <- function(package, status_df, renviron_config, local_config, user) {
+.show_config_full <- function(package, status_df, renviron_config, local_config, section) {
   # Show template configuration
   template_config <- tryCatch({
-    get_config(package = package, origin = "template", user = user)
+    get_config(package = package, origin = "template", section = section)
   }, error = function(e) list())
   
   if (length(template_config) > 0) {

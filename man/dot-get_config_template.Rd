@@ -6,7 +6,7 @@
 \usage{
 .get_config_template(
   package = get_package_name(),
-  user = "default",
+  section = "default",
   yaml_file = NULL,
   case_format = "snake_case",
   verbose = FALSE

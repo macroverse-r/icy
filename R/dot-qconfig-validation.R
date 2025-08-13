@@ -13,7 +13,7 @@ NULL
 #'
 #' @param var_name Variable name
 #' @param package Package name
-#' @param user User section
+#' @param section Section name
 #' @param description Description text
 #' @param options Option values
 #' @param allow_skip Allow skip flag
@@ -29,7 +29,7 @@ NULL
 #' @param verbose Verbose flag
 #' @return List of validated and normalized parameters
 #' @keywords internal
-.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose) {
+.validate_and_normalize_qconfig_params <- function(var_name, package, section, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose) {
   # Input validation
   if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
     .icy_stop("var_name must be a non-empty character string")
@@ -39,8 +39,8 @@ NULL
     .icy_stop("package must be a non-empty character string")
   }
   
-  if (!is.character(user) || length(user) != 1 || nchar(user) == 0) {
-    .icy_stop("user must be a non-empty character string")
+  if (!is.character(section) || length(section) != 1 || nchar(section) == 0) {
+    .icy_stop("section must be a non-empty character string")
   }
   
   if (!is.null(description) && (!is.character(description) || length(description) != 1)) {
@@ -114,7 +114,7 @@ NULL
   return(list(
     var_name = var_name,
     package = package,
-    user = user,
+    section = section,
     description = description,
     options = options,
     allow_skip = allow_skip,

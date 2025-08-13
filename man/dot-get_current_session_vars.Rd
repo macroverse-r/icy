@@ -4,12 +4,12 @@
 \alias{.get_current_session_vars}
 \title{Get current session environment variables for a package}
 \usage{
-.get_current_session_vars(package, user = "default")
+.get_current_session_vars(package, section = "default")
 }
 \arguments{
 \item{package}{Character string with package name}
 
-\item{user}{Character string for user configuration section}
+\item{section}{Character string for configuration section}
 }
 \value{
 Character vector of variable names that are currently in session environment

@@ -72,14 +72,14 @@ NULL
 #' Get current session environment variables for a package
 #'
 #' @param package Character string with package name
-#' @param user Character string for user configuration section
+#' @param section Character string for configuration section
 #'
 #' @return Character vector of variable names that are currently in session environment
 #' @keywords internal
-.get_current_session_vars <- function(package, user = "default") {
+.get_current_session_vars <- function(package, section = "default") {
   # Get all possible variables from template
   template_vars <- tryCatch({
-    names(get_config(package = package, origin = "template", user = user))
+    names(get_config(package = package, origin = "template", section = section))
   }, error = function(e) {
     character(0)
   })

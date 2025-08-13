@@ -7,7 +7,7 @@
 sync(
   package = get_package_name(),
   var_names = NULL,
-  user = "default",
+  section = "default",
   verbose = FALSE
 )
 }
@@ -17,7 +17,7 @@ sync(
 \item{var_names}{Optional character vector of specific variable names to sync.
 If NULL (default), syncs all variables defined in the configuration.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }

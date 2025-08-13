@@ -7,7 +7,7 @@
 qconfig(
   var_name,
   package = get_package_name(),
-  user = "default",
+  section = "default",
   description = NULL,
   options = NULL,
   allow_skip = TRUE,
@@ -28,7 +28,7 @@ qconfig(
 
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{description}{Character string with custom description. If NULL, uses description
 from template YAML descriptions section. If no template description exists, no description is shown.}

@@ -8,7 +8,7 @@ validate(
   package = get_package_name(),
   var_names = NULL,
   values = NULL,
-  user = "default",
+  section = "default",
   warn = TRUE,
   allowed_vars = NULL
 )
@@ -22,7 +22,7 @@ validates all variables defined in the template.}
 \item{values}{Optional named list of values to validate. If provided,
 validates both names and values.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{warn}{Logical; if TRUE (default), issues warnings for validation failures.
 If FALSE, raises an error on first validation failure.}

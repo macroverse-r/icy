@@ -7,7 +7,7 @@
 #' @param var_list Named list of environment variables to write. Names should be the
 #'   environment variable names and values should be the values to set.
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param fn_local Character string with custom filename for the local config.
 #'   If NULL, uses the default naming pattern.
 #' @param create_if_missing Logical; if TRUE (default), creates the local config file
@@ -41,14 +41,14 @@
 #' write_local(
 #'   var_list = list(API_URL = "https://prod.api.com"),
 #'   package = "mypackage",
-#'   user = "production"
+#'   section = "production"
 #' )
 #' }
 #'
 #' @export
 write_local <- function(var_list,
                         package = get_package_name(),
-                        user = "default",
+                        section = "default",
                         fn_local = NULL,
                         create_if_missing = TRUE,
                         case_format = "snake_case",
@@ -65,11 +65,15 @@ write_local <- function(var_list,
   }
   
   # Capture current session variables before any changes
-  original_session_vars <- .get_current_session_vars(package, user)
+  original_session_vars <- .get_current_session_vars(package, section)
   
   # Validate against template configuration
   template_config <- tryCatch({
-    get_config(package = package, origin = "template", user = user, yaml_file = fn_tmpl)
+    if (is.null(fn_tmpl)) {
+      get_config(package = package, origin = "template", section = section)
+    } else {
+      .get_config_template(package = package, section = section, yaml_file = fn_tmpl)
+    }
   }, error = function(e) {
     .icy_stop(paste0("Could not read template configuration: ", e$message))
   })
@@ -113,9 +117,9 @@ write_local <- function(var_list,
   # Read existing configuration
   config_data <- yaml::read_yaml(local_path)
 
-  # Ensure user section exists
-  if (!user %in% names(config_data)) {
-    config_data[[user]] <- list()
+  # Ensure section exists
+  if (!section %in% names(config_data)) {
+    config_data[[section]] <- list()
   }
 
   # Track what we're updating and which vars should be NULL
@@ -125,11 +129,11 @@ write_local <- function(var_list,
 
   # Update configuration
   for (var_name in names(var_list)) {
-    old_value <- config_data[[user]][[var_name]]
+    old_value <- config_data[[section]][[var_name]]
     new_value <- var_list[[var_name]]
     
     # Set the value (R will remove NULL values, but we'll add them back)
-    config_data[[user]][[var_name]] <- new_value
+    config_data[[section]][[var_name]] <- new_value
 
     if (!is.null(old_value)) {
       if (!identical(old_value, new_value)) {
@@ -145,13 +149,13 @@ write_local <- function(var_list,
     # Create a temporary list with the NULL value and merge it
     temp_list <- list(NULL)
     names(temp_list) <- null_var
-    config_data[[user]] <- c(config_data[[user]], temp_list)
+    config_data[[section]] <- c(config_data[[section]], temp_list)
   }
   
   # Reorder configuration to match template order
-  current_vars <- names(config_data[[user]])
+  current_vars <- names(config_data[[section]])
   ordered_vars <- intersect(template_vars, current_vars)  # Template order, only existing vars
-  config_data[[user]] <- config_data[[user]][ordered_vars]
+  config_data[[section]] <- config_data[[section]][ordered_vars]
 
   # Write back to file
   yaml::write_yaml(config_data, local_path)

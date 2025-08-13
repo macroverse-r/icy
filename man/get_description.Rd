@@ -7,7 +7,7 @@
 get_description(
   package = get_package_name(),
   var_name = NULL,
-  user = "default",
+  section = "default",
   yaml_file = NULL,
   case_format = "snake_case",
   verbose = FALSE
@@ -19,7 +19,7 @@ get_description(
 \item{var_name}{Character string specifying a specific variable name to get description for.
 If NULL (default), returns descriptions for all variables.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{yaml_file}{Character string with the name or path to the template YAML file. If NULL,
 the function will search for the appropriate template file.}

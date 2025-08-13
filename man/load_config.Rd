@@ -7,7 +7,7 @@
 load_config(
   package = get_package_name(),
   origin = "priority",
-  user = "default",
+  section = "default",
   unset = list(),
   ensure_local = TRUE,
   yaml_file = NULL,
@@ -27,7 +27,7 @@ uses the current package name.}
 \item "priority": Read with priority order (.Renviron > local config, default)
 }}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{unset}{Named list of default values to use for variables that are not set
 in any configuration source. Names should match template variable names.}

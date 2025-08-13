@@ -6,7 +6,7 @@
 \usage{
 toggle_verbose(
   package = get_package_name(),
-  user = "default",
+  section = "default",
   initial = TRUE,
   verbose = NULL
 )
@@ -14,7 +14,7 @@ toggle_verbose(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{user}{Character string. The user configuration to modify. Defaults to "default".}
+\item{section}{Character string. The section configuration to modify. Defaults to "default".}
 
 \item{initial}{Logical. The default value to use when initializing a
 non-existent verbose variable. Defaults to TRUE.}

@@ -6,7 +6,7 @@
 #' If the variable doesn't exist, it will be created with the specified initial value.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
-#' @param user Character string. The user configuration to modify. Defaults to "default".
+#' @param section Character string. The section configuration to modify. Defaults to "default".
 #' @param initial Logical. The default value to use when initializing a
 #'   non-existent verbose variable. Defaults to TRUE.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.
@@ -42,7 +42,7 @@
 #'
 #' @export
 toggle_verbose <- function(package = get_package_name(),
-                           user = "default",
+                           section = "default",
                            initial = TRUE,
                            verbose = NULL) {
   # Create dynamic variable names based on package
@@ -52,7 +52,7 @@ toggle_verbose <- function(package = get_package_name(),
   # Read current config
   current_config <- tryCatch(
     {
-      get_config(package = package, origin = "local", user = user)
+      get_config(package = package, origin = "local", section = section)
     },
     error = function(e) {
       list()
@@ -77,7 +77,7 @@ toggle_verbose <- function(package = get_package_name(),
   write_local(
     var_list = structure(list(new_value), names = verbose_var),
     package = package,
-    user = user
+    section = section
   )
 
   # Show message if verbose parameter is TRUE

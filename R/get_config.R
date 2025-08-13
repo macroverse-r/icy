@@ -10,15 +10,15 @@
 #'   - "local": Read from the user's local configuration file (default)
 #'   - "renviron": Read from .Renviron file
 #'   - "priority": Read with priority order (.Renviron > local config)
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param yaml_file Character string with the name or path to the YAML file. If NULL,
 #'   the function will search for the appropriate file based on the origin.
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-#' @param inherit Character string specifying a user section to inherit values from.
+#' @param inherit Character string specifying a section to inherit values from.
 #'   If NULL (default), no inheritance is applied. When specified, values from the
-#'   inherit section are used as defaults, which can be overridden by the main user section.
+#'   inherit section are used as defaults, which can be overridden by the main section.
 #'   Only works with "template" and "local" origins.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
@@ -36,14 +36,14 @@
 #' config <- get_config(package = "mypackage", origin = "priority")
 #'
 #' # Get production config with defaults inherited from default section
-#' prod_config <- get_config(package = "mypackage", user = "production", 
+#' prod_config <- get_config(package = "mypackage", section = "production", 
 #'                          inherit = "default", origin = "template")
 #' }
 #'
 #' @export
 get_config <- function(package = get_package_name(),
                        origin = "priority",
-                       user = "default",
+                       section = "default",
                        yaml_file = NULL,
                        case_format = "snake_case",
                        inherit = NULL,
@@ -62,7 +62,7 @@ get_config <- function(package = get_package_name(),
   if (origin == "template") {
     config <- .get_config_template(
       package = package,
-      user = user,
+      section = section,
       yaml_file = yaml_file,
       case_format = case_format,
       verbose = verbose
@@ -70,7 +70,7 @@ get_config <- function(package = get_package_name(),
   } else if (origin == "local") {
     config <- .get_config_local(
       package = package,
-      user = user,
+      section = section,
       yaml_file = yaml_file,
       case_format = case_format,
       verbose = verbose
@@ -78,13 +78,13 @@ get_config <- function(package = get_package_name(),
   } else if (origin == "renviron") {
     config <- .get_config_renviron(
       package = package,
-      user = user,
+      section = section,
       verbose = verbose
     )
   } else if (origin == "priority") {
     config <- .get_config_priority(
       package = package,
-      user = user,
+      section = section,
       yaml_file = yaml_file,
       case_format = case_format,
       verbose = verbose
@@ -92,16 +92,16 @@ get_config <- function(package = get_package_name(),
   }
 
   # Apply inheritance if requested
-  if (!is.null(inherit) && inherit != user && origin %in% c("template", "local")) {
+  if (!is.null(inherit) && inherit != section && origin %in% c("template", "local")) {
     if (verbose) {
-      .icy_text(paste0("Applying inheritance from section '", inherit, "' to '", user, "'"))
+      .icy_text(paste0("Applying inheritance from section '", inherit, "' to '", section, "'"))
     }
     
     # Get the base config to inherit from
     base_config <- if (origin == "template") {
       .get_config_template(
         package = package,
-        user = inherit,
+        section = inherit,
         yaml_file = yaml_file,
         case_format = case_format,
         verbose = FALSE
@@ -109,7 +109,7 @@ get_config <- function(package = get_package_name(),
     } else {
       .get_config_local(
         package = package,
-        user = inherit,
+        section = inherit,
         yaml_file = yaml_file,
         case_format = case_format,
         verbose = FALSE
@@ -136,7 +136,7 @@ get_config <- function(package = get_package_name(),
 #' Get configuration from local file
 #' @keywords internal
 .get_config_local <- function(package = get_package_name(),
-                              user = "default",
+                              section = "default",
                               yaml_file = NULL,
                               case_format = "snake_case",
                               verbose = FALSE) {
@@ -183,14 +183,14 @@ get_config <- function(package = get_package_name(),
       config_data <- yaml::read_yaml(yaml_file)
 
       # Extract user section
-      if (!user %in% names(config_data)) {
+      if (!section %in% names(config_data)) {
         .icy_stop(c(
-          paste0("User section ", user, " not found in local config"),
+          paste0("Section ", section, " not found in local config"),
           "i" = paste0("Available sections: ", paste(names(config_data), collapse = ", "))
         ))
       }
 
-      config <- config_data[[user]]
+      config <- config_data[[section]]
 
       if (is.null(config) || length(config) == 0) {
         return(list())
@@ -208,7 +208,7 @@ get_config <- function(package = get_package_name(),
 #' Get configuration from template file
 #' @keywords internal
 .get_config_template <- function(package = get_package_name(),
-                                 user = "default",
+                                 section = "default",
                                  yaml_file = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
@@ -254,17 +254,17 @@ get_config <- function(package = get_package_name(),
       config_data <- yaml::read_yaml(yaml_file)
 
       # Extract user section
-      if (!user %in% names(config_data)) {
+      if (!section %in% names(config_data)) {
         .icy_stop(c(
-          paste0("User section ", user, " not found in template"),
+          paste0("Section ", section, " not found in template"),
           "i" = paste0("Available sections: ", paste(names(config_data), collapse = ", "))
         ))
       }
 
-      config <- config_data[[user]]
+      config <- config_data[[section]]
 
       if (is.null(config) || length(config) == 0) {
-        .icy_stop(paste0("No environment variables found in template section ", user))
+        .icy_stop(paste0("No environment variables found in template section ", section))
       }
 
       return(config)
@@ -279,7 +279,7 @@ get_config <- function(package = get_package_name(),
 #' Get configuration from .Renviron file
 #' @keywords internal
 .get_config_renviron <- function(package = get_package_name(),
-                                 user = "default",
+                                 section = "default",
                                  verbose = FALSE) {
   # Get path to .Renviron
   renviron_path <- get_renviron_path()
@@ -330,7 +330,7 @@ get_config <- function(package = get_package_name(),
       {
         names(get_config(package = package,
                          origin = "template",
-                         user = user))
+                         section = section))
       },
       error = function(e) NULL
     )
@@ -348,14 +348,14 @@ get_config <- function(package = get_package_name(),
 #' Get configuration with priority resolution
 #' @keywords internal
 .get_config_priority <- function(package = get_package_name(),
-                                 user = "default",
+                                 section = "default",
                                  yaml_file = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
   # Get configurations from both sources
   local_config <- .get_config_local(
     package = package,
-    user = user,
+    section = section,
     yaml_file = yaml_file,
     case_format = case_format,
     verbose = verbose
@@ -363,7 +363,7 @@ get_config <- function(package = get_package_name(),
 
   renviron_config <- .get_config_renviron(
     package = package,
-    user = user,
+    section = section,
     verbose = verbose
   )
 

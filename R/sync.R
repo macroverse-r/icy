@@ -9,7 +9,7 @@
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_names Optional character vector of specific variable names to sync.
 #'   If NULL (default), syncs all variables defined in the configuration.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
 #' @return Invisibly returns TRUE.
@@ -29,17 +29,17 @@
 #' @export
 sync <- function(package = get_package_name(),
                  var_names = NULL,
-                 user = "default",
+                 section = "default",
                  verbose = FALSE) {
     
     # Get configuration from files only (not session) to sync session to match files
     # Priority order: .Renviron > local config (but exclude session environment)
     renviron_config <- tryCatch({
-        get_config(package = package, origin = "renviron", user = user)
+        get_config(package = package, origin = "renviron", section = section)
     }, error = function(e) list())
     
     local_config <- tryCatch({
-        get_config(package = package, origin = "local", user = user)
+        get_config(package = package, origin = "local", section = section)
     }, error = function(e) list())
     
     # Merge with .Renviron taking priority over local config

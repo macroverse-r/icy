@@ -12,7 +12,7 @@
   note,
   write,
   package,
-  user,
+  section,
   verbose,
   type,
   allow_custom,
@@ -37,7 +37,7 @@
 
 \item{package}{Package name}
 
-\item{user}{User section}
+\item{section}{Section in YAML file}
 
 \item{verbose}{Verbose flag}
 

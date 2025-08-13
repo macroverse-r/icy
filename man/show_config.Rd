@@ -7,7 +7,7 @@
 show_config(
   package = get_package_name(),
   var_names = NULL,
-  user = "default",
+  section = "default",
   display = "sources",
   fn_tmpl = NULL,
   fn_local = NULL
@@ -19,7 +19,7 @@ show_config(
 \item{var_names}{Optional character vector of specific variable names to show.
 If NULL (default), shows all variables defined in the configuration.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{display}{Character string specifying display mode:
 \itemize{

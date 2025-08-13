@@ -7,7 +7,7 @@
 write_local(
   var_list,
   package = get_package_name(),
-  user = "default",
+  section = "default",
   fn_local = NULL,
   create_if_missing = TRUE,
   case_format = "snake_case",
@@ -22,7 +22,7 @@ environment variable names and values should be the values to set.}
 
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{fn_local}{Character string with custom filename for the local config.
 If NULL, uses the default naming pattern.}
@@ -70,7 +70,7 @@ write_local(
 write_local(
   var_list = list(API_URL = "https://prod.api.com"),
   package = "mypackage",
-  user = "production"
+  section = "production"
 )
 }
 

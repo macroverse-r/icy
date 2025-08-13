@@ -22,7 +22,7 @@
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #'   If provided, enables validation and grouping related variables together in the .Renviron file. 
 #'   Set to NULL to perform a simple write without validation or grouping.
-#' @param user Character string. The user configuration to use. Defaults to "default".
+#' @param section Character string. The section configuration to use. Defaults to "default".
 #' @param renviron_path Path to the .Renviron file. Defaults to the user's home directory.
 #' @param overwrite Logical; if TRUE (default), overwrites existing variables.
 #'   If FALSE, existing variables are left unchanged.
@@ -86,7 +86,7 @@
 #' @export
 write_renviron <- function(var_list,
                            package = get_package_name(),
-                           user = "default",
+                           section = "default",
                            renviron_path = get_renviron_path(),
                            overwrite = TRUE,
                            validate = TRUE,
@@ -106,7 +106,7 @@ write_renviron <- function(var_list,
   # Capture current session variables before any changes (only for package mode)
   original_session_vars <- character(0)
   if (!is.null(package)) {
-    original_session_vars <- .get_current_session_vars(package, user)
+    original_session_vars <- .get_current_session_vars(package, section)
   }
   
   # Delegate to the appropriate internal function based on whether a package is provided
@@ -123,7 +123,7 @@ write_renviron <- function(var_list,
     result <- .write_pkg_to_renviron(
       var_list = var_list,
       package = package,
-      user = user,
+      section = section,
       renviron_path = renviron_path,
       overwrite = overwrite,
       validate = validate,
@@ -208,7 +208,7 @@ write_renviron <- function(var_list,
 # Handles validation and groups variables together by package
 .write_pkg_to_renviron <- function(var_list,
                                    package,
-                                   user,
+                                   section,
                                    renviron_path,
                                    overwrite,
                                    validate,
@@ -240,7 +240,7 @@ write_renviron <- function(var_list,
   # Get all environment variables for this package
   package_var_names <- character(0)
   tryCatch({
-    package_config <- get_config(package = package, user = user)
+    package_config <- get_config(package = package, section = section)
     package_var_names <- names(package_config)
   }, error = function(e) {
     # If we can't get the package var names, continue without grouping

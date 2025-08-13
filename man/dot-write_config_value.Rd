@@ -9,7 +9,7 @@
   value,
   write,
   package,
-  user,
+  section,
   verbose,
   type = NULL,
   fn_tmpl = NULL,
@@ -25,7 +25,7 @@
 
 \item{package}{Package name}
 
-\item{user}{User section}
+\item{section}{Section in YAML file}
 
 \item{verbose}{Whether to show confirmation messages}
 

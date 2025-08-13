@@ -6,7 +6,7 @@
 \usage{
 .get_config_renviron(
   package = get_package_name(),
-  user = "default",
+  section = "default",
   verbose = FALSE
 )
 }

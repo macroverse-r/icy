@@ -15,7 +15,7 @@ NULL
 #' @param value Value to write
 #' @param write Write location ("local", "renviron", "session")
 #' @param package Package name 
-#' @param user User section
+#' @param section Section in YAML file
 #' @param verbose Whether to show confirmation messages
 #' @param type Expected type for the variable (NULL means no conversion)
 #' @param fn_tmpl Optional path to custom YAML template file (NULL uses default template)
@@ -23,7 +23,7 @@ NULL
 #'
 #' @return TRUE if successful, FALSE otherwise
 #' @keywords internal
-.write_config_value <- function(var_name, value, write, package, user, verbose, type = NULL, fn_tmpl = NULL, fn_local = NULL) {
+.write_config_value <- function(var_name, value, write, package, section, verbose, type = NULL, fn_tmpl = NULL, fn_local = NULL) {
   tryCatch({
     switch(write,
       "local" = {
@@ -31,7 +31,7 @@ NULL
         # Convert value based on type information
         converted_value <- .convert_by_type(value, type)
         config_list[[var_name]] <- converted_value
-        write_local(var_list = config_list, package = package, user = user, fn_tmpl = fn_tmpl, fn_local = fn_local)
+        write_local(var_list = config_list, package = package, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
         if (verbose) {
           .icy_success(paste0("Written ", var_name, " to local config"))
         }

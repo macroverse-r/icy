@@ -8,7 +8,7 @@
 #'
 #' @param var_name Character string with the environment variable name (e.g., "DUMMY_API_KEY").
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param description Character string with custom description. If NULL, uses description
 #'   from template YAML descriptions section. If no template description exists, no description is shown.
 #' @param options Vector of option values to present to the user. If NULL, uses options
@@ -110,7 +110,7 @@
 #' # User must provide existing directories only
 #' }
 #' @export
-qconfig <- function(var_name, package = get_package_name(), user = "default",
+qconfig <- function(var_name, package = get_package_name(), section = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
                     note = NULL, arg_only = FALSE, write = "local", type = NULL, 
                     allow_custom = NULL, allow_create_dir = TRUE, resolve_paths = "ask", 
@@ -118,7 +118,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   
   # Validate and normalize parameters
   params <- .validate_and_normalize_qconfig_params(
-    var_name, package, user, description, options, allow_skip, 
+    var_name, package, section, description, options, allow_skip, 
     note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
   )
   
@@ -159,7 +159,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   # Perform interactive configuration (pass final_type for display)
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
                                        params$allow_skip, final_note, params$write, 
-                                       params$package, params$user, params$verbose, final_type, 
+                                       params$package, params$section, params$verbose, final_type, 
                                        final_allow_custom, params$allow_create_dir, params$resolve_paths, params$fn_tmpl, params$fn_local)
   
   # Convert to proper type and return

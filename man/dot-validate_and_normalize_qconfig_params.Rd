@@ -7,7 +7,7 @@
 .validate_and_normalize_qconfig_params(
   var_name,
   package,
-  user,
+  section,
   description,
   options,
   allow_skip,
@@ -28,7 +28,7 @@
 
 \item{package}{Package name}
 
-\item{user}{User section}
+\item{section}{Section name}
 
 \item{description}{Description text}
 

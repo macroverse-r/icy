@@ -7,7 +7,7 @@
 write_renviron(
   var_list,
   package = get_package_name(),
-  user = "default",
+  section = "default",
   renviron_path = get_renviron_path(),
   overwrite = TRUE,
   validate = TRUE,
@@ -24,7 +24,7 @@ environment variable names and values should be the values to set.}
 If provided, enables validation and grouping related variables together in the .Renviron file.
 Set to NULL to perform a simple write without validation or grouping.}
 
-\item{user}{Character string. The user configuration to use. Defaults to "default".}
+\item{section}{Character string. The section configuration to use. Defaults to "default".}
 
 \item{renviron_path}{Path to the .Renviron file. Defaults to the user's home directory.}
 

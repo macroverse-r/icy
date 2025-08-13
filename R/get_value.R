@@ -6,7 +6,7 @@
 #' @param name Character string with the variable name to retrieve.
 #' @param package Character string with the package name. Defaults to `get_package_name()`.
 #' @param origin Character string specifying where to read from. Defaults to "priority".
-#' @param user Character string for the user/section in the YAML file. Defaults to "default".
+#' @param section Character string for the section in the YAML file. Defaults to "default".
 #' @param yaml_file Character string with the name or path to the YAML file. Defaults to NULL.
 #' @param case_format Character string indicating the case format. Defaults to "snake_case".
 #'
@@ -25,13 +25,13 @@
 get_value <- function(name,
                       package = get_package_name(),
                       origin = "priority",
-                      user = "default",
+                      section = "default",
                       yaml_file = NULL,
                       case_format = "snake_case") {
 
   config <- get_config(package = package,
                        origin = origin,
-                       user = user,
+                       section = section,
                        yaml_file = yaml_file,
                        case_format = case_format)
   

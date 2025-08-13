@@ -11,7 +11,11 @@
 #' @keywords internal
 .get_template_value <- function(var_name, package, section, processor = NULL, fn_tmpl = NULL) {
   tryCatch({
-    config <- get_config(package = package, origin = "template", user = section, yaml_file = fn_tmpl)
+    config <- if (is.null(fn_tmpl)) {
+      get_config(package = package, origin = "template", section = section)
+    } else {
+      .get_config_template(package = package, section = section, yaml_file = fn_tmpl)
+    }
     
     if (!is.null(config) && var_name %in% names(config)) {
       value <- config[[var_name]]

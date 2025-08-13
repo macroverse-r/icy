@@ -8,7 +8,7 @@ get_value(
   name,
   package = get_package_name(),
   origin = "priority",
-  user = "default",
+  section = "default",
   yaml_file = NULL,
   case_format = "snake_case"
 )
@@ -20,7 +20,7 @@ get_value(
 
 \item{origin}{Character string specifying where to read from. Defaults to "priority".}
 
-\item{user}{Character string for the user/section in the YAML file. Defaults to "default".}
+\item{section}{Character string for the section in the YAML file. Defaults to "default".}
 
 \item{yaml_file}{Character string with the name or path to the YAML file. Defaults to NULL.}
 

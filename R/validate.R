@@ -9,7 +9,7 @@
 #'   validates all variables defined in the template.
 #' @param values Optional named list of values to validate. If provided,
 #'   validates both names and values.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param warn Logical; if TRUE (default), issues warnings for validation failures.
 #'   If FALSE, raises an error on first validation failure.
 #' @param allowed_vars Optional character vector of allowed variable names. If NULL,
@@ -41,14 +41,14 @@
 validate <- function(package = get_package_name(),
                      var_names = NULL,
                      values = NULL,
-                     user = "default",
+                     section = "default",
                      warn = TRUE,
                      allowed_vars = NULL) {
     
     # Get allowed variables from template if not provided
     if (is.null(allowed_vars)) {
         allowed_vars <- tryCatch({
-            names(get_config(package = package, origin = "template", user = user))
+            names(get_config(package = package, origin = "template", section = section))
         }, error = function(e) {
             msg <- paste0("Could not retrieve allowed variables from template: ", e$message)
             if (warn) {

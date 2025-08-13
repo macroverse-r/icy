@@ -6,7 +6,7 @@
 \usage{
 setup(
   package = get_package_name(),
-  user = "default",
+  section = "default",
   write = "local",
   skip_configured = FALSE,
   vars = NULL,
@@ -22,7 +22,7 @@ setup(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{write}{Character string specifying where to write the configuration.
 Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),

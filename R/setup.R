@@ -4,7 +4,7 @@
 #' configuration. Provides a guided setup experience for first-time package users.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param write Character string specifying where to write the configuration.
 #'   Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),
 #'   "session" (sets in current R session only using Sys.setenv).
@@ -69,12 +69,16 @@
 #' }
 #'
 #' @export
-setup <- function(package = get_package_name(), user = "default", write = "local",
+setup <- function(package = get_package_name(), section = "default", write = "local",
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
                   type = NULL, note = NULL, arg_only = FALSE, fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
   # Get template variables
-  template_config <- get_config(package = package, user = user, origin = "template", yaml_file = fn_tmpl)
+  template_config <- if (is.null(fn_tmpl)) {
+    get_config(package = package, section = section, origin = "template")
+  } else {
+    .get_config_template(package = package, section = section, yaml_file = fn_tmpl)
+  }
   if (is.null(template_config) || length(template_config) == 0) {
     .icy_stop(paste0("No template configuration found for package '", package, "'"))
   }
@@ -88,7 +92,7 @@ setup <- function(package = get_package_name(), user = "default", write = "local
   
   # Skip already configured variables if requested
   if (skip_configured) {
-    current_config <- tryCatch(get_config(package = package, user = user, origin = "priority"), 
+    current_config <- tryCatch(get_config(package = package, section = section, origin = "priority"), 
                               error = function(e) NULL)
     if (!is.null(current_config)) {
       configured <- character(0)
@@ -164,7 +168,7 @@ setup <- function(package = get_package_name(), user = "default", write = "local
       args <- list(
         var_name = var_name,
         package = package,
-        user = user,
+        section = section,
         write = write,
         allow_skip = allow_skip_vec[i],
         verbose = verbose,
@@ -222,7 +226,7 @@ setup <- function(package = get_package_name(), user = "default", write = "local
     in_show_config <- function() {
       .icy_title("Current Configuration", auto_number = FALSE)
       # Show only the variables that were part of this setup
-      show_config(package = package, var_names = var_names, user = user, display = "sources", fn_tmpl = fn_tmpl, fn_local = fn_local)
+      show_config(package = package, var_names = var_names, section = section, display = "sources", fn_tmpl = fn_tmpl, fn_local = fn_local)
     }
     in_show_config()
     

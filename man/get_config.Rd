@@ -7,7 +7,7 @@
 get_config(
   package = get_package_name(),
   origin = "priority",
-  user = "default",
+  section = "default",
   yaml_file = NULL,
   case_format = "snake_case",
   inherit = NULL,
@@ -25,7 +25,7 @@ get_config(
 \item "priority": Read with priority order (.Renviron > local config)
 }}
 
-\item{user}{Character string for the user/section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
 the function will search for the appropriate file based on the origin.}
@@ -34,9 +34,9 @@ the function will search for the appropriate file based on the origin.}
 searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
-\item{inherit}{Character string specifying a user section to inherit values from.
+\item{inherit}{Character string specifying a section to inherit values from.
 If NULL (default), no inheritance is applied. When specified, values from the
-inherit section are used as defaults, which can be overridden by the main user section.
+inherit section are used as defaults, which can be overridden by the main section.
 Only works with "template" and "local" origins.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
@@ -61,7 +61,7 @@ local_config <- get_config(package = "mypackage", origin = "local")
 config <- get_config(package = "mypackage", origin = "priority")
 
 # Get production config with defaults inherited from default section
-prod_config <- get_config(package = "mypackage", user = "production", 
+prod_config <- get_config(package = "mypackage", section = "production", 
                          inherit = "default", origin = "template")
 }
 

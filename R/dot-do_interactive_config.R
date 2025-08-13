@@ -11,7 +11,7 @@
 #' @param note Note text
 #' @param write Write destination
 #' @param package Package name
-#' @param user User section
+#' @param section Section in YAML file
 #' @param verbose Verbose flag
 #' @param type Variable type
 #' @param allow_custom Whether to allow custom input when options exist
@@ -25,7 +25,7 @@
                                    description,
                                    options, allow_skip,
                                    note, write, package,
-                                   user, verbose,
+                                   section, verbose,
                                    type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl = NULL, fn_local = NULL) {
   
   # Display description if available
@@ -37,7 +37,7 @@
   
   # Display current value if available
   current_value <- tryCatch({
-    get_value(var_name, package = package, user = user, yaml_file = fn_local)
+    get_value(var_name, package = package, section = section, yaml_file = fn_local)
   }, error = function(e) NULL)
   
   if (!is.null(current_value)) {
@@ -448,7 +448,7 @@
   }
   
   # Common write and success handling for both paths
-  success <- .write_config_value(var_name, selected_value, write, package, user, verbose, type, fn_tmpl, fn_local)
+  success <- .write_config_value(var_name, selected_value, write, package, section, verbose, type, fn_tmpl, fn_local)
   if (!success) {
     .icy_stop("Failed to write configuration")
   }

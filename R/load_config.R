@@ -20,7 +20,7 @@
 #'   - "local": Read from the user's local configuration file
 #'   - "renviron": Read from .Renviron file
 #'   - "priority": Read with priority order (.Renviron > local config, default)
-#' @param user Character string for the user/section in the YAML file (default: "default").
+#' @param section Character string for the section in the YAML file (default: "default").
 #' @param unset Named list of default values to use for variables that are not set
 #'   in any configuration source. Names should match template variable names.
 #' @param ensure_local Logical. If TRUE (default), creates a local configuration file 
@@ -56,7 +56,7 @@
 #' @export
 load_config <- function(package = get_package_name(),
                         origin = "priority",
-                        user = "default",
+                        section = "default",
                         unset = list(),
                         ensure_local = TRUE,
                         yaml_file = NULL,
@@ -73,7 +73,7 @@ load_config <- function(package = get_package_name(),
     get_config(
       package = package,
       origin = "template",
-      user = "default",
+      section = "default",
       yaml_file = yaml_file,
       case_format = case_format
     )
@@ -126,7 +126,7 @@ load_config <- function(package = get_package_name(),
     get_config(
       package = package,
       origin = origin,
-      user = user,
+      section = section,
       yaml_file = yaml_file,
       case_format = case_format
     )
