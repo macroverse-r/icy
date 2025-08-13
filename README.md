@@ -69,46 +69,44 @@ devtools::install_github("macroverse-r/icy")
 
 ## Configuration System Overview
 
-The `icy` package provides flexible configuration management with multiple optional layers:
+The icy configuration workflow follows three main steps for package developers:
 
-### Core Usage: Template + Local Config (Recommended)
+```
+Step 1: Create Template → Step 2: Choose Strategy → Step 3: Expose to Users
+     (Package Author)         (Package Integration)       (User Interface)
+```
 
-Most packages only need these two layers:
+Workflow Summary:
 
-1. 📋 Template (read-only blueprint) - Package author defines all possible variables
-2. 📝 Local Config (user-customizable) - User's package-specific settings
+1. Template Creation: Define all possible configuration variables in `inst/package_config_template.yml`
+2. Integration Strategy: Choose between file-based config (`get_config()`) or environment variables (`load_config()`)
+3. User Interface: Provide configuration functions using `qconfig()`, `setup()`, or custom wrappers
+
+<details>
+<summary><strong>Quick Start</strong></summary>
 
 ```r
-# get_config() returns a list - does NOT modify R session
-config <- icy::get_config(origin = "local")  # Returns list from local config
-api_key <- config$MY_PACKAGE_API_KEY        # Extract values from returned list
+# 1. Create your template (see Step 1 below for details)
+# inst/mypackage_config_template.yml
+
+# 2. In your R/zzz.R - choose your strategy:
+.onLoad <- function(libname, pkgname) {
+  icy::create_local()  # Creates user's local config from template
+}
+
+# 3. In your package functions - access config:
+get_api_key <- function() {
+  config <- icy::get_config(origin = "local")  # File-based approach
+  return(config$MYPACKAGE_API_KEY)
+}
+
+# 4. Expose configuration to users:
+configure_mypackage <- function() {
+  icy::setup()  # Interactive configuration for all variables
+}
 ```
 
-### Extended Usage: Full Priority System (Optional)
-
-For advanced scenarios, icy supports a four-layer priority system:
-
-1. 🚀 Session Environment - Current R session variables (highest priority)
-2. 🌍 .Renviron - Global user settings (affects all R sessions)  
-3. 📝 Local Config - Package-specific user settings (main layer)
-4. 📋 Template - Package defaults (lowest priority)
-
-```r
-# Advanced workflow with full priority resolution
-config <- icy::get_config(origin = "priority")  # Uses all available sources
-```
-
-### Configuration Flow
-
-```
-Template (inst/package_config_template.yml)
-    ↓ (copied on first use)
-Local Config (~/.local/share/R/package/package_config_local.yml)
-    ↓ (optionally enhanced by)
-.Renviron (~/.Renviron) [optional]
-    ↓ (optionally overridden by)  
-R Session Environment Variables [optional]
-```
+</details>
 
 <details>
 <summary><strong>Step 1: Create Your Package Template</strong></summary>
@@ -176,14 +174,7 @@ configure_package <- function() {
 }
 ```
 
-Both `write_local()` and `write_renviron()` support session synchronization options:
-
-- `sync = "conservative"` (default): Only sync variables already in session environment
-- `sync = "all"`: Sync all written variables to session environment  
-- `sync = "none"`: Skip session synchronization
-- `sync = c("VAR1", "VAR2")`: Sync only specified variables
-
-When syncing, the new written values are placed in the session environment with highest priority, giving immediate effect regardless of .Renviron values.
+Session synchronization: Both `write_local()` and `write_renviron()` support sync options (`"conservative"`, `"all"`, `"none"`, or specific variables). See Pattern 5 for detailed sync behavior and examples.
 
 #### Strategy B: R Session Environment Variables
 When to use: You want traditional `Sys.getenv()` / `Sys.setenv()` behavior.
@@ -279,34 +270,54 @@ final_config <- get_config(package = "dummy", origin = "priority")
 </details>
 
 <details>
-<summary><strong>Pattern 2: "I'm setting up the package for the first time"</strong></summary>
+<summary><strong>Pattern 2: "My users need a smooth first-time setup experience"</strong></summary>
 
-As a package developer, you want to make it easy for users:
+As a package developer, provide an optimal first-time user experience:
 
 ```r
-# User loads your package for the first time
-library(dummy)  # Your .onLoad() runs icy::create_local()
+# Your package's .onLoad() (in R/zzz.R)
+.onLoad <- function(libname, pkgname) {
+  icy::create_local()  # Creates local config from template automatically
+}
 
-# Check what was created
-icy::show_config(package = "dummy")
-# Shows template values because local config was just created
+# Provide a dedicated setup function for users
+setup_dummy <- function() {
+  message("Welcome to dummy package configuration!")
+  
+  # Use icy's interactive setup - walks through all variables
+  icy::setup()
+  
+  message("\nConfiguration complete! Your settings are saved locally.")
+  message("Run show_dummy_config() anytime to view your settings.")
+}
 
-# User customizes their local settings
-icy::write_local(
-  var_list = list(
-    DUMMY_API_KEY = "my-real-api-key-from-vendor",
-    DUMMY_DATA_DIR = "/my/project/data",
-    DUMMY_VERBOSE = FALSE  # I don't need chatty output
-  ),
-  package = "dummy"
-)
+# Individual configuration functions for specific needs
+configure_api_key <- function() {
+  icy::qconfig("DUMMY_API_KEY")  # Interactive with validation
+}
 
-# Settings are now persistent and package-specific
+configure_directories <- function() {
+  icy::qconfig("DUMMY_DATA_DIR", type = "path")  # With directory creation
+}
+
+# Advanced: Targeted setup for critical variables
+setup_essentials <- function() {
+  icy::setup(
+    vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST"),
+    allow_skip = c(FALSE, TRUE)  # API key required, DB host optional
+  )
+}
+
+# Users then have a smooth experience:
+# library(dummy)           # Local config created automatically  
+# setup_dummy()            # Interactive configuration for all variables
+# setup_essentials()       # Just the critical ones
+# configure_api_key()      # Individual settings as needed
 ```
 
-💡 Educational note: Local config changes only affect this package, not other R packages or projects.
+💡 Educational note: Interactive functions like `setup()` and `qconfig()` provide template descriptions, validate inputs, and handle type conversion automatically.
 
-🔧 Developer note: By default, `icy` detects whether you are in an R package or not and behaves accordingly. Specifically, the local config will be saved in the same folder as the template if your R session is in the R package and in the user-specific config folder (e.g., ~/.config/R on Linux) in a standard R session.
+🔧 Developer note: Local configs are saved in user-specific directories (~/.local/share/R/) for installed packages, or alongside templates for development packages.
 
 </details>
 
@@ -341,7 +352,7 @@ Working with development, testing, and production:
 # Development setup
 dev_config <- get_config(
   package = "dummy",
-  user = "development",  # Uses the "development" section from template
+  section = "development",  # Uses the "development" section from template
   origin = "template"
 )
 
@@ -372,45 +383,53 @@ write_renviron(
 <details>
 <summary><strong>Pattern 5: "I made changes and need them active now"</strong></summary>
 
-Configuration changes don't automatically affect the current R session:
+Understanding the difference between file changes and session environment:
 
 ```r
-# Before changes
-api_key_before <- get_config(package = "dummy")$DUMMY_API_KEY
-print(api_key_before)  # "old-key"
+# get_config() ALWAYS reads from files - never affected by session sync
+file_config <- get_config(package = "dummy", origin = "local")
+print(file_config$DUMMY_API_KEY)  # Reads current file value
 
-# Case 1: Default behavior (sync = "conservative")
-# Only syncs variables already in session
+# Sys.getenv() reads from R session environment
+session_value <- Sys.getenv("DUMMY_API_KEY")  # May be different from file
+
+# When you write_local(), the FILE is updated immediately
 write_local(
   var_list = list(DUMMY_API_KEY = "new-key"),
-  package = "dummy"
-  # sync = "conservative" is default
-)
-
-# Session updated immediately for DUMMY_API_KEY (was in session)
-api_key_new <- get_config(package = "dummy")$DUMMY_API_KEY
-print(api_key_new)  # "new-key"
-
-# Case 2: Manual sync control (sync = "none")
-write_local(
-  var_list = list(DUMMY_DEBUG = TRUE),
   package = "dummy",
-  sync = "none"
+  sync = "none"  # Don't sync to session
 )
 
-# Configuration files updated, but R session not yet
-debug_still_old <- get_config(package = "dummy")$DUMMY_DEBUG
-print(debug_still_old)  # Still old value
+# File updated, but session unchanged
+print(get_config(package = "dummy")$DUMMY_API_KEY)  # "new-key" (from file)
+print(Sys.getenv("DUMMY_API_KEY"))                  # Still old value (session)
 
-# Manual sync to make changes active
-icy::sync(package = "dummy", var_names = "DUMMY_DEBUG")
+# Sync options control SESSION environment updates:
+write_local(
+  var_list = list(DUMMY_VERBOSE = TRUE),
+  package = "dummy",
+  sync = "all"  # Update session immediately
+)
 
-# Now it's updated
-debug_new <- get_config(package = "dummy")$DUMMY_DEBUG
-print(debug_new)  # TRUE
+# Now both file and session are updated
+print(get_config(package = "dummy")$DUMMY_VERBOSE)  # TRUE (from file)
+print(Sys.getenv("DUMMY_VERBOSE"))                  # "TRUE" (session)
+
+# Manual session sync when needed
+icy::sync(package = "dummy", var_names = "DUMMY_API_KEY")
+print(Sys.getenv("DUMMY_API_KEY"))  # Now updated in session
 ```
 
-💡 Educational note: Use `sync = "conservative"` for immediate effect on session variables, or `sync = "none"` with manual `icy::sync()` for full control!
+Sync Options Summary:
+
+- `sync = "conservative"` (default): Only sync variables already in session environment
+- `sync = "all"`: Sync all written variables to session environment  
+- `sync = "none"`: Skip session synchronization
+- `sync = c("VAR1", "VAR2")`: Sync only specified variables
+
+When syncing, the new written values are placed in the session environment with highest priority, giving immediate effect regardless of .Renviron values.
+
+💡 Educational note: `get_config()` reads files, `Sys.getenv()` reads session. Sync controls whether changes propagate to session environment.
 
 </details>
 
@@ -468,44 +487,7 @@ Use `toggle_verbose()` and `toggle_debug()` when configuration isn't behaving as
 </details>
 
 <details>
-<summary><strong>Pattern 8: I need interactive configuration for my package users</strong></summary>
-
-Provide your users with guided, interactive configuration using qconfig and setup:
-
-```r
-# Single variable configuration with template integration
-api_key <- icy::qconfig("DUMMY_API_KEY", package = "dummy")
-# Shows template description, options, and handles type conversion
-# Writes to local config by default
-
-# Boolean variables get automatic TRUE/FALSE options
-verbose_setting <- icy::qconfig("DUMMY_VERBOSE", package = "dummy")
-# Automatically detects boolean type and shows TRUE/FALSE choices
-
-# Directory path configuration with validation
-data_dir <- icy::qconfig("DUMMY_DATA_DIR", type = "path", package = "dummy")
-# Validates paths and offers to create missing directories
-
-# Complete package setup workflow
-icy::setup(package = "dummy")
-# Walks through ALL template variables with progress tracking
-# Skips already-configured variables by default
-# Shows configuration summary and next steps
-
-# Targeted setup for specific variables
-icy::setup(
-  package = "dummy",
-  vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST"),
-  allow_skip = c(FALSE, TRUE)  # API key required, DB host optional
-)
-```
-
-Both functions integrate with your template file to show descriptions, validate inputs, and provide sensible defaults.
-
-</details>
-
-<details>
-<summary><strong>Pattern 9: I can't remember the exact config filename</strong> 🆕</summary>
+<summary><strong>Pattern 8: I can't remember the exact config filename</strong> 🆕</summary>
 
 icy provides intelligent fuzzy matching when you're unsure of exact filenames:
 
@@ -525,7 +507,104 @@ This prevents frustrating "file not found" errors when working with multiple con
 
 </details>
 
-## File Naming Conventions
+<details>
+<summary><strong>Pattern 9: I want to expose clean configuration functions to my users</strong> 🆕</summary>
+
+As a package developer, provide user-friendly configuration interfaces:
+
+```r
+# Create simple wrappers for common configuration tasks
+set_api_key <- function(key = NULL) {
+  if (is.null(key)) {
+    # Interactive mode
+    icy::qconfig("MYPACKAGE_API_KEY")
+  } else {
+    # Programmatic mode
+    icy::write_local(list(MYPACKAGE_API_KEY = key))
+    message("API key configured successfully")
+  }
+}
+
+# Complete package setup function
+setup_mypackage <- function(interactive = TRUE) {
+  if (interactive) {
+    message("Welcome to MyPackage configuration!")
+    icy::setup()  # Full interactive setup
+  } else {
+    # Non-interactive: just ensure local config exists
+    icy::create_local()
+  }
+}
+
+# Configuration viewing function
+show_mypackage_config <- function() {
+  icy::show_config(display = "values")
+  message("\nTo modify settings, run setup_mypackage() or set_api_key()")
+}
+
+# Validation function for critical settings
+validate_mypackage_config <- function() {
+  config <- icy::get_config(origin = "priority")
+  
+  # Check required settings
+  if (is.null(config$MYPACKAGE_API_KEY) || config$MYPACKAGE_API_KEY == "your-api-key-here") {
+    stop("API key not configured. Run set_api_key() to configure.")
+  }
+  
+  # Validate settings
+  if (!is.logical(config$MYPACKAGE_VERBOSE)) {
+    warning("MYPACKAGE_VERBOSE should be TRUE or FALSE")
+  }
+  
+  return(config)
+}
+
+# Export these functions in your NAMESPACE for users:
+# export(set_api_key, setup_mypackage, show_mypackage_config)
+```
+
+This pattern gives users simple, package-specific functions while leveraging icy's power behind the scenes.
+
+</details>
+
+## Technical Reference
+
+<details>
+<summary><strong>Priority Resolution System</strong></summary>
+
+icy supports a four-layer priority system for advanced configuration scenarios:
+
+```
+🚀 Session Environment (Sys.getenv)     [Highest Priority]
+           ↓ overrides
+🌍 .Renviron (~/.Renviron)              [Global settings]
+           ↓ overrides  
+📝 Local Config (user customizable)     [Package-specific]
+           ↓ fallback to
+📋 Template (read-only defaults)        [Lowest Priority]
+```
+
+### Two Ways to Access Priority-Resolved Configuration:
+
+```r
+# Option 1: get_config() - Returns merged list (does NOT modify session)
+config <- icy::get_config(origin = "priority")
+api_key <- config$MY_PACKAGE_API_KEY  # Extract from returned list
+
+# Option 2: load_config() - Sets environment variables (modifies session)
+icy::load_config(origin = "priority")  # Uses Sys.setenv() internally
+api_key <- Sys.getenv("MY_PACKAGE_API_KEY")  # Standard R environment access
+```
+
+### When to Use Priority Resolution:
+- When users need global settings that apply across multiple R sessions (.Renviron)
+- When you want session-specific overrides during development
+- When building complex deployment scenarios with environment-specific settings
+
+</details>
+
+<details>
+<summary><strong>File Naming Conventions</strong></summary>
 
 Using the `case_format` argument, several functions of the package supports multiple naming conventions for configuration files:
 
@@ -535,6 +614,8 @@ Using the `case_format` argument, several functions of the package supports mult
 - kebab-case: `package-config-local.yml`
 
 Alternatively, you can also use any other names (e.g., using `yaml_file` with `get_config()` and `fn_local` and `fn_tmpl` with `create_local()`)
+
+</details>
 
 ## License
 
