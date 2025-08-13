@@ -13,6 +13,7 @@
 
 - **Multi-source configuration**: Load from template, local config, or .Renviron files with priority resolution
 - **Interactive configuration**: User-friendly prompts with template integration for easy setup
+- **Smart file pairing**: Intelligent auto-detection and fuzzy matching of template/local file pairs with user confirmation
 - **Type-aware YAML writing**: Automatic type conversion based on template specifications
 - **Flexible file discovery**: Support for different YAML file naming conventions (snake_case, camelCase, PascalCase, kebab-case)
 - **Environment variable management**: Write, update, and erase variables in .Renviron files
@@ -236,7 +237,10 @@ icy::sync(package = "dummy")
 
 ## Usage Patterns: Real-World Scenarios
 
-### Pattern 1: "I want to see what's currently configured"
+Click on any pattern below to expand and learn more about that use case:
+
+<details>
+<summary><strong>Pattern 1: "I want to see what's currently configured"</strong></summary>
 
 Understanding your configuration state is the first step:
 
@@ -261,7 +265,10 @@ final_config <- get_config(package = "dummy", origin = "priority")
 
 **💡 Educational note:** When developing, you can use `show_config()` frequently. It's your "dashboard" for understanding configuration state.
 
-### Pattern 2: "I'm setting up the package for the first time"
+</details>
+
+<details>
+<summary><strong>Pattern 2: "I'm setting up the package for the first time"</strong></summary>
 
 **As a package developer**, you want to make it easy for users:
 
@@ -290,7 +297,10 @@ icy::write_local(
 
 **🔧 Developer note:** By default, `icy` detects with you are in a R package or not and behaves accordingly. Specifically, the local config with be saved in the same folder than the template if you R session is in the R package and in the user-specific config folder (e.g., ~/.config/R on Linux) in a standard R session.
 
-### Pattern 3: "I want global settings across all my projects"
+</details>
+
+<details>
+<summary><strong>Pattern 3: "I want global settings across all my projects"</strong></summary>
 
 Sometimes you want the same setting everywhere:
 
@@ -309,7 +319,10 @@ icy::write_renviron(
 
 **💡 Educational note:** .Renviron changes affect your entire R environment. Use sparingly!
 
-### Pattern 4: "I need different settings for different environments"
+</details>
+
+<details>
+<summary><strong>Pattern 4: "I need different settings for different environments"</strong></summary>
 
 Working with development, testing, and production:
 
@@ -343,7 +356,10 @@ write_renviron(
 
 **💡 Educational note:** Template sections are read-only. User customizations always go in "default" section of local/renviron.
 
-### Pattern 5: "I made changes and need them active now"
+</details>
+
+<details>
+<summary><strong>Pattern 5: "I made changes and need them active now"</strong></summary>
 
 Configuration changes don't automatically affect the current R session:
 
@@ -385,7 +401,10 @@ print(debug_new)  # TRUE
 
 **💡 Educational note:** Use `sync = "conservative"` for immediate effect on session variables, or `sync = "none"` with manual `icy::sync()` for full control!
 
-### Pattern 6: "I want to reset everything back to defaults"
+</details>
+
+<details>
+<summary><strong>Pattern 6: "I want to reset everything back to defaults"</strong></summary>
 
 Sometimes you need to start over:
 
@@ -404,7 +423,10 @@ write_local(var_list = template_defaults, package = "dummy")
 sync(package = "dummy", var_names = var_names)
 ```
 
-### Pattern 7: "I'm debugging configuration issues"
+</details>
+
+<details>
+<summary><strong>Pattern 7: "I'm debugging configuration issues"</strong></summary>
 
 When things aren't working as expected:
 
@@ -431,6 +453,8 @@ print(c(local = local_path, template = template_path))
 ```
 
 **💡 Educational note:** Use `toggle_verbose()` and `toggle_debug()` when configuration isn't behaving as expected or during development phase.
+
+</details>
 
 
 ## File Naming Conventions
