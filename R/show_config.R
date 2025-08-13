@@ -13,6 +13,10 @@
 #'   - "sources": Show variable names, values, and source information (default)
 #'   - "values": Show only variable names and values (no source info)
 #'   - "full": Show detailed information about all configuration sources
+#' @param fn_tmpl Character string with the name or path to a custom YAML template file.
+#'   If NULL (default), uses the standard template file for the package.
+#' @param fn_local Character string with the name or path to a custom local YAML config file.
+#'   If NULL (default), uses the standard local config file for the package.
 #'
 #' @return Invisibly returns a data frame with variable names, values, and sources.
 #'
@@ -35,7 +39,9 @@
 show_config <- function(package = get_package_name(),
                         var_names = NULL,
                         user = "default",
-                        display = "sources") {
+                        display = "sources",
+                        fn_tmpl = NULL,
+                        fn_local = NULL) {
 
   # Get all possible variable names if not specified
   if (is.null(var_names)) {
@@ -44,7 +50,8 @@ show_config <- function(package = get_package_name(),
       {
         names(get_config(package = package,
                          origin = "template",
-                         user = user))
+                         user = user,
+                         yaml_file = fn_tmpl))
       },
       error = function(e) NULL
     )
@@ -52,7 +59,7 @@ show_config <- function(package = get_package_name(),
     # Also get from local config
     local_vars <- tryCatch(
       {
-        names(get_config(package = package, origin = "local", user = user))
+        names(get_config(package = package, origin = "local", user = user, yaml_file = fn_local))
       },
       error = function(e) NULL
     )
@@ -83,7 +90,7 @@ show_config <- function(package = get_package_name(),
 
   local_config <- tryCatch(
     {
-      get_config(package = package, origin = "local", user = user)
+      get_config(package = package, origin = "local", user = user, yaml_file = fn_local)
     },
     error = function(e) list()
   )

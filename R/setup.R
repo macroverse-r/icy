@@ -222,7 +222,7 @@ setup <- function(package = get_package_name(), user = "default", write = "local
     in_show_config <- function() {
       .icy_title("Current Configuration", auto_number = FALSE)
       # Show only the variables that were part of this setup
-      show_config(package = package, var_names = var_names, user = user, display = "sources")
+      show_config(package = package, var_names = var_names, user = user, display = "sources", fn_tmpl = fn_tmpl, fn_local = fn_local)
     }
     in_show_config()
     

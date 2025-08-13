@@ -8,7 +8,9 @@ show_config(
   package = get_package_name(),
   var_names = NULL,
   user = "default",
-  display = "sources"
+  display = "sources",
+  fn_tmpl = NULL,
+  fn_local = NULL
 )
 }
 \arguments{
@@ -25,6 +27,12 @@ If NULL (default), shows all variables defined in the configuration.}
 \item "values": Show only variable names and values (no source info)
 \item "full": Show detailed information about all configuration sources
 }}
+
+\item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
+If NULL (default), uses the standard template file for the package.}
+
+\item{fn_local}{Character string with the name or path to a custom local YAML config file.
+If NULL (default), uses the standard local config file for the package.}
 }
 \value{
 Invisibly returns a data frame with variable names, values, and sources.
