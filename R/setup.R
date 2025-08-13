@@ -73,6 +73,21 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
                   type = NULL, note = NULL, arg_only = FALSE, fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
+  # Early detection and handling of file pairing issues
+  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
+    paired_files <- .validate_file_pairing(
+      fn_tmpl = fn_tmpl,
+      fn_local = fn_local,
+      package = package,
+      section = section,
+      verbose = verbose
+    )
+    
+    # Update file parameters with validated results
+    fn_tmpl <- paired_files$fn_tmpl
+    fn_local <- paired_files$fn_local
+  }
+
   # Get template variables
   template_config <- if (is.null(fn_tmpl)) {
     get_config(package = package, section = section, origin = "template")

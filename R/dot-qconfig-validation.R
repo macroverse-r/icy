@@ -87,13 +87,18 @@ NULL
     .icy_stop("verbose must be TRUE or FALSE")
   }
   
-  # Validate fn_tmpl and fn_local consistency - both or neither
-  if (is.null(fn_tmpl) && !is.null(fn_local)) {
-    .icy_stop("fn_local requires fn_tmpl to be specified. Both parameters must be used together.")
-  }
-  if (!is.null(fn_tmpl) && is.null(fn_local)) {
-    .icy_stop("fn_tmpl requires fn_local to be specified. Both parameters must be used together.")
-  }
+  # Unified file validation and pairing
+  paired_files <- .validate_file_pairing(
+    fn_tmpl = fn_tmpl,
+    fn_local = fn_local,
+    package = package,
+    section = section,
+    verbose = verbose
+  )
+  
+  # Update parameters with validated files
+  fn_tmpl <- paired_files$fn_tmpl
+  fn_local <- paired_files$fn_local
   
   # Validate fn_tmpl and fn_local types if specified
   if (!is.null(fn_tmpl) && (!is.character(fn_tmpl) || length(fn_tmpl) != 1 || nchar(fn_tmpl) == 0)) {
