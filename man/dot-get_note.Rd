@@ -4,12 +4,14 @@
 \alias{.get_note}
 \title{Get Note for Variable from Template}
 \usage{
-.get_note(var_name, package)
+.get_note(var_name, package, fn_tmpl = NULL)
 }
 \arguments{
 \item{var_name}{Variable name}
 
 \item{package}{Package name}
+
+\item{fn_tmpl}{Optional path to custom YAML template file (NULL uses default template)}
 }
 \value{
 Character string with note, or NULL if not found

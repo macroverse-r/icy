@@ -4,7 +4,13 @@
 \alias{.get_template_value}
 \title{Generic Template Config Getter}
 \usage{
-.get_template_value(var_name, package, section, processor = NULL)
+.get_template_value(
+  var_name,
+  package,
+  section,
+  processor = NULL,
+  fn_tmpl = NULL
+)
 }
 \arguments{
 \item{var_name}{Variable name}
@@ -14,6 +20,8 @@
 \item{section}{Config section (e.g., "descriptions", "types", "options", "notes")}
 
 \item{processor}{Optional function to process the retrieved value}
+
+\item{fn_tmpl}{Optional path to custom YAML template file (NULL uses default template)}
 }
 \value{
 Processed config value, or NULL if not found

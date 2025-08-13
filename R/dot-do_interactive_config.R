@@ -17,6 +17,8 @@
 #' @param allow_custom Whether to allow custom input when options exist
 #' @param allow_create_dir Whether to allow directory creation for path types
 #' @param resolve_paths Path resolution mode ("ask", "static", "dynamic")
+#' @param fn_tmpl Optional path to custom YAML template file (NULL uses default template)
+#' @param fn_local Optional path to custom local YAML file (NULL uses default local file)
 #' @return Raw result value or NULL if skipped
 #' @keywords internal
 .do_interactive_config <- function(var_name,
@@ -24,7 +26,7 @@
                                    options, allow_skip,
                                    note, write, package,
                                    user, verbose,
-                                   type, allow_custom, allow_create_dir, resolve_paths) {
+                                   type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl = NULL, fn_local = NULL) {
   
   # Display description if available
   if (!is.null(description) && nchar(description) > 0) {
@@ -35,7 +37,7 @@
   
   # Display current value if available
   current_value <- tryCatch({
-    get_value(var_name, package = package, user = user)
+    get_value(var_name, package = package, user = user, yaml_file = fn_local)
   }, error = function(e) NULL)
   
   if (!is.null(current_value)) {
@@ -81,22 +83,35 @@
     # Manual text input case
     is_manual_input <- TRUE
     
-    if (allow_skip) {
-      prompt_reminder <- "(or press Enter to keep current config)"
-    } else {
-      prompt_reminder <- ""
-    }
-    prompt_text <- paste0("Enter value: ", .apply_color(prompt_reminder, color = "gray"))
-    
-    .icy_text(prompt_text)
-    user_input <- readline()
-    
-    # Handle skip case for manual input
-    if (is.null(.handle_skip_input(user_input, allow_skip))) return(NULL)
-    
-    # Validate input for manual entry
-    if (!allow_skip && nchar(user_input) == 0) {
-      .icy_stop("A value is required")
+    # Input validation loop for manual text input
+    repeat {
+      if (allow_skip) {
+        prompt_reminder <- "(or press Enter to keep current config)"
+      } else {
+        prompt_reminder <- ""
+      }
+      prompt_text <- paste0("Enter value: ", .apply_color(prompt_reminder, color = "gray"))
+      
+      .icy_text(prompt_text)
+      user_input <- readline()
+      
+      # Handle skip case for manual input
+      if (is.null(.handle_skip_input(user_input, allow_skip))) return(NULL)
+      
+      # Validate input for manual entry
+      if (!allow_skip && nchar(user_input) == 0) {
+        .icy_stop("A value is required")
+      }
+      
+      # Validate type if specified
+      validation_error <- .validate_input_type(user_input, type)
+      if (!is.null(validation_error)) {
+        .icy_alert(validation_error)
+        next  # Retry input
+      }
+      
+      # Input is valid, break from loop
+      break
     }
     
     selected_value <- user_input
@@ -207,7 +222,7 @@
       }
       prompt_text <- paste0("Enter your choice: ", .apply_color(prompt_reminder, color = "gray"))
       
-      .icy_text(prompt_text, indentation = FALSE)
+      .icy_text(prompt_text)
       user_input <- readline()
       
       # Handle skip case inside the loop
@@ -246,15 +261,27 @@
             }
           }
         } else {
-          # Regular custom input for non-path types
-          .icy_text("Enter custom value:")
-          custom_input <- readline()
-          
-          # Handle skip for custom input
-          if (is.null(.handle_skip_input(custom_input, allow_skip))) return(NULL)
-          
-          if (!allow_skip && nchar(trimws(custom_input)) == 0) {
-            .icy_stop("A value is required")
+          # Regular custom input for non-path types with validation loop
+          repeat {
+            .icy_text("Enter custom value:")
+            custom_input <- readline()
+            
+            # Handle skip for custom input
+            if (is.null(.handle_skip_input(custom_input, allow_skip))) return(NULL)
+            
+            if (!allow_skip && nchar(trimws(custom_input)) == 0) {
+              .icy_stop("A value is required")
+            }
+            
+            # Validate type if specified
+            validation_error <- .validate_input_type(custom_input, type)
+            if (!is.null(validation_error)) {
+              .icy_alert(validation_error)
+              next  # Retry input
+            }
+            
+            # Input is valid, break from loop
+            break
           }
           
           selected_value <- custom_input
@@ -314,7 +341,7 @@
             .icy_text("")
             
             repeat {
-              .icy_text("Enter your choice: ('s'=static, 'd'=dynamic, or 'b' to go back)", indentation = FALSE)
+              .icy_text("Enter your choice: ('s'=static, 'd'=dynamic, or 'b' to go back)")
               resolution_choice <- trimws(tolower(readline()))
               
               if (resolution_choice == "s") {
@@ -421,7 +448,7 @@
   }
   
   # Common write and success handling for both paths
-  success <- .write_config_value(var_name, selected_value, write, package, user, verbose, type)
+  success <- .write_config_value(var_name, selected_value, write, package, user, verbose, type, fn_tmpl, fn_local)
   if (!success) {
     .icy_stop("Failed to write configuration")
   }

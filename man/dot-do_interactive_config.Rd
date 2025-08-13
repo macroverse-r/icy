@@ -17,7 +17,9 @@
   type,
   allow_custom,
   allow_create_dir,
-  resolve_paths
+  resolve_paths,
+  fn_tmpl = NULL,
+  fn_local = NULL
 )
 }
 \arguments{
@@ -46,6 +48,10 @@
 \item{allow_create_dir}{Whether to allow directory creation for path types}
 
 \item{resolve_paths}{Path resolution mode ("ask", "static", "dynamic")}
+
+\item{fn_tmpl}{Optional path to custom YAML template file (NULL uses default template)}
+
+\item{fn_local}{Optional path to custom local YAML file (NULL uses default local file)}
 }
 \value{
 Raw result value or NULL if skipped

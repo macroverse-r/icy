@@ -18,6 +18,8 @@ qconfig(
   allow_custom = NULL,
   allow_create_dir = TRUE,
   resolve_paths = "ask",
+  fn_tmpl = NULL,
+  fn_local = NULL,
   verbose = FALSE
 )
 }
@@ -64,6 +66,14 @@ When FALSE, non-existent paths result in retry prompts. Only affects "path" type
 Options: "ask" (default, prompt user for static vs dynamic), "static" (resolve immediately),
 "dynamic" (store keywords for runtime resolution). Users can also use suffix notation:
 "8s" for static, "8d" for dynamic, "8" to ask (when resolve_paths="ask").}
+
+\item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
+If NULL (default), uses the standard template file for the package. Must be specified
+together with fn_local when using custom template files.}
+
+\item{fn_local}{Character string with the name or path to a custom local YAML config file.
+If NULL (default), uses the standard local config file for the package. Must be specified
+together with fn_tmpl when using custom configuration files.}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }

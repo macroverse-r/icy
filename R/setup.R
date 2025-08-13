@@ -20,6 +20,12 @@
 #'   If scalar, same note for all. If vector, must match length of variables.
 #' @param arg_only Logical scalar or vector. If TRUE, only uses provided options and ignores template options.
 #'   If scalar, applies to all. If vector, must match length of variables.
+#' @param fn_tmpl Character string with the name or path to a custom YAML template file.
+#'   If NULL (default), uses the standard template file for the package. Must be specified
+#'   together with fn_local when using custom template files.
+#' @param fn_local Character string with the name or path to a custom local YAML config file.
+#'   If NULL (default), uses the standard local config file for the package. Must be specified
+#'   together with fn_tmpl when using custom configuration files.
 #' @param verbose Logical. If TRUE, displays confirmation messages. Defaults to FALSE.
 #'
 #' @return A named list of all configured values (invisible). Values that were 
@@ -65,10 +71,10 @@
 #' @export
 setup <- function(package = get_package_name(), user = "default", write = "local",
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
-                  type = NULL, note = NULL, arg_only = FALSE, verbose = FALSE) {
+                  type = NULL, note = NULL, arg_only = FALSE, fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
   # Get template variables
-  template_config <- get_config(package = package, user = user, origin = "template")
+  template_config <- get_config(package = package, user = user, origin = "template", yaml_file = fn_tmpl)
   if (is.null(template_config) || length(template_config) == 0) {
     .icy_stop(paste0("No template configuration found for package '", package, "'"))
   }
@@ -162,7 +168,9 @@ setup <- function(package = get_package_name(), user = "default", write = "local
         write = write,
         allow_skip = allow_skip_vec[i],
         verbose = verbose,
-        arg_only = arg_only_vec[i]
+        arg_only = arg_only_vec[i],
+        fn_tmpl = fn_tmpl,
+        fn_local = fn_local
       )
       
       # Add optional arguments only if not NA
@@ -180,8 +188,8 @@ setup <- function(package = get_package_name(), user = "default", write = "local
   }
   
   # Summary
-  configured_count <- sum(!sapply(results, is.null))
-  skipped_count <- sum(sapply(results, is.null))
+  configured_count <- sum(!vapply(results, is.null, logical(1)))
+  skipped_count <- sum(vapply(results, is.null, logical(1)))
   
   .icy_text("")
   .icy_title("Setup Complete", auto_number = FALSE)
@@ -198,7 +206,10 @@ setup <- function(package = get_package_name(), user = "default", write = "local
   if (configured_count > 0) {
     .icy_text("")
     write_location <- switch(write,
-      "local" = "local configuration file",
+      "local" = {
+        # Get the actual path of the local config file that was written to
+        find_local(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)
+      },
       "renviron" = "~/.Renviron file", 
       "session" = "current R session",
       write

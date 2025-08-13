@@ -11,7 +11,9 @@
   package,
   user,
   verbose,
-  type = NULL
+  type = NULL,
+  fn_tmpl = NULL,
+  fn_local = NULL
 )
 }
 \arguments{
@@ -28,6 +30,10 @@
 \item{verbose}{Whether to show confirmation messages}
 
 \item{type}{Expected type for the variable (NULL means no conversion)}
+
+\item{fn_tmpl}{Optional path to custom YAML template file (NULL uses default template)}
+
+\item{fn_local}{Optional path to custom local YAML file (NULL uses default local file)}
 }
 \value{
 TRUE if successful, FALSE otherwise

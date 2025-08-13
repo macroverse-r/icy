@@ -36,6 +36,12 @@
 #'   Options: "ask" (default, prompt user for static vs dynamic), "static" (resolve immediately),
 #'   "dynamic" (store keywords for runtime resolution). Users can also use suffix notation:
 #'   "8s" for static, "8d" for dynamic, "8" to ask (when resolve_paths="ask").
+#' @param fn_tmpl Character string with the name or path to a custom YAML template file.
+#'   If NULL (default), uses the standard template file for the package. Must be specified
+#'   together with fn_local when using custom template files.
+#' @param fn_local Character string with the name or path to a custom local YAML config file.
+#'   If NULL (default), uses the standard local config file for the package. Must be specified
+#'   together with fn_tmpl when using custom configuration files.
 #' @param verbose Logical. If TRUE, displays confirmation messages. Defaults to FALSE.
 #'
 #' @return The selected option value, or NULL if allow_skip = TRUE and user skips.
@@ -107,23 +113,20 @@
 qconfig <- function(var_name, package = get_package_name(), user = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
                     note = NULL, arg_only = FALSE, write = "local", type = NULL, 
-                    allow_custom = NULL, allow_create_dir = TRUE, resolve_paths = "ask", verbose = FALSE) {
+                    allow_custom = NULL, allow_create_dir = TRUE, resolve_paths = "ask", 
+                    fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
-  # Display section header
-  # .icy_title(var_name)
-
-  # .icy_title("test second title same level")
   # Validate and normalize parameters
   params <- .validate_and_normalize_qconfig_params(
     var_name, package, user, description, options, allow_skip, 
-    note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, verbose
+    note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
   )
   
   # Read template data using modular functions 
-  template_description <- .get_description(params$var_name, params$package)
-  template_type <- .get_type(params$var_name, params$package)  # Already normalized boolean→logical
-  template_options <- .get_option(params$var_name, params$package)
-  template_note <- .get_note(params$var_name, params$package)
+  template_description <- .get_description(params$var_name, params$package, params$fn_tmpl)
+  template_type <- .get_type(params$var_name, params$package, params$fn_tmpl)  # Already normalized boolean→logical
+  template_options <- .get_option(params$var_name, params$package, params$fn_tmpl)
+  template_note <- .get_note(params$var_name, params$package, params$fn_tmpl)
   
   # Determine final values (argument > template > none)
   final_description <- if (!is.null(params$description)) params$description else template_description
@@ -157,7 +160,7 @@ qconfig <- function(var_name, package = get_package_name(), user = "default",
   raw_result <- .do_interactive_config(params$var_name, final_description, final_options, 
                                        params$allow_skip, final_note, params$write, 
                                        params$package, params$user, params$verbose, final_type, 
-                                       final_allow_custom, params$allow_create_dir, params$resolve_paths)
+                                       final_allow_custom, params$allow_create_dir, params$resolve_paths, params$fn_tmpl, params$fn_local)
   
   # Convert to proper type and return
   return(.convert_return_value(raw_result, final_type))

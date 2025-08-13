@@ -18,6 +18,8 @@
   allow_custom,
   allow_create_dir,
   resolve_paths,
+  fn_tmpl,
+  fn_local,
   verbose
 )
 }
@@ -47,6 +49,10 @@
 \item{allow_create_dir}{Allow directory creation flag}
 
 \item{resolve_paths}{Path resolution mode}
+
+\item{fn_tmpl}{Optional path to custom YAML template file}
+
+\item{fn_local}{Optional path to custom local YAML file}
 
 \item{verbose}{Verbose flag}
 }

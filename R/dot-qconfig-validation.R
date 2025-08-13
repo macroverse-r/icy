@@ -24,10 +24,12 @@ NULL
 #' @param allow_custom Allow custom input flag
 #' @param allow_create_dir Allow directory creation flag
 #' @param resolve_paths Path resolution mode
+#' @param fn_tmpl Optional path to custom YAML template file
+#' @param fn_local Optional path to custom local YAML file
 #' @param verbose Verbose flag
 #' @return List of validated and normalized parameters
 #' @keywords internal
-.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, verbose) {
+.validate_and_normalize_qconfig_params <- function(var_name, package, user, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose) {
   # Input validation
   if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
     .icy_stop("var_name must be a non-empty character string")
@@ -85,6 +87,22 @@ NULL
     .icy_stop("verbose must be TRUE or FALSE")
   }
   
+  # Validate fn_tmpl and fn_local consistency - both or neither
+  if (is.null(fn_tmpl) && !is.null(fn_local)) {
+    .icy_stop("fn_local requires fn_tmpl to be specified. Both parameters must be used together.")
+  }
+  if (!is.null(fn_tmpl) && is.null(fn_local)) {
+    .icy_stop("fn_tmpl requires fn_local to be specified. Both parameters must be used together.")
+  }
+  
+  # Validate fn_tmpl and fn_local types if specified
+  if (!is.null(fn_tmpl) && (!is.character(fn_tmpl) || length(fn_tmpl) != 1 || nchar(fn_tmpl) == 0)) {
+    .icy_stop("fn_tmpl must be a non-empty character string")
+  }
+  if (!is.null(fn_local) && (!is.character(fn_local) || length(fn_local) != 1 || nchar(fn_local) == 0)) {
+    .icy_stop("fn_local must be a non-empty character string")
+  }
+  
   # Normalize type parameter (boolean logic moved to main function)
   if (!is.null(type) && type %in% c("boolean", "bool")) {
     type <- "logical"
@@ -107,6 +125,8 @@ NULL
     allow_custom = allow_custom,
     allow_create_dir = allow_create_dir,
     resolve_paths = resolve_paths,
+    fn_tmpl = fn_tmpl,
+    fn_local = fn_local,
     verbose = verbose
   ))
 }

@@ -18,10 +18,12 @@ NULL
 #' @param user User section
 #' @param verbose Whether to show confirmation messages
 #' @param type Expected type for the variable (NULL means no conversion)
+#' @param fn_tmpl Optional path to custom YAML template file (NULL uses default template)
+#' @param fn_local Optional path to custom local YAML file (NULL uses default local file)
 #'
 #' @return TRUE if successful, FALSE otherwise
 #' @keywords internal
-.write_config_value <- function(var_name, value, write, package, user, verbose, type = NULL) {
+.write_config_value <- function(var_name, value, write, package, user, verbose, type = NULL, fn_tmpl = NULL, fn_local = NULL) {
   tryCatch({
     switch(write,
       "local" = {
@@ -29,7 +31,7 @@ NULL
         # Convert value based on type information
         converted_value <- .convert_by_type(value, type)
         config_list[[var_name]] <- converted_value
-        write_local(var_list = config_list, package = package, user = user)
+        write_local(var_list = config_list, package = package, user = user, fn_tmpl = fn_tmpl, fn_local = fn_local)
         if (verbose) {
           .icy_success(paste0("Written ", var_name, " to local config"))
         }

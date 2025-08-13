@@ -11,6 +11,7 @@ write_local(
   fn_local = NULL,
   create_if_missing = TRUE,
   case_format = "snake_case",
+  fn_tmpl = NULL,
   verbose = FALSE,
   sync = "conservative"
 )
@@ -31,6 +32,9 @@ from template if it doesn't exist. If FALSE, returns an error if file is missing
 
 \item{case_format}{Character string indicating the case format to use for filenames.
 Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+
+\item{fn_tmpl}{Character string with the name or path to a custom YAML template file
+for validation. If NULL (default), uses the standard template file for the package.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 

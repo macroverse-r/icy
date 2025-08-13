@@ -122,7 +122,7 @@ NULL
       .icy_text("")
       
       repeat {
-        .icy_text("Enter your choice: (0-1)", indentation = FALSE)
+        .icy_text("Enter your choice: (0-1)")
         user_choice <- readline()
         
         # Handle empty input (default to 0/no)

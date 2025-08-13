@@ -14,6 +14,8 @@
 #'   from template if it doesn't exist. If FALSE, returns an error if file is missing.
 #' @param case_format Character string indicating the case format to use for filenames.
 #'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param fn_tmpl Character string with the name or path to a custom YAML template file
+#'   for validation. If NULL (default), uses the standard template file for the package.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #' @param sync Character or logical. Controls session environment synchronization:
 #'   - "conservative" (default): only sync variables already in session
@@ -50,6 +52,7 @@ write_local <- function(var_list,
                         fn_local = NULL,
                         create_if_missing = TRUE,
                         case_format = "snake_case",
+                        fn_tmpl = NULL,
                         verbose = FALSE,
                         sync = "conservative") {
   # Input validation
@@ -66,7 +69,7 @@ write_local <- function(var_list,
   
   # Validate against template configuration
   template_config <- tryCatch({
-    get_config(package = package, origin = "template", user = user)
+    get_config(package = package, origin = "template", user = user, yaml_file = fn_tmpl)
   }, error = function(e) {
     .icy_stop(paste0("Could not read template configuration: ", e$message))
   })
