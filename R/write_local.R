@@ -126,7 +126,7 @@ write_local <- function(var_list,
   }
   
   # Call the generalized YAML writer
-  write_config_yaml(
+  .write_config_yaml(
     var_list = var_list,
     file_path = local_path,
     package = package,

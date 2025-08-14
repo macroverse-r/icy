@@ -4,7 +4,7 @@
 \alias{.icy_debug}
 \title{Debug message}
 \usage{
-.icy_debug(msg, ...)
+.icy_debug(msg, debug = get_config(package = "icy")[["ICY_DEBUG"]], ...)
 }
 \arguments{
 \item{msg}{Debug message}

@@ -124,7 +124,6 @@ NULL
 #' Falls back to bold formatting with dashes.
 #'
 #' @param msg Title text
-#' @param level_adjust Numeric adjustment for contextual title level positioning (default 0)
 #' @param ... Additional arguments passed to underlying functions
 .icy_title <- function(msg, level_adjust = 0, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
@@ -165,9 +164,9 @@ NULL
 #'
 #' @param msg Debug message
 #' @param ... Additional arguments passed to underlying functions
-.icy_debug <- function(msg, ...) {
+.icy_debug <- function(msg, debug = get_config(package = "icy")[["ICY_DEBUG"]], ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_debug(msg, ...)
+    contextual::cx_debug(msg, debug = debug, ...)
   } else {
     message("[DEBUG] ", msg)
   }

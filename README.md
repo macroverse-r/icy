@@ -44,7 +44,6 @@ devtools::install_github("macroverse-r/icy")
 | `load_config()` | Modify R session environment using `Sys.setenv()`. Sets environment variables directly in current session |
 | `get_package_name()` | Automatically detect calling package name using stack inspection. Enables package-agnostic function calls |
 | `get_package_path()` | Get package directory path. Context-aware: returns development path in package directories, installation path otherwise |
-| `get_renviron_path()` | Get path to user's .Renviron file for global environment variable management |
 
 ### Configuration Management
 | Function | Description |

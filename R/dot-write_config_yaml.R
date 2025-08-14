@@ -28,7 +28,7 @@
 #' @details
 #' This function is the core YAML writer for the icy ecosystem, designed to handle:
 #' \itemize{
-#'   \item Local configuration files (via write_local2)
+#'   \item Local configuration files (via write_local)
 #'   \item Template files (via create_template/update_template)
 #'   \item Any package-related YAML configuration
 #' }
@@ -36,26 +36,8 @@
 #' It integrates with icy's validation system and properly handles NULL values
 #' by preserving them as `~` in the YAML output.
 #'
-#' @examples
-#' \dontrun{
-#' # Write to a local configuration
-#' write_config_yaml(
-#'   var_list = list(API_KEY = "secret", DEBUG = TRUE),
-#'   file_path = find_local("mypackage"),
-#'   package = "mypackage"
-#' )
-#'
-#' # Write a template with header
-#' write_config_yaml(
-#'   var_list = list(VAR1 = NULL, VAR2 = "default"),
-#'   file_path = "inst/mypackage_config_template.yml",
-#'   package = "mypackage",
-#'   custom_header = c("# MyPackage Configuration Template", "")
-#' )
-#' }
-#'
-#' @export
-write_config_yaml <- function(var_list,
+#' @keywords internal
+.write_config_yaml <- function(var_list,
                               file_path,
                               package = get_package_name(verbose = FALSE),
                               section = "default",

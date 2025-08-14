@@ -87,7 +87,7 @@
 write_renviron <- function(var_list,
                            package = get_package_name(),
                            section = "default",
-                           renviron_path = get_renviron_path(),
+                           renviron_path = path.expand("~/.Renviron"),
                            overwrite = TRUE,
                            validate = TRUE,
                            allowed_vars = NULL,

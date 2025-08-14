@@ -282,7 +282,7 @@ get_config <- function(package = get_package_name(),
                                  section = "default",
                                  verbose = FALSE) {
   # Get path to .Renviron
-  renviron_path <- get_renviron_path()
+  renviron_path <- path.expand("~/.Renviron")
 
   if (!file.exists(renviron_path)) {
     return(list()) # Return empty list if no .Renviron exists

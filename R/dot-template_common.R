@@ -227,7 +227,7 @@ NULL
     }
     
     # Write using unified write_config_yaml approach
-    write_config_yaml(
+    .write_config_yaml(
       var_list = template_data,
       file_path = file_path,
       package = package,

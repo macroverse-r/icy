@@ -59,7 +59,10 @@ show_config <- function(package = get_package_name(),
     # Also get from local config
     local_vars <- tryCatch(
       {
-        names(get_config(package = package, origin = "local", section = section, yaml_file = fn_local))
+        names(get_config(package = package,
+                         origin = "local",
+                         section = section,
+                         yaml_file = fn_local))
       },
       error = function(e) NULL
     )
@@ -71,6 +74,7 @@ show_config <- function(package = get_package_name(),
       return(invisible(NULL))
     }
   }
+  
 
   # Build status information
   status_df <- data.frame(
