@@ -591,6 +591,16 @@ icy supports a four-layer priority system for advanced configuration scenarios:
 config <- icy::get_config(origin = "priority")
 api_key <- config$MY_PACKAGE_API_KEY  # Extract from returned list
 
+# Getting a specific value (common patterns):
+api_key <- icy::get_config(origin = "priority")$MY_PACKAGE_API_KEY  # Direct access
+debug_mode <- icy::get_config(origin = "local")$MY_PACKAGE_DEBUG    # From local only
+
+# With error checking for missing values:
+config <- icy::get_config(origin = "priority")
+if (is.null(config$MY_PACKAGE_API_KEY)) {
+  stop("API key not configured. Run setup() to configure.")
+}
+
 # Option 2: load_config() - Sets environment variables (modifies session)
 icy::load_config(origin = "priority")  # Uses Sys.setenv() internally
 api_key <- Sys.getenv("MY_PACKAGE_API_KEY")  # Standard R environment access
