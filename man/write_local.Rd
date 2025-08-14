@@ -20,7 +20,8 @@ write_local(
 \item{var_list}{Named list of environment variables to write. Names should be the
 environment variable names and values should be the values to set.}
 
-\item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()}
+to detect the calling package.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
@@ -36,7 +37,8 @@ Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 \item{fn_tmpl}{Character string with the name or path to a custom YAML template file
 for validation. If NULL (default), uses the standard template file for the package.}
 
-\item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation.
+Defaults to FALSE.}
 
 \item{sync}{Character or logical. Controls session environment synchronization:
 \itemize{
@@ -51,8 +53,23 @@ Invisibly returns NULL on success.
 }
 \description{
 Writes or updates environment variables in the local configuration YAML file.
-This function modifies the user's local configuration, preserving the YAML
-structure and comments where possible.
+This is a streamlined implementation that delegates the actual YAML writing
+to the generalized write_config_yaml function. Only variables defined in the
+template are kept; any other variables in the local config are removed to
+ensure consistency with the template.
+}
+\details{
+This function enforces template consistency by:
+\itemize{
+\item Validating all variables against the template
+\item Removing any variables not defined in the template
+\item Ordering variables to match the template order
+\item Preserving NULL values as defined in the template
+}
+
+Variables not in the template will be silently removed from the local
+configuration to prevent undefined variables from accumulating. This ensures
+local configs remain clean subsets of the template definition.
 }
 \examples{
 \dontrun{
@@ -66,7 +83,7 @@ write_local(
   package = "mypackage"
 )
 
-# Write to a specific user section
+# Write to a specific section
 write_local(
   var_list = list(API_URL = "https://prod.api.com"),
   package = "mypackage",
