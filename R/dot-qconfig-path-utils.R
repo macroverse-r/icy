@@ -116,16 +116,18 @@ NULL
       # Interactive prompt for directory creation
       .icy_text("")
       .icy_alert(paste0("Path does not exist: ", cleaned_path))
-      .icy_text("Do you want to create it?")
-      .icy_text("  1: Yes, create directory")
-      .icy_text("  0: No, try different path (or Enter)")
-      .icy_text("")
+      options <- c(
+        "Yes, create directory",
+        "No, try different path (or Enter)"
+      )
+      .icy_text(.apply_color("Select an option:", color = "brown"))
+      .icy_bullets(options, bullet = "1:")
+      .icy_text(paste0("Enter your choice: ", .apply_color("(1-2, or press Enter to skip)", color = "gray")))
       
       repeat {
-        .icy_text("Enter your choice: (0-1)")
         user_choice <- readline()
         
-        # Handle empty input (default to 0/no)
+        # Handle empty input (default to option 2/no)
         if (nchar(trimws(user_choice)) == 0) {
           return(list(path = NULL, success = FALSE, message = ""))
         }
@@ -148,12 +150,12 @@ NULL
             .icy_alert(paste0("Could not create directory: ", cleaned_path))
             return(list(path = NULL, success = FALSE, message = ""))
           }
-        } else if (!is.na(choice) && choice == 0) {
+        } else if (!is.na(choice) && choice == 2) {
           # User chose not to create
           return(list(path = NULL, success = FALSE, message = ""))
         } else {
           # Invalid selection
-          .icy_alert("Invalid selection. Please enter 0 or 1.")
+          .icy_alert("Invalid selection. Please enter 1 or 2.")
         }
       }
     } else {

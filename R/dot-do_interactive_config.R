@@ -123,9 +123,9 @@
     is_manual_input <- FALSE
     
     if (allow_custom) {
-      .icy_text("Select an option or enter custom value:")
+      .icy_text(.apply_color("Select an option or enter custom value:", color = "brown"))
     } else {
-      .icy_text("Select an option:")
+      .icy_text(.apply_color("Select an option:", color = "brown"))
     }
     
     # Format options with current value indicator and resolved paths

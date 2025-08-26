@@ -111,7 +111,6 @@ update_template <- function(action = NULL,
   # Handle interactive mode
   if (interactive) {
     if (verbose) {
-      .icy_title("Interactive Template Update")
       .icy_text(paste0("Template: ", .apply_color(template_path, "yellow")))
     }
     
@@ -145,10 +144,6 @@ update_template <- function(action = NULL,
       auto_save = FALSE
     )
     
-    if (verbose) {
-      .icy_success("Template updated successfully")
-    }
-    
     return(invisible(TRUE))
   }
   
@@ -158,8 +153,7 @@ update_template <- function(action = NULL,
   # Handle NULL or missing action parameter
   if (is.null(action)) {
     if (verbose) {
-      .icy_text("No action specified. Entering interactive mode...")
-      .icy_text("")
+      .icy_text(.apply_color("No action specified. Entering interactive mode...", color = "gray"))
     }
     # Recursively call with interactive = TRUE
     return(update_template(

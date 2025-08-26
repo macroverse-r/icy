@@ -74,7 +74,7 @@ create_template <- function(package = get_package_name(verbose = FALSE),
     if (is.null(overwrite)) {
       .icy_text("")
       .icy_alert(paste0("Template file already exists: ", template_path))
-      .icy_text("Overwrite existing file? (Y/n):")
+      .icy_text(paste0("Overwrite existing file? ", .apply_color("(Y/n)", "gray")))
       response <- tolower(trimws(readline()))
       overwrite <- (response != "n" && response != "no")
     }
@@ -90,7 +90,7 @@ create_template <- function(package = get_package_name(verbose = FALSE),
   if (!dir.exists(template_dir)) {
     if (verbose) {
       .icy_text("")
-      .icy_text(paste0("Create directory ", .apply_color(template_dir, "yellow"), "? (Y/n):"))
+      .icy_text(paste0("Create directory ", .apply_color(template_dir, "yellow"), "? ", .apply_color("(Y/n)", "gray")))
       response <- tolower(trimws(readline()))
       if (response == "n" || response == "no") {
         .icy_alert("Template creation cancelled")

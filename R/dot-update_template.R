@@ -21,20 +21,12 @@
   )))
   is_empty_template <- length(all_vars) == 0
   
-  if (verbose) {
-    .icy_title("Interactive Template Editor")
-    
-    if (is_empty_template) {
-      .icy_text("Template is empty")
-      .icy_text("")
-      .icy_title("Add New Variable", level_adjust = -1)
-    } else {
-      .show_template_summary(template_data, show_values = TRUE, show_metadata = TRUE)
-    }
-  }
-  
   # For empty templates, start directly with adding a variable
   if (is_empty_template) {
+    if (verbose) {
+      empty_msg <- "Template is empty... (automatically opting for adding a first variable)"
+      .icy_text(.apply_color(empty_msg, "gray"))
+    }
     template_data <- .add_variable_interactive(template_data, package, verbose, debug)
     # Auto-save after adding the first variable
     if (!is.null(template_file) && file.exists(template_file)) {
@@ -48,7 +40,6 @@
     }
   }
   
-  # Then proceed with the normal interactive loop
   repeat {
     .icy_text("")
     action <- .select_template_action()
@@ -62,10 +53,7 @@
       "update" = .update_variable_interactive(template_data, package, verbose),
       "remove" = .remove_variable_interactive(template_data, verbose),
       "section" = .manage_sections_interactive(template_data, package, verbose),
-      "preview" = {
-        .show_template_summary(template_data, show_values = TRUE, show_metadata = TRUE)
-        template_data
-      },
+      "view" = .show_template_summary(template_data, show_values = TRUE, show_metadata = TRUE),
       template_data
     )
     
@@ -90,34 +78,33 @@
 #' Select Template Action
 #' @keywords internal
 .select_template_action <- function() {
-  .icy_title("Template Actions", level_adjust = -1)
-  
   actions <- c(
     "Add new variable",
     "Update existing variable", 
     "Remove variable",
     "Manage sections",
-    "Preview template",
+    "View template",
     "Finish & Exit"
   )
   
-  .icy_bullets(actions, bullet = "1.")
-  
-  .icy_text("")
-  .icy_text("Select action (1-6):")
+  .icy_text(.apply_color("-----------", color = "gray"))
+  .icy_text(.apply_color("Select an option:", color = "brown"))
+  .icy_bullets(actions, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color("(1-6)", color = "gray")))
   
   repeat {
     choice <- trimws(readline())
     
     if (choice %in% as.character(1:6)) {
+      .icy_text(.apply_color("-----------", color = "gray"))
       return(switch(choice,
-        "1" = "add",
-        "2" = "update", 
-        "3" = "remove",
-        "4" = "section",
-        "5" = "preview",
-        "6" = "done"
-      ))
+                    "1" = "add",
+                    "2" = "update", 
+                    "3" = "remove",
+                    "4" = "section",
+                    "5" = "view",
+                    "6" = "done"
+                    ))
     } else if (tolower(choice) %in% c("q", "quit", "exit")) {
       return("quit")
     }
@@ -130,7 +117,7 @@
 #' Add Variable Interactive
 #' @keywords internal
 .add_variable_interactive <- function(template_data, package, verbose = TRUE, debug = FALSE) {
-  .icy_title("Add New Variable", level_adjust = -1)
+  .icy_title("Adding New Variable", level_adjust = -3)
   
   # Get existing variables
   existing_vars <- unique(unlist(lapply(
@@ -160,7 +147,7 @@
 #' Update Variable Interactive
 #' @keywords internal
 .update_variable_interactive <- function(template_data, package, verbose = TRUE) {
-  .icy_title("Update Variable", level_adjust = -1)
+  .icy_title("Updating Variable", level_adjust = -3)
   
   # Get all variables
   all_vars <- unique(unlist(lapply(
@@ -174,11 +161,9 @@
   }
   
   # Select variable
-  .icy_text("Select variable to update:")
-  .icy_bullets(all_vars, bullet = "1.")
-  
-  .icy_text("")
-  .icy_text(paste0("Enter number (1-", length(all_vars), "):"))
+  .icy_text(.apply_color("Select variable to update:", color = "brown"))
+  .icy_bullets(all_vars, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(all_vars), ")"), color = "gray")))
   
   repeat {
     choice <- trimws(readline())
@@ -219,10 +204,10 @@
   
   # Update each field
   .icy_text("")
-  .icy_text("Update fields (press Enter to keep current value):")
+  .icy_text(paste0("Update fields ", .apply_color("(press Enter to keep current value)", "gray"), ":"))
   
   # Update default value
-  .icy_text(paste0("New default value (Enter for no change, 'NULL' for null):"))
+  .icy_text(paste0("New default value ", .apply_color("(Enter for no change, 'NULL' for null)", "gray"), ":"))
   new_default <- trimws(readline())
   
   if (nchar(new_default) > 0) {
@@ -243,7 +228,7 @@
   }
   
   # Update description
-  .icy_text("New description (Enter for no change):")
+  .icy_text(paste0("New description ", .apply_color("(Enter for no change)", "gray"), ":"))
   new_desc <- trimws(readline())
   
   if (nchar(new_desc) > 0) {
@@ -254,7 +239,7 @@
   }
   
   # Update type
-  .icy_text("New type (Enter for no change):")
+  .icy_text(paste0("New type ", .apply_color("(Enter for no change)", "gray"), ":"))
   new_type <- trimws(readline())
   
   if (nchar(new_type) > 0) {
@@ -275,7 +260,7 @@
 #' Remove Variable Interactive
 #' @keywords internal
 .remove_variable_interactive <- function(template_data, verbose = TRUE) {
-  .icy_title("Remove Variable", level_adjust = -1)
+  .icy_title("Removing Variable", level_adjust = -3)
   
   # Get all variables
   all_vars <- unique(unlist(lapply(
@@ -289,11 +274,9 @@
   }
   
   # Select variable
-  .icy_text("Select variable to remove:")
-  .icy_bullets(all_vars, bullet = "1.")
-  
-  .icy_text("")
-  .icy_text(paste0("Enter number (1-", length(all_vars), "):"))
+  .icy_text(.apply_color("Select variable to remove:", color = "brown"))
+  .icy_bullets(all_vars, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(all_vars), ")"), color = "gray")))
   
   repeat {
     choice <- trimws(readline())
@@ -310,7 +293,7 @@
   # Confirm removal
   .icy_text("")
   .icy_alert(paste0("This will remove '", var_name, "' from all sections"))
-  .icy_text("Are you sure? (Y/n):")
+  .icy_text(paste0("Are you sure? ", .apply_color("(Y/n)", "gray")))
   
   response <- tolower(trimws(readline()))
   if (response == "n" || response == "no") {
@@ -359,7 +342,7 @@
 #' Manage Sections Interactive
 #' @keywords internal
 .manage_sections_interactive <- function(template_data, package, verbose = TRUE) {
-  .icy_title("Manage Sections", level_adjust = -1)
+  .icy_title("Managing Sections", level_adjust = -3)
   
   # Show current sections
   data_sections <- setdiff(names(template_data), 
@@ -384,10 +367,9 @@
     "Back"
   )
   
-  .icy_bullets(section_actions, bullet = "1.")
-  
-  .icy_text("")
-  .icy_text("Select action (1-4):")
+  .icy_text(.apply_color("Select section action:", color = "brown"))
+  .icy_bullets(section_actions, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color("(1-4)", color = "gray")))
   
   choice <- trimws(readline())
   
@@ -406,7 +388,7 @@
 #' @keywords internal
 .add_section_interactive <- function(template_data, verbose = TRUE) {
   .icy_text("")
-  .icy_text("Enter new section name (e.g., production, development):")
+  .icy_text(paste0("Enter new section name ", .apply_color("(e.g., production, development)", "gray"), ":"))
   section_name <- trimws(readline())
   
   if (nchar(section_name) == 0) {
@@ -425,7 +407,7 @@
   # Ask if user wants to copy variables from default
   if ("default" %in% names(template_data) && length(template_data$default) > 0) {
     .icy_text("")
-    .icy_text("Copy variables from default section? (Y/n):")
+    .icy_text(paste0("Copy variables from default section? ", .apply_color("(Y/n)", "gray")))
     response <- tolower(trimws(readline()))
     
     if (response != "n" && response != "no") {
@@ -457,14 +439,14 @@
   
   # Select source section
   .icy_text("")
-  .icy_text("Select source section to copy from:")
-  for (i in seq_along(data_sections)) {
-    n_vars <- length(template_data[[data_sections[i]]])
-    .icy_text(paste0("  ", i, ") ", data_sections[i], " (", n_vars, " variables)"))
-  }
-  
-  .icy_text("")
-  .icy_text(paste0("Enter number (1-", length(data_sections), "):"))
+  # Create formatted section list with variable counts
+  section_list <- sapply(data_sections, function(section) {
+    n_vars <- length(template_data[[section]])
+    paste0(section, " (", n_vars, " variables)")
+  })
+  .icy_text(.apply_color("Select source section to copy from:", color = "brown"))
+  .icy_bullets(section_list, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(data_sections), ")"), color = "gray")))
   
   repeat {
     choice <- trimws(readline())
@@ -491,7 +473,7 @@
   
   # Select or create target section
   .icy_text("")
-  .icy_text("Enter target section name (or press Enter to create new section):")
+  .icy_text(paste0("Enter target section name ", .apply_color("(or press Enter to create new section)", "gray"), ":"))
   target_section <- trimws(readline())
   
   if (nchar(target_section) == 0) {
@@ -535,19 +517,15 @@
     return(template_data)
   }
   
-  .icy_text("")
-  .icy_text("Select section to remove:")
-  
   # Create formatted section list with variable counts
   section_list <- sapply(data_sections, function(section) {
     n_vars <- length(template_data[[section]])
     paste0(section, " (", n_vars, " variables)")
   })
   
-  .icy_bullets(section_list, bullet = "1.")
-  
-  .icy_text("")
-  .icy_text(paste0("Enter number (1-", length(data_sections), "):"))
+  .icy_text(.apply_color("Select section to remove:", color = "brown"))
+  .icy_bullets(section_list, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(data_sections), ")"), color = "gray")))
   
   repeat {
     choice <- trimws(readline())
@@ -564,7 +542,7 @@
   # Confirm
   .icy_text("")
   .icy_alert(paste0("Remove section '", section_name, "'?"))
-  .icy_text("Are you sure? (Y/n):")
+  .icy_text(paste0("Are you sure? ", .apply_color("(Y/n)", "gray")))
   
   response <- tolower(trimws(readline()))
   if (response == "n" || response == "no") {

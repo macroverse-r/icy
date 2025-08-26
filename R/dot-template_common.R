@@ -23,7 +23,7 @@ NULL
   
   # Get variable name
   .icy_text("")
-  .icy_text("Variable name (e.g., API_KEY, DEBUG_MODE):")
+  .icy_text(paste0("Variable name ", .apply_color("(e.g., API_KEY, DEBUG_MODE)", "gray"), ":"))
   var_name <- trimws(readline())
   
   if (nchar(var_name) == 0) {
@@ -50,7 +50,7 @@ NULL
   if (!startsWith(var_name, paste0(package_upper, "_"))) {
     suggested_name <- paste0(package_upper, "_", var_name)
     .icy_text(paste0("Suggested name: ", .apply_color(suggested_name, "yellow")))
-    .icy_text("Use suggested name? (Y/n):")
+    .icy_text(paste0("Use suggested name? ", .apply_color("(Y/n)", "gray")))
     response <- tolower(trimws(readline()))
     if (response != "n" && response != "no") {
       var_name <- suggested_name
@@ -59,7 +59,7 @@ NULL
   
   # Get default value
   .icy_text(paste0("Default value for ", .apply_color(var_name, "cyan"), 
-                  " (or press Enter for NULL):"))
+                  " ", .apply_color("(or press Enter for NULL)", "gray"), ":"))
   default_value <- trimws(readline())
   
   if (nchar(default_value) == 0) {
@@ -71,7 +71,7 @@ NULL
   
   # Get description (required)
   repeat {
-    .icy_text(paste0("Description for ", .apply_color(var_name, "cyan"), " (required):"))
+    .icy_text(paste0("Description for ", .apply_color(var_name, "cyan"), " ", .apply_color("(required)", "gray"), ":"))
     description <- trimws(readline())
     
     if (nchar(description) > 0) {
@@ -83,16 +83,15 @@ NULL
   # Detect and confirm type
   detected_type <- .detect_variable_type(default_value)
   .icy_text(paste0("Detected type: ", .apply_color(detected_type, "yellow")))
-  .icy_text("Is this correct? (Y/n):")
+  .icy_text(paste0("Is this correct? ", .apply_color("(Y/n)", "gray")))
   response <- tolower(trimws(readline()))
   
   if (response == "n" || response == "no") {
     # Let user select type
     types <- c("character", "logical", "integer", "numeric", "path")
-    .icy_text("Select type:")
-    for (i in seq_along(types)) {
-      .icy_text(paste0("  ", i, ") ", types[i]))
-    }
+    .icy_text(.apply_color("Select type:", color = "brown"))
+    .icy_bullets(types, bullet = "1:")
+    .icy_text(paste0("Enter your choice: ", .apply_color("(1-5)", color = "gray")))
     
     repeat {
       selection <- trimws(readline())
@@ -109,13 +108,13 @@ NULL
   }
   
   # Optional note
-  .icy_text(paste0("Note for ", .apply_color(var_name, "cyan"), " (optional, press Enter to skip):"))
+  .icy_text(paste0("Note for ", .apply_color(var_name, "cyan"), " ", .apply_color("(optional, press Enter to skip)", "gray"), ":"))
   note <- trimws(readline())
   
   # Options for choice variables (skip for logical)
   options <- NULL
   if (type != "logical") {
-    .icy_text(paste0("Valid options (comma-separated, or press Enter to skip):"))
+    .icy_text(paste0("Valid options ", .apply_color("(comma-separated, or press Enter to skip)", "gray"), ":"))
     options_input <- trimws(readline())
     
     if (nchar(options_input) > 0) {
@@ -240,8 +239,6 @@ NULL
     # Handle messaging
     if (verbose && !auto_save) {
       .icy_success(paste0("Template written: ", file_path))
-    } else if (verbose && auto_save && interactive()) {
-      .icy_text(.apply_color("(Auto-saved)", "gray"))
     }
     
     return(invisible(TRUE))
@@ -311,11 +308,16 @@ NULL
     # For create mode, use streamlined prompting after first variable
     if (var_count > 1 && mode == "create") {
       .icy_text("")
-      .icy_text("Add another variable? (Y/n):")
+      .icy_text(paste0("Add another variable? ", .apply_color("(Y/n)", "gray")))
       response <- tolower(trimws(readline()))
       if (response == "n" || response == "no") {
         break
       }
+    }
+    
+    # Add section title for each variable in create mode
+    if (verbose && mode == "create") {
+      .icy_title(paste0("Variable ", var_count), level_adjust = 0)
     }
     
     tryCatch({

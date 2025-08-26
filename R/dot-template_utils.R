@@ -74,6 +74,8 @@
                                   show_values = TRUE,
                                   show_metadata = TRUE) {
   
+  .icy_title("Template Overview", level_adjust = -3)
+  
   # Separate sections
   sections <- .separate_yaml_sections(template_data)
   
@@ -150,11 +152,9 @@
       length(sections$metadata$options)
     )
     
-    if (metadata_count > 0) {
-      .icy_text("")
-      .icy_text(paste0("Metadata entries: ", metadata_count))
-    }
   }
+
+  return(invisible(template_data))
 }
 
 
