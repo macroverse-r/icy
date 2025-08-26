@@ -35,9 +35,12 @@ searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
 \item{inherit}{Character string specifying a section to inherit values from.
-If NULL (default), no inheritance is applied. When specified, values from the
+If NULL (default), the function checks for an "inherit" section in the template
+that defines automatic inheritance relationships. When explicitly specified,
+this parameter overrides any template-defined inheritance. Values from the
 inherit section are used as defaults, which can be overridden by the main section.
-Only works with "template" and "local" origins.}
+Inheritance is recursive - if A inherits from B and B inherits from C, A will
+receive values from both B and C. Only works with "template" and "local" origins.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 }

@@ -56,6 +56,26 @@
   .get_template_value(var_name, package, "notes", fn_tmpl = fn_tmpl)
 }
 
+#' Normalize Type Names
+#'
+#' Normalizes type names to standard R types.
+#' Converts: boolean/bool -> logical, dir -> path
+#'
+#' @param type Character string with type name
+#' @return Normalized type name
+#' @keywords internal
+.normalize_type <- function(type) {
+  if (!is.null(type)) {
+    if (type %in% c("boolean", "bool")) {
+      return("logical")
+    }
+    if (type == "dir") {
+      return("path")
+    }
+  }
+  return(type)
+}
+
 #' Get Type for Variable from Template
 #'
 #' Handles boolean → logical and dir → path normalization.
@@ -66,20 +86,7 @@
 #' @return Character string with normalized type, or NULL if not found
 #' @keywords internal
 .get_type <- function(var_name, package, fn_tmpl = NULL) {
-  # Processor to normalize types
-  normalize_type <- function(type) {
-    if (!is.null(type)) {
-      if (type %in% c("boolean", "bool")) {
-        return("logical")
-      }
-      if (type == "dir") {
-        return("path")
-      }
-    }
-    return(type)
-  }
-  
-  .get_template_value(var_name, package, "types", normalize_type, fn_tmpl = fn_tmpl)
+  .get_template_value(var_name, package, "types", processor = .normalize_type, fn_tmpl = fn_tmpl)
 }
 
 #' Get Option for Variable from Template

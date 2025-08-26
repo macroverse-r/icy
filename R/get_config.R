@@ -16,11 +16,19 @@
 #' @param case_format Character string indicating the case format to use for
 #'   searching the YAML file if `yaml_file` is NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-#' @param inherit Character string specifying a section to inherit values from.
-#'   If NULL (default), no inheritance is applied. When specified, values from the
-#'   inherit section are used as defaults, which can be overridden by the main section.
+#' @param inherit Character string specifying a section to inherit values from, or
+#'   0 to explicitly disable inheritance. If NULL (default), the function checks 
+#'   for an "inherit" section in the template that defines automatic inheritance 
+#'   relationships. When explicitly specified, this parameter overrides any 
+#'   template-defined inheritance. Use 0 to disable inheritance even if defined 
+#'   in template. Values from the inherit section are used as defaults, which can 
+#'   be overridden by the main section. Inheritance is recursive - if A inherits 
+#'   from B and B inherits from C, A will receive values from both B and C. 
 #'   Only works with "template" and "local" origins.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
+#' @param validate Logical. If TRUE (default), validates the template structure
+#'   and checks for issues like circular inheritance. Set to FALSE to skip 
+#'   validation for performance or to work with templates that have known issues.
 #'
 #' @return Named list of environment variable configurations.
 #'
@@ -47,7 +55,8 @@ get_config <- function(package = get_package_name(),
                        yaml_file = NULL,
                        case_format = "snake_case",
                        inherit = NULL,
-                       verbose = FALSE) {
+                       verbose = FALSE,
+                       validate = TRUE) {
 
   # Validate origin parameter
   valid_origins <- c("template", "local", "renviron", "priority")
@@ -56,6 +65,26 @@ get_config <- function(package = get_package_name(),
       paste0("Invalid origin: ", origin),
       "i" = paste0("Valid origins are: ", paste(valid_origins, collapse = ", "))
     ))
+  }
+  
+  # Validate template if enabled and using template/local origin
+  if (origin %in% c("template", "local") && validate) {
+    # Quick validation for performance
+    validation <- validate_template(
+      package = package,
+      yaml_file = yaml_file,
+      case_format = case_format,
+      verbose = FALSE,
+      quick = TRUE
+    )
+    
+    if (!validation$valid && length(validation$errors) > 0) {
+      .icy_stop(c(
+        "Template validation failed",
+        "x" = validation$errors[1],
+        "i" = "Use validate = FALSE to skip validation"
+      ))
+    }
   }
 
   # Route to appropriate internal function based on origin
@@ -91,42 +120,58 @@ get_config <- function(package = get_package_name(),
     )
   }
 
-  # Apply inheritance if requested
-  if (!is.null(inherit) && inherit != section && origin %in% c("template", "local")) {
+  # Check for explicit no-inheritance directive
+  if (!is.null(inherit) && (inherit == 0 || inherit == "0")) {
     if (verbose) {
+      .icy_text("Inheritance explicitly disabled")
+    }
+    return(config)
+  }
+
+  # Check for automatic inheritance from template if inherit is NULL
+  if (is.null(inherit) && origin %in% c("template", "local")) {
+    template_inherit <- .get_inherit_config(
+      package = package,
+      yaml_file = yaml_file,
+      case_format = case_format
+    )
+    
+    if (!is.null(template_inherit)) {
+      resolved_inherit <- .resolve_inheritance(
+        section = section,
+        inherit_map = template_inherit,
+        verbose = verbose
+      )
+      
+      if (!is.null(resolved_inherit)) {
+        inherit <- resolved_inherit
+        if (verbose) {
+          .icy_text(paste0("Using template-defined inheritance: ", section, " inherits from ", inherit))
+        }
+      }
+    }
+  }
+  
+  # Apply inheritance if requested or auto-detected
+  if (!is.null(inherit) && inherit != section && origin %in% c("template", "local")) {
+    if (verbose && !exists("resolved_inherit", inherits = FALSE)) {
       .icy_text(paste0("Applying inheritance from section '", inherit, "' to '", section, "'"))
     }
     
-    # Get the base config to inherit from
-    base_config <- if (origin == "template") {
-      .get_config_template(
-        package = package,
-        section = inherit,
-        yaml_file = yaml_file,
-        case_format = case_format,
-        verbose = FALSE
-      )
-    } else {
-      .get_config_local(
-        package = package,
-        section = inherit,
-        yaml_file = yaml_file,
-        case_format = case_format,
-        verbose = FALSE
-      )
-    }
+    # Get the base config to inherit from - RECURSIVELY to get full inheritance chain
+    # Pass inherit=NULL to let it auto-detect from template but prevent infinite recursion
+    base_config <- get_config(
+      package = package,
+      origin = origin,
+      section = inherit,
+      yaml_file = yaml_file,
+      case_format = case_format,
+      inherit = NULL,  # Critical: prevent double-processing of inheritance
+      verbose = FALSE
+    )
     
-    # Merge configs: current config values override base config
-    # Only add keys from base that don't exist in current config
-    # We need to preserve NULL values, so we'll build a new list
-    merged_config <- config
-    for (key in names(base_config)) {
-      if (!(key %in% names(config))) {
-        # Use single bracket assignment to preserve NULL values
-        merged_config[key] <- base_config[key]
-      }
-    }
-    config <- merged_config
+    # Apply inheritance using dedicated function
+    config <- .apply_inheritance(config, base_config)
   }
 
   return(config)
@@ -417,5 +462,156 @@ get_config <- function(package = get_package_name(),
     # Return the original string if we can't convert
     return(value)
   }
+}
+
+
+#' Get inheritance configuration from template
+#'
+#' Reads the inherit section from a template YAML file if it exists.
+#'
+#' @param package Package name
+#' @param yaml_file Optional path to YAML file
+#' @param case_format Case format for file searching
+#' @return Named list mapping sections to their parent sections, or NULL if no inherit section
+#' @keywords internal
+.get_inherit_config <- function(package, yaml_file = NULL, case_format = "snake_case") {
+  # Find the template file
+  if (is.null(yaml_file)) {
+    template_file <- find_template(
+      package = package,
+      case_format = case_format
+    )
+    
+    if (is.null(template_file)) {
+      return(NULL)  # No template, no inheritance
+    }
+  } else {
+    template_file <- yaml_file
+    # Check if file exists
+    if (!file.exists(template_file)) {
+      # Try pattern matching
+      matching_files <- .find_matching_pattern(
+        package = package,
+        fn_pattern = template_file,
+        user_dir = FALSE,
+        verbose = FALSE
+      )
+      
+      if (length(matching_files) == 0) {
+        return(NULL)  # File not found
+      }
+      template_file <- matching_files[1]
+    }
+  }
+  
+  # Read template and extract inherit section
+  tryCatch({
+    template_data <- yaml::read_yaml(template_file)
+    
+    if ("inherit" %in% names(template_data)) {
+      return(template_data$inherit)
+    }
+    
+    return(NULL)
+  }, error = function(e) {
+    return(NULL)  # Error reading file, no inheritance
+  })
+}
+
+
+#' Resolve inheritance chain for a section
+#'
+#' Resolves the inheritance chain for a given section, handling recursive
+#' inheritance and circular dependency detection.
+#'
+#' @param section The section to resolve inheritance for
+#' @param inherit_map Named list mapping sections to their parents
+#' @param max_depth Maximum depth for inheritance chain (prevents infinite loops)
+#' @param verbose Show messages
+#' @return The section to inherit from, or NULL if no inheritance
+#' @keywords internal
+.resolve_inheritance <- function(section, inherit_map, max_depth = 10, verbose = FALSE) {
+  if (is.null(inherit_map) || !is.list(inherit_map)) {
+    return(NULL)
+  }
+  
+  # Check if section has inheritance defined
+  if (!(section %in% names(inherit_map))) {
+    return(NULL)
+  }
+  
+  inherit_from <- inherit_map[[section]]
+  
+  # Handle NULL or ~ in YAML (no inheritance)
+  if (is.null(inherit_from)) {
+    return(NULL)
+  }
+  
+  # Track visited sections to detect circular dependencies
+  visited <- c(section)
+  current <- inherit_from
+  depth <- 1
+  
+  # Follow the inheritance chain
+  while (!is.null(current) && current %in% names(inherit_map) && depth < max_depth) {
+    if (current %in% visited) {
+      if (verbose) {
+        .icy_warn(paste0("Circular inheritance detected: ", 
+                        paste(c(visited, current), collapse = " -> ")))
+      }
+      return(inherit_from)  # Return the direct parent only
+    }
+    
+    visited <- c(visited, current)
+    next_inherit <- inherit_map[[current]]
+    
+    if (is.null(next_inherit)) {
+      # Reached the end of chain
+      return(inherit_from)  # Return the direct parent
+    }
+    
+    current <- next_inherit
+    depth <- depth + 1
+  }
+  
+  if (depth >= max_depth && verbose) {
+    .icy_warn(paste0("Maximum inheritance depth reached for section: ", section))
+  }
+  
+  return(inherit_from)
+}
+
+
+#' Apply configuration inheritance
+#'
+#' Merges two configurations with the child config values overriding parent values.
+#' Properly handles NULL values.
+#'
+#' @param config The child configuration
+#' @param base_config The parent configuration to inherit from
+#' @return Merged configuration with child values taking precedence
+#' @keywords internal
+.apply_inheritance <- function(config, base_config) {
+  if (is.null(base_config) || length(base_config) == 0) {
+    return(config)
+  }
+  
+  if (is.null(config) || length(config) == 0) {
+    return(base_config)
+  }
+  
+  # Merge configs: current config values override base config
+  # Only add keys from base that don't exist in current config
+  # We need to preserve NULL values, so we'll build a new list
+  merged_config <- config
+  
+  for (key in names(base_config)) {
+    if (!(key %in% names(config))) {
+      # Use single bracket assignment to preserve NULL values
+      merged_config[key] <- base_config[key]
+    }
+  }
+  
+  return(merged_config)
 }
 

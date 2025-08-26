@@ -1,73 +1,5 @@
 
 
-#' Validate Template Structure
-#'
-#' Validates that a template has the required structure and sections.
-#'
-#' @param template_data Template data structure to validate
-#' @param require_default Logical; if TRUE, requires a default section
-#' @return List with 'valid' (logical) and 'message' (character) components
-#' @keywords internal
-.validate_template_structure <- function(template_data, require_default = TRUE) {
-  if (!is.list(template_data)) {
-    return(list(
-      valid = FALSE,
-      message = "Template data must be a list"
-    ))
-  }
-  
-  # Check for required default section
-  if (require_default && !"default" %in% names(template_data)) {
-    return(list(
-      valid = FALSE,
-      message = "Template missing required 'default' section"
-    ))
-  }
-  
-  # Check metadata sections have matching variables
-  data_sections <- setdiff(
-    names(template_data),
-    c("descriptions", "types", "notes", "options")
-  )
-  
-  if (length(data_sections) > 0) {
-    all_vars <- unique(unlist(lapply(
-      template_data[data_sections],
-      names
-    )))
-    
-    # Check descriptions
-    if ("descriptions" %in% names(template_data)) {
-      orphan_descriptions <- setdiff(names(template_data$descriptions), all_vars)
-      if (length(orphan_descriptions) > 0) {
-        return(list(
-          valid = FALSE,
-          message = paste0(
-            "Descriptions exist for non-existent variables: ",
-            paste(orphan_descriptions, collapse = ", ")
-          )
-        ))
-      }
-    }
-    
-    # Check types
-    if ("types" %in% names(template_data)) {
-      orphan_types <- setdiff(names(template_data$types), all_vars)
-      if (length(orphan_types) > 0) {
-        return(list(
-          valid = FALSE,
-          message = paste0(
-            "Types defined for non-existent variables: ",
-            paste(orphan_types, collapse = ", ")
-          )
-        ))
-      }
-    }
-  }
-  
-  return(list(valid = TRUE, message = ""))
-}
-
 
 #' Validate Variable Name
 #'
@@ -255,9 +187,9 @@
 }
 
 
-#' Validate Template Variables
+#' Validate Variables Against Template
 #'
-#' Validates a set of variables against a template.
+#' Validates a set of variables against a template section.
 #'
 #' @param var_list List of variables to validate
 #' @param template_data Template data structure
@@ -265,10 +197,10 @@
 #' @param check_types Logical; if TRUE, validates types
 #' @return List with 'valid', 'invalid_vars', and 'message' components
 #' @keywords internal
-.validate_template_variables <- function(var_list, 
-                                        template_data,
-                                        section = "default",
-                                        check_types = TRUE) {
+.validate_variables_against_template <- function(var_list, 
+                                                template_data,
+                                                section = "default",
+                                                check_types = TRUE) {
   
   # Get template variables
   if (section %in% names(template_data)) {
