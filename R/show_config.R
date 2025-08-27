@@ -111,9 +111,9 @@ show_config <- function(package = get_package_name(),
       status_df$value[i] <- session_value
       # Determine if session value matches a config source
       if (var %in% names(renviron_config) && !is.null(renviron_config[[var]]) && renviron_config[[var]] == session_value) {
-        status_df$source[i] <- ".Renviron"
+        status_df$source[i] <- "session = .Renviron"
       } else if (var %in% names(local_config) && !is.null(local_config[[var]]) && local_config[[var]] == session_value) {
-        status_df$source[i] <- "local config"
+        status_df$source[i] <- "session = local"
       } else {
         status_df$source[i] <- "session"
       }
@@ -169,6 +169,8 @@ show_config <- function(package = get_package_name(),
         ".Renviron" = "magenta",
         "local config" = "blue", 
         "session" = "yellow",
+        "session = .Renviron" = "yellow",
+        "session = local" = "yellow",
         "not set" = "gray",
         "cyan"  # default
       )
@@ -255,7 +257,9 @@ show_config <- function(package = get_package_name(),
     source_color <- switch(source,
       ".Renviron" = "magenta",
       "local config" = "blue",
-      "session" = "yellow", 
+      "session" = "yellow",
+      "session = .Renviron" = "yellow",
+      "session = local" = "yellow",
       "not set" = "gray",
       "cyan"
     )

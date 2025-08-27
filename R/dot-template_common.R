@@ -217,11 +217,11 @@ NULL
   
   tryCatch({
     # Generate or preserve header
-    header <- if (file.exists(file_path)) {
-      # Preserve existing header
+    header <- if (file.exists(file_path) && auto_save) {
+      # Preserve existing header only for auto-save operations
       .read_template_header(file_path)
     } else {
-      # Generate new header
+      # Generate new header for initial creation or overwrite
       .generate_template_header(package)
     }
     

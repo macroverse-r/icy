@@ -6,7 +6,7 @@
 \usage{
 validate_template(
   package = get_package_name(verbose = FALSE),
-  yaml_file = NULL,
+  fn_tmpl = NULL,
   case_format = "snake_case",
   verbose = TRUE,
   quick = FALSE
@@ -15,11 +15,11 @@ validate_template(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}.}
 
-\item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
-the function will search for the appropriate file.}
+\item{fn_tmpl}{Character string with custom filename for the template.
+If NULL, uses the default naming pattern based on case_format.}
 
 \item{case_format}{Character string indicating the case format to use for
-searching the YAML file. Options are: "snake_case" (default), "camelCase",
+searching the template file. Options are: "snake_case" (default), "camelCase",
 "PascalCase", "kebab-case".}
 
 \item{verbose}{Logical. If TRUE (default), displays validation progress and results.}
@@ -50,6 +50,9 @@ result <- validate_template()
 
 # Validate specific package
 result <- validate_template("mypackage")
+
+# Validate custom template file
+result <- validate_template(fn_tmpl = "my_custom_template")
 
 # Quick validation (only critical checks)
 result <- validate_template(quick = TRUE)

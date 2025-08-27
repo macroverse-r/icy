@@ -16,7 +16,7 @@
   
   # Check if template is empty (new template)
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("descriptions", "types", "notes", "options")],
+    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
     names
   )))
   is_empty_template <- length(all_vars) == 0
@@ -121,7 +121,7 @@
   
   # Get existing variables
   existing_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("descriptions", "types", "notes", "options")],
+    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
     names
   )))
   
@@ -151,7 +151,7 @@
   
   # Get all variables
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("descriptions", "types", "notes", "options")],
+    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
     names
   )))
   
@@ -264,7 +264,7 @@
   
   # Get all variables
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("descriptions", "types", "notes", "options")],
+    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
     names
   )))
   
@@ -306,7 +306,7 @@
   
   # Remove from data sections
   for (section in names(template_data)) {
-    if (!section %in% c("descriptions", "types", "notes", "options")) {
+    if (!section %in% c("types", "descriptions", "notes", "options", "inheritances")) {
       if (var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL
         removed_from <- c(removed_from, section)
@@ -315,7 +315,7 @@
   }
   
   # Remove from metadata
-  metadata_sections <- c("descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   for (section in metadata_sections) {
     if (section %in% names(template_data) && 
         var_name %in% names(template_data[[section]])) {
@@ -346,7 +346,7 @@
   
   # Show current sections
   data_sections <- setdiff(names(template_data), 
-                          c("descriptions", "types", "notes", "options"))
+                          c("types", "descriptions", "notes", "options", "inheritances"))
   
   .icy_text("Current sections:")
   if (length(data_sections) > 0) {
@@ -364,12 +364,13 @@
     "Add new section",
     "Copy variables to section", 
     "Remove section",
+    "Configure section inheritance",
     "Back"
   )
   
   .icy_text(.apply_color("Select section action:", color = "brown"))
   .icy_bullets(section_actions, bullet = "1:")
-  .icy_text(paste0("Enter your choice: ", .apply_color("(1-4)", color = "gray")))
+  .icy_text(paste0("Enter your choice: ", .apply_color("(1-5)", color = "gray")))
   
   choice <- trimws(readline())
   
@@ -377,6 +378,7 @@
     "1" = .add_section_interactive(template_data, verbose),
     "2" = .copy_to_section_interactive(template_data, verbose),
     "3" = .remove_section_interactive(template_data, verbose),
+    "4" = .configure_inheritance_interactive(template_data, verbose),
     template_data
   )
   
@@ -421,6 +423,49 @@
     .icy_success(paste0("Created empty section '", section_name, "'"))
   }
   
+  # Ask about inheritance
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  other_sections <- setdiff(names(template_data), c(section_name, metadata_sections))
+  
+  if (length(other_sections) > 0) {
+    .icy_text("")
+    .icy_text(paste0("Should '", section_name, "' inherit from another section? ", 
+                    .apply_color("(Y/n)", "gray")))
+    response <- tolower(trimws(readline()))
+    
+    if (response != "n" && response != "no") {
+      .icy_text(.apply_color("Select parent section:", color = "brown"))
+      .icy_bullets(other_sections, bullet = "1:")
+      .icy_text(paste0("Enter your choice: ", 
+                      .apply_color(paste0("(1-", length(other_sections), ")"), color = "gray")))
+      
+      repeat {
+        choice <- trimws(readline())
+        choice_num <- suppressWarnings(as.integer(choice))
+        
+        if (!is.na(choice_num) && choice_num >= 1 && choice_num <= length(other_sections)) {
+          parent_section <- other_sections[choice_num]
+          
+          # Initialize inheritances section if needed
+          if (!"inheritances" %in% names(template_data)) {
+            template_data$inheritances <- list()
+          }
+          
+          # Check for circular dependency
+          if (!.would_create_circular_dependency(template_data$inheritances, section_name, parent_section)) {
+            template_data$inheritances[[section_name]] <- parent_section
+            .icy_text(paste0("  → Set inheritance: '", section_name, "' inherits from '", parent_section, "'"))
+          } else {
+            .icy_alert("Cannot set inheritance: would create circular dependency")
+          }
+          break
+        }
+        
+        .icy_alert("Please enter a valid number")
+      }
+    }
+  }
+  
   return(template_data)
 }
 
@@ -430,7 +475,7 @@
 .copy_to_section_interactive <- function(template_data, verbose = TRUE) {
   # Get all available sections
   data_sections <- setdiff(names(template_data), 
-                          c("descriptions", "types", "notes", "options"))
+                          c("types", "descriptions", "notes", "options", "inheritances"))
   
   if (length(data_sections) == 0) {
     .icy_alert("No sections available to copy from")
@@ -557,6 +602,274 @@
   }
   
   return(template_data)
+}
+
+
+#' Configure Section Inheritance Interactive
+#' @keywords internal
+.configure_inheritance_interactive <- function(template_data, verbose = TRUE) {
+  # Get data sections (exclude metadata)
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  data_sections <- setdiff(names(template_data), metadata_sections)
+  
+  if (length(data_sections) <= 1) {
+    .icy_alert("Need at least 2 sections to configure inheritance")
+    return(template_data)
+  }
+  
+  # Show current inheritance if it exists
+  if ("inheritances" %in% names(template_data) && length(template_data$inheritances) > 0) {
+    .icy_text("")
+    .icy_text(.apply_color("Current inheritance relationships:", "cyan"))
+    for (child in names(template_data$inheritances)) {
+      parent <- template_data$inheritances[[child]]
+      if (!is.null(parent)) {
+        .icy_text(paste0("  ", child, " → ", parent))
+      }
+    }
+  } else {
+    .icy_text("")
+    .icy_text("No inheritance relationships currently defined")
+  }
+  
+  .icy_text("")
+  
+  # Menu options
+  inheritance_actions <- c(
+    "Set inheritance for section",
+    "Remove inheritance for section", 
+    "Clear all inheritance",
+    "View inheritance chain",
+    "Back"
+  )
+  
+  .icy_text(.apply_color("Select inheritance action:", color = "brown"))
+  .icy_bullets(inheritance_actions, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color("(1-5)", color = "gray")))
+  
+  choice <- trimws(readline())
+  
+  template_data <- switch(choice,
+    "1" = .set_inheritance_interactive(template_data, data_sections, verbose),
+    "2" = .remove_inheritance_interactive(template_data, data_sections, verbose),
+    "3" = .clear_inheritance_interactive(template_data, verbose),
+    "4" = .view_inheritance_chain_interactive(template_data, data_sections, verbose),
+    template_data
+  )
+  
+  return(template_data)
+}
+
+
+#' Set Inheritance for Section Interactive
+#' @keywords internal
+.set_inheritance_interactive <- function(template_data, data_sections, verbose = TRUE) {
+  .icy_text("")
+  .icy_text(.apply_color("Select section to configure:", color = "brown"))
+  .icy_bullets(data_sections, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(data_sections), ")"), color = "gray")))
+  
+  repeat {
+    choice <- trimws(readline())
+    choice_num <- suppressWarnings(as.integer(choice))
+    
+    if (!is.na(choice_num) && choice_num >= 1 && choice_num <= length(data_sections)) {
+      child_section <- data_sections[choice_num]
+      break
+    }
+    
+    .icy_alert("Please enter a valid number")
+  }
+  
+  # Select parent section
+  parent_options <- c(setdiff(data_sections, child_section), "Remove inheritance")
+  
+  .icy_text("")
+  .icy_text(.apply_color(paste0("Select parent section for '", child_section, "':"), color = "brown"))
+  .icy_bullets(parent_options, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(parent_options), ")"), color = "gray")))
+  
+  repeat {
+    choice <- trimws(readline())
+    choice_num <- suppressWarnings(as.integer(choice))
+    
+    if (!is.na(choice_num) && choice_num >= 1 && choice_num <= length(parent_options)) {
+      if (choice_num == length(parent_options)) {
+        # Remove inheritance
+        if ("inheritances" %in% names(template_data)) {
+          template_data$inheritances[[child_section]] <- NULL
+        }
+        if (verbose) {
+          .icy_success(paste0("Removed inheritance for section '", child_section, "'"))
+        }
+        return(template_data)
+      } else {
+        parent_section <- parent_options[choice_num]
+        break
+      }
+    }
+    
+    .icy_alert("Please enter a valid number")
+  }
+  
+  # Initialize inherit section if needed
+  if (!"inheritances" %in% names(template_data)) {
+    template_data$inheritances <- list()
+  }
+  
+  # Check for circular dependency
+  if (.would_create_circular_dependency(template_data$inheritances, child_section, parent_section)) {
+    .icy_alert("This would create a circular dependency. Please choose a different parent.")
+    return(template_data)
+  }
+  
+  # Set inheritance
+  template_data$inheritances[[child_section]] <- parent_section
+  
+  if (verbose) {
+    .icy_success(paste0("Set inheritance: '", child_section, "' → '", parent_section, "'"))
+  }
+  
+  return(template_data)
+}
+
+
+#' Remove Inheritance for Section Interactive
+#' @keywords internal
+.remove_inheritance_interactive <- function(template_data, data_sections, verbose = TRUE) {
+  if (!"inheritances" %in% names(template_data) || length(template_data$inheritances) == 0) {
+    .icy_alert("No inheritance relationships to remove")
+    return(template_data)
+  }
+  
+  inherited_sections <- names(template_data$inheritances)
+  
+  .icy_text("")
+  .icy_text(.apply_color("Select section to remove inheritance from:", color = "brown"))
+  .icy_bullets(inherited_sections, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(inherited_sections), ")"), color = "gray")))
+  
+  repeat {
+    choice <- trimws(readline())
+    choice_num <- suppressWarnings(as.integer(choice))
+    
+    if (!is.na(choice_num) && choice_num >= 1 && choice_num <= length(inherited_sections)) {
+      section_name <- inherited_sections[choice_num]
+      break
+    }
+    
+    .icy_alert("Please enter a valid number")
+  }
+  
+  template_data$inheritances[[section_name]] <- NULL
+  
+  if (verbose) {
+    .icy_success(paste0("Removed inheritance for section '", section_name, "'"))
+  }
+  
+  return(template_data)
+}
+
+
+#' Clear All Inheritance Interactive
+#' @keywords internal
+.clear_inheritance_interactive <- function(template_data, verbose = TRUE) {
+  if (!"inheritances" %in% names(template_data) || length(template_data$inheritances) == 0) {
+    .icy_alert("No inheritance relationships to clear")
+    return(template_data)
+  }
+  
+  .icy_text("")
+  .icy_alert("Clear ALL inheritance relationships?")
+  .icy_text(paste0("Are you sure? ", .apply_color("(Y/n)", "gray")))
+  
+  response <- tolower(trimws(readline()))
+  
+  if (response != "n" && response != "no") {
+    template_data$inheritances <- list()
+    if (verbose) {
+      .icy_success("Cleared all inheritance relationships")
+    }
+  }
+  
+  return(template_data)
+}
+
+
+#' View Inheritance Chain Interactive
+#' @keywords internal
+.view_inheritance_chain_interactive <- function(template_data, data_sections, verbose = TRUE) {
+  if (!"inheritances" %in% names(template_data) || length(template_data$inheritances) == 0) {
+    .icy_alert("No inheritance relationships defined")
+    return(template_data)
+  }
+  
+  .icy_text("")
+  .icy_text(.apply_color("Select section to view inheritance chain:", color = "brown"))
+  .icy_bullets(data_sections, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color(paste0("(1-", length(data_sections), ")"), color = "gray")))
+  
+  repeat {
+    choice <- trimws(readline())
+    choice_num <- suppressWarnings(as.integer(choice))
+    
+    if (!is.na(choice_num) && choice_num >= 1 && choice_num <= length(data_sections)) {
+      section_name <- data_sections[choice_num]
+      break
+    }
+    
+    .icy_alert("Please enter a valid number")
+  }
+  
+  # Build inheritance chain
+  chain <- c(section_name)
+  current <- section_name
+  visited <- character()
+  
+  while (current %in% names(template_data$inheritances) && 
+         !is.null(template_data$inheritances[[current]])) {
+    
+    if (current %in% visited) {
+      chain <- c(chain, "⟲ CIRCULAR")
+      break
+    }
+    
+    visited <- c(visited, current)
+    current <- template_data$inheritances[[current]]
+    chain <- c(chain, current)
+  }
+  
+  .icy_text("")
+  .icy_text(paste0("Inheritance chain for '", section_name, "':"))
+  .icy_text(paste0("  ", paste(chain, collapse = " → ")))
+  .icy_text("")
+  .icy_text(paste0("Press Enter to continue..."))
+  readline()
+  
+  return(template_data)
+}
+
+
+#' Check if Setting Inheritance Would Create Circular Dependency
+#' @keywords internal
+.would_create_circular_dependency <- function(inherit_map, child, parent) {
+  # Create temporary map with the new relationship
+  temp_map <- inherit_map
+  temp_map[[child]] <- parent
+  
+  # Check if parent eventually inherits from child
+  current <- parent
+  visited <- character()
+  
+  while (current %in% names(temp_map) && !is.null(temp_map[[current]])) {
+    if (current %in% visited || current == child) {
+      return(TRUE)
+    }
+    visited <- c(visited, current)
+    current <- temp_map[[current]]
+  }
+  
+  return(FALSE)
 }
 
 

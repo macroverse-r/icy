@@ -14,9 +14,9 @@
 \item{case_format}{Case format for file searching}
 }
 \value{
-Named list mapping sections to their parent sections, or NULL if no inherit section
+Named list mapping sections to their parent sections, or NULL if no inheritances section
 }
 \description{
-Reads the inherit section from a template YAML file if it exists.
+Reads the inheritances section from a template YAML file if it exists.
 }
 \keyword{internal}

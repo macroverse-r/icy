@@ -235,9 +235,15 @@
 #' Write YAML with Header Comments
 #' @keywords internal
 .write_yaml_with_header <- function(config_data, file_path, header_lines) {
-  # Convert to YAML
-  yaml_content <- yaml::as.yaml(config_data)
-  yaml_lines <- strsplit(yaml_content, "\n")[[1]]
+  # Check if this is a template structure
+  if (.is_template_structure(config_data)) {
+    # Use formatted template writer with section comments
+    yaml_lines <- .format_yaml_with_section_comments(config_data)
+  } else {
+    # Use standard YAML formatting
+    yaml_content <- yaml::as.yaml(config_data)
+    yaml_lines <- strsplit(yaml_content, "\n")[[1]]
+  }
   
   # Ensure header ends with blank line if it has content
   if (length(header_lines) > 0 && !identical(header_lines[length(header_lines)], "")) {
@@ -275,4 +281,154 @@
   }
   
   return(header_lines)
+}
+
+
+#' Format YAML with Descriptive Section Comments
+#'
+#' Manually formats template YAML with comprehensive section descriptions
+#' and proper spacing for better readability and documentation.
+#'
+#' @param config_data Template data structure
+#' @return Character vector of formatted YAML lines
+#' @keywords internal
+.format_yaml_with_section_comments <- function(config_data) {
+  yaml_lines <- character(0)
+  
+  # Define the standard order: data sections first, then metadata in specific order
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  
+  # Separate data sections from metadata sections
+  all_sections <- names(config_data)
+  data_sections <- setdiff(all_sections, metadata_sections)
+  metadata_present <- intersect(metadata_sections, all_sections)
+  
+  # Ensure 'default' comes first in data sections
+  data_sections <- c(
+    intersect("default", data_sections),
+    setdiff(data_sections, "default")
+  )
+  
+  # Helper function to format a section
+  format_section <- function(section_name, section_data, comment_lines) {
+    lines <- c("", comment_lines, paste0(section_name, ":"))
+    
+    if (is.null(section_data) || length(section_data) == 0) {
+      # Empty section
+      lines <- c(lines, "")
+    } else {
+      # Non-empty section - convert to YAML and indent
+      section_yaml <- yaml::as.yaml(list(temp = section_data))
+      section_lines <- strsplit(section_yaml, "\n")[[1]]
+      # Remove the "temp:" wrapper and add proper indentation
+      section_lines <- section_lines[-1]  # Remove first line (temp:)
+      if (length(section_lines) > 0) {
+        # Already indented by yaml::as.yaml, just add them
+        lines <- c(lines, section_lines, "")
+      } else {
+        lines <- c(lines, "")
+      }
+    }
+    
+    return(lines)
+  }
+  
+  # Process data sections
+  for (section in data_sections) {
+    if (section == "default") {
+      comment_lines <- c(
+        "# Default configuration values",
+        "# This section defines the standard configuration variables and their default values",
+        "# that will be used when the package loads. Users can override these in their local",
+        "# configuration files. All variables should follow the naming convention: PACKAGE_VARIABLE"
+      )
+    } else {
+      comment_lines <- c(
+        paste("#", section, "environment configuration"),
+        paste("# This section contains values specific to", section, "environments. When active,"),
+        "# these values override the defaults. Use inheritance to avoid duplicating values."
+      )
+    }
+    
+    yaml_lines <- c(yaml_lines, format_section(section, config_data[[section]], comment_lines))
+  }
+  
+  # Process metadata sections in specific order
+  section_descriptions <- list(
+    types = list(
+      title = "Variable type definitions (metadata)",
+      desc = c(
+        "# Specifies the expected data type for each variable to enable validation and",
+        "# proper handling. Supported types: character, logical, integer, numeric, path",
+        "# Example: MY_VAR: character"
+      )
+    ),
+    descriptions = list(
+      title = "Human-readable descriptions for each variable (metadata)",
+      desc = c(
+        "# Provides clear explanations of what each configuration variable controls,",
+        "# helping users understand the impact of changing values. These descriptions",
+        "# appear in interactive configuration tools and documentation."
+      )
+    ),
+    notes = list(
+      title = "Additional notes or warnings for variables (metadata)",
+      desc = c(
+        "# Optional section for important warnings, caveats, or additional context that",
+        "# doesn't fit in the main description. Use for security warnings, deprecation",
+        "# notices, or special instructions."
+      )
+    ),
+    options = list(
+      title = "Valid options for choice-based variables (metadata)",
+      desc = c(
+        "# Defines the allowed values for variables that should be restricted to a",
+        "# specific set of choices. Values outside these options will trigger validation",
+        "# warnings. Useful for enumerated settings like log levels or modes."
+      )
+    ),
+    inheritances = list(
+      title = "Section inheritance relationships (metadata)",
+      desc = c(
+        "# Defines parent-child relationships between configuration sections, allowing",
+        "# sections to inherit values from others. Child sections override inherited values.",
+        "# Example: production: default (production inherits from default)"
+      )
+    )
+  )
+  
+  for (section in metadata_present) {
+    info <- section_descriptions[[section]]
+    comment_lines <- c(
+      paste("#", info$title),
+      info$desc
+    )
+    
+    yaml_lines <- c(yaml_lines, format_section(section, config_data[[section]], comment_lines))
+  }
+  
+  # Remove any trailing empty lines
+  while (length(yaml_lines) > 0 && nchar(trimws(yaml_lines[length(yaml_lines)])) == 0) {
+    yaml_lines <- yaml_lines[-length(yaml_lines)]
+  }
+  
+  return(yaml_lines)
+}
+
+
+#' Check if Data Structure is a Template
+#'
+#' Determines if the config data represents a template file structure
+#' by checking for the presence of metadata sections.
+#'
+#' @param config_data Configuration data structure
+#' @return Logical indicating if this is a template structure
+#' @keywords internal
+.is_template_structure <- function(config_data) {
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_present <- intersect(names(config_data), metadata_sections)
+  
+  # Consider it a template if it has at least 2 metadata sections or
+  # has typical template sections
+  return(length(metadata_present) >= 2 || "descriptions" %in% names(config_data))
 }

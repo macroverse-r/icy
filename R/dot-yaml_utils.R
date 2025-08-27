@@ -2,21 +2,6 @@
 
 
 
-#' Prepare Data for YAML Writing
-#'
-#' Prepares data structure for YAML serialization, handling special cases
-#' and ensuring proper structure.
-#'
-#' @param data List or data structure to prepare
-#' @return Prepared YAML string
-#' @keywords internal
-.prepare_yaml_for_writing <- function(data) {
-  # Convert to YAML
-  yaml_str <- yaml::as.yaml(data)
-  
-  return(yaml_str)
-}
-
 
 #' Merge YAML Data Structures
 #'
@@ -113,7 +98,7 @@
 #' @return List with 'data' and 'metadata' components
 #' @keywords internal
 .separate_yaml_sections <- function(template_data) {
-  metadata_sections <- c("descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   
   data_sections <- list()
   metadata <- list()

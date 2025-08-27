@@ -314,7 +314,7 @@ update_template <- function(action = NULL,
     }
     
     # Remove from metadata sections
-    metadata_sections <- c("descriptions", "types", "notes", "options")
+    metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
     for (section in metadata_sections) {
       if (section %in% names(template_data) && var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL

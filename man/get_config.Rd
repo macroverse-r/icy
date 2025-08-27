@@ -11,7 +11,8 @@ get_config(
   yaml_file = NULL,
   case_format = "snake_case",
   inherit = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  validate = TRUE
 )
 }
 \arguments{
@@ -34,15 +35,21 @@ the function will search for the appropriate file based on the origin.}
 searching the YAML file if \code{yaml_file} is NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
-\item{inherit}{Character string specifying a section to inherit values from.
-If NULL (default), the function checks for an "inherit" section in the template
-that defines automatic inheritance relationships. When explicitly specified,
-this parameter overrides any template-defined inheritance. Values from the
-inherit section are used as defaults, which can be overridden by the main section.
-Inheritance is recursive - if A inherits from B and B inherits from C, A will
-receive values from both B and C. Only works with "template" and "local" origins.}
+\item{inherit}{Character string specifying a section to inherit values from, or
+0 to explicitly disable inheritance. If NULL (default), the function checks
+for an "inheritances" section in the template that defines automatic inheritance
+relationships. When explicitly specified, this parameter overrides any
+template-defined inheritance. Use 0 to disable inheritance even if defined
+in template. Values from the inherit section are used as defaults, which can
+be overridden by the main section. Inheritance is recursive - if A inherits
+from B and B inherits from C, A will receive values from both B and C.
+Only works with "template" and "local" origins.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
+
+\item{validate}{Logical. If TRUE (default), validates the template structure
+and checks for issues like circular inheritance. Set to FALSE to skip
+validation for performance or to work with templates that have known issues.}
 }
 \value{
 Named list of environment variable configurations.

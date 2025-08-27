@@ -18,7 +18,7 @@
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param inherit Character string specifying a section to inherit values from, or
 #'   0 to explicitly disable inheritance. If NULL (default), the function checks 
-#'   for an "inherit" section in the template that defines automatic inheritance 
+#'   for an "inheritances" section in the template that defines automatic inheritance 
 #'   relationships. When explicitly specified, this parameter overrides any 
 #'   template-defined inheritance. Use 0 to disable inheritance even if defined 
 #'   in template. Values from the inherit section are used as defaults, which can 
@@ -72,7 +72,7 @@ get_config <- function(package = get_package_name(),
     # Quick validation for performance
     validation <- validate_template(
       package = package,
-      yaml_file = yaml_file,
+      fn_tmpl = yaml_file,
       case_format = case_format,
       verbose = FALSE,
       quick = TRUE
@@ -108,6 +108,8 @@ get_config <- function(package = get_package_name(),
     config <- .get_config_renviron(
       package = package,
       section = section,
+      yaml_file = yaml_file,
+      case_format = case_format,
       verbose = verbose
     )
   } else if (origin == "priority") {
@@ -129,7 +131,7 @@ get_config <- function(package = get_package_name(),
   }
 
   # Check for automatic inheritance from template if inherit is NULL
-  if (is.null(inherit) && origin %in% c("template", "local")) {
+  if (is.null(inherit) && origin %in% c("template", "local", "priority")) {
     template_inherit <- .get_inherit_config(
       package = package,
       yaml_file = yaml_file,
@@ -153,7 +155,7 @@ get_config <- function(package = get_package_name(),
   }
   
   # Apply inheritance if requested or auto-detected
-  if (!is.null(inherit) && inherit != section && origin %in% c("template", "local")) {
+  if (!is.null(inherit) && inherit != section && origin %in% c("template", "local", "priority")) {
     if (verbose && !exists("resolved_inherit", inherits = FALSE)) {
       .icy_text(paste0("Applying inheritance from section '", inherit, "' to '", section, "'"))
     }
@@ -309,7 +311,7 @@ get_config <- function(package = get_package_name(),
       config <- config_data[[section]]
 
       if (is.null(config) || length(config) == 0) {
-        .icy_stop(paste0("No environment variables found in template section ", section))
+        return(list())  # Return empty list, same as .get_config_local()
       }
 
       return(config)
@@ -325,6 +327,8 @@ get_config <- function(package = get_package_name(),
 #' @keywords internal
 .get_config_renviron <- function(package = get_package_name(),
                                  section = "default",
+                                 yaml_file = NULL,
+                                 case_format = "snake_case",
                                  verbose = FALSE) {
   # Get path to .Renviron
   renviron_path <- path.expand("~/.Renviron")
@@ -371,19 +375,25 @@ get_config <- function(package = get_package_name(),
   # If package is specified, filter to only package-specific variables
   if (!is.null(package)) {
     # First, try to get variable names from template
-    template_vars <- tryCatch(
+    template_result <- tryCatch(
       {
-        names(get_config(package = package,
-                         origin = "template",
-                         section = section))
+        .get_config_template(package = package,
+                             section = section,
+                             yaml_file = yaml_file,
+                             case_format = case_format)
       },
       error = function(e) NULL
     )
 
-    if (!is.null(template_vars)) {
-      # Filter to only variables defined in template
+    if (!is.null(template_result)) {
+      # Template was successfully read - filter based on its variables
+      template_vars <- names(template_result)
+      if (is.null(template_vars)) {
+        template_vars <- character(0)  # Empty section should have no variables
+      }
       env_vars <- env_vars[intersect(names(env_vars), template_vars)]
     }
+    # If template_result is NULL (template read failed), return all variables as fallback
   }
 
   return(env_vars)
@@ -409,6 +419,8 @@ get_config <- function(package = get_package_name(),
   renviron_config <- .get_config_renviron(
     package = package,
     section = section,
+    yaml_file = yaml_file,
+    case_format = case_format,
     verbose = verbose
   )
 
@@ -467,12 +479,12 @@ get_config <- function(package = get_package_name(),
 
 #' Get inheritance configuration from template
 #'
-#' Reads the inherit section from a template YAML file if it exists.
+#' Reads the inheritances section from a template YAML file if it exists.
 #'
 #' @param package Package name
 #' @param yaml_file Optional path to YAML file
 #' @param case_format Case format for file searching
-#' @return Named list mapping sections to their parent sections, or NULL if no inherit section
+#' @return Named list mapping sections to their parent sections, or NULL if no inheritances section
 #' @keywords internal
 .get_inherit_config <- function(package, yaml_file = NULL, case_format = "snake_case") {
   # Find the template file
@@ -508,8 +520,8 @@ get_config <- function(package = get_package_name(),
   tryCatch({
     template_data <- yaml::read_yaml(template_file)
     
-    if ("inherit" %in% names(template_data)) {
-      return(template_data$inherit)
+    if ("inheritances" %in% names(template_data)) {
+      return(template_data$inheritances)
     }
     
     return(NULL)

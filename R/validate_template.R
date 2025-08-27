@@ -4,10 +4,10 @@
 #' inheritance chains, variable consistency, and metadata integrity.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()`.
-#' @param yaml_file Character string with the name or path to the YAML file. If NULL,
-#'   the function will search for the appropriate file.
+#' @param fn_tmpl Character string with custom filename for the template.
+#'   If NULL, uses the default naming pattern based on case_format.
 #' @param case_format Character string indicating the case format to use for
-#'   searching the YAML file. Options are: "snake_case" (default), "camelCase", 
+#'   searching the template file. Options are: "snake_case" (default), "camelCase", 
 #'   "PascalCase", "kebab-case".
 #' @param verbose Logical. If TRUE (default), displays validation progress and results.
 #' @param quick Logical. If FALSE (default), performs complete validation. If TRUE,
@@ -30,13 +30,16 @@
 #' # Validate specific package
 #' result <- validate_template("mypackage")
 #' 
+#' # Validate custom template file
+#' result <- validate_template(fn_tmpl = "my_custom_template")
+#' 
 #' # Quick validation (only critical checks)
 #' result <- validate_template(quick = TRUE)
 #' }
 #'
 #' @export
 validate_template <- function(package = get_package_name(verbose = FALSE),
-                            yaml_file = NULL,
+                            fn_tmpl = NULL,
                             case_format = "snake_case",
                             verbose = TRUE,
                             quick = FALSE) {
@@ -53,26 +56,22 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Find template file
-  if (is.null(yaml_file)) {
-    template_file <- find_template(
-      package = package,
-      case_format = case_format
-    )
-    
-    if (is.null(template_file)) {
-      result$valid <- FALSE
+  template_file <- find_template(
+    package = package,
+    fn_tmpl = fn_tmpl,
+    case_format = case_format
+  )
+  
+  if (is.null(template_file)) {
+    result$valid <- FALSE
+    if (is.null(fn_tmpl)) {
       result$errors <- c(result$errors, 
                          paste0("No template configuration file found for package '", package, "'"))
-      return(structure(result, class = "icy_validation_result"))
-    }
-  } else {
-    template_file <- yaml_file
-    if (!file.exists(template_file)) {
-      result$valid <- FALSE
+    } else {
       result$errors <- c(result$errors, 
-                         paste0("Template file not found: ", template_file))
-      return(structure(result, class = "icy_validation_result"))
+                         paste0("Template file not found: ", fn_tmpl))
     }
+    return(structure(result, class = "icy_validation_result"))
   }
   
   result$info <- c(result$info, paste0("Validating template: ", template_file))
@@ -101,7 +100,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   result$warnings <- c(result$warnings, structure_result$warnings)
   
   # Perform inheritance validation (always do this, even in quick mode)
-  if ("inherit" %in% names(template_data)) {
+  if ("inheritances" %in% names(template_data)) {
     inheritance_result <- .validate_template_inheritance(template_data)
     result$inheritance <- inheritance_result
     if (!inheritance_result$valid) {
@@ -156,11 +155,11 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
     max_depth = 0
   )
   
-  if (!"inherit" %in% names(template_data)) {
+  if (!"inheritances" %in% names(template_data)) {
     return(result)
   }
   
-  inherit_map <- template_data$inherit
+  inherit_map <- template_data$inheritances
   if (!is.list(inherit_map)) {
     result$valid <- FALSE
     result$errors <- c(result$errors, "Inherit section must be a named list")
@@ -168,7 +167,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   }
   
   # Get all sections (excluding metadata sections)
-  metadata_sections <- c("inherit", "descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check that all inheritance targets exist
@@ -253,7 +252,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Check for at least one data section
-  metadata_sections <- c("inherit", "descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   data_sections <- setdiff(names(template_data), metadata_sections)
   result$sections <- data_sections
   
@@ -320,7 +319,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Get all variables from data sections
-  metadata_sections <- c("inherit", "descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   all_data_vars <- character()
@@ -426,7 +425,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   }
   
   types_map <- template_data$types
-  metadata_sections <- c("inherit", "descriptions", "types", "notes", "options")
+  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check each typed variable across all sections

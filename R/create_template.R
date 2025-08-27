@@ -101,12 +101,14 @@ create_template <- function(package = get_package_name(verbose = FALSE),
   }
   
   # Step 5: Initialize complete template structure
+  # Initialize all sections to provide complete template structure from the start
   template_data <- list(
     default = list(),
-    descriptions = list(),
     types = list(),
+    descriptions = list(),
     notes = list(),
-    options = list()
+    options = list(),
+    inheritances = list()
   )
   
   # Step 6: Create initial template file with header
