@@ -167,7 +167,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   }
   
   # Get all sections (excluding metadata sections)
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check that all inheritance targets exist
@@ -252,7 +252,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Check for at least one data section
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(template_data), metadata_sections)
   result$sections <- data_sections
   
@@ -319,7 +319,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Get all variables from data sections
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   all_data_vars <- character()
@@ -425,7 +425,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   }
   
   types_map <- template_data$types
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check each typed variable across all sections

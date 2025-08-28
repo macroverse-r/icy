@@ -8,21 +8,26 @@
 #' @return Character vector of header lines
 #' @keywords internal
 .generate_template_header <- function(package, additional_lines = NULL) {
-  header <- c(
-    paste("#", toupper(package), "Configuration Template"),
-    "#",
-    "# This file serves as the blueprint for your package configuration.",
-    "# A local copy will be created for users when the package loads.",
-    "# Users should edit their local config file, not this template.",
-    paste("# Generated on:", Sys.Date())
-  )
+  # Try to get header template from centralized YAML
+  header_template <- .get_header_template()
+  
+  if (!is.null(header_template)) {
+    # Use centralized template with substitutions
+    header <- sapply(header_template, function(line) {
+      line <- gsub("\\{PACKAGE\\}", toupper(package), line)
+      line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
+      return(line)
+    }, USE.NAMES = FALSE)
+  } else {
+    stop("Header template not found. Check that icy_metadata_sections.yml is available.")
+  }
   
   if (!is.null(additional_lines)) {
     header <- c(header, "#", additional_lines)
   }
   
-  # Ensure ends with blank line
-  c(header, "")
+  # Return clean header without trailing blank line
+  header
 }
 
 

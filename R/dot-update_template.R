@@ -15,8 +15,9 @@
                                          verbose = TRUE, debug = FALSE) {
   
   # Check if template is empty (new template)
+  metadata_sections <- .get_metadata_sections()
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
+    template_data[!names(template_data) %in% metadata_sections],
     names
   )))
   is_empty_template <- length(all_vars) == 0
@@ -120,8 +121,9 @@
   .icy_title("Adding New Variable", level_adjust = -3)
   
   # Get existing variables
+  metadata_sections <- .get_metadata_sections()
   existing_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
+    template_data[!names(template_data) %in% metadata_sections],
     names
   )))
   
@@ -150,8 +152,9 @@
   .icy_title("Updating Variable", level_adjust = -3)
   
   # Get all variables
+  metadata_sections <- .get_metadata_sections()
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
+    template_data[!names(template_data) %in% metadata_sections],
     names
   )))
   
@@ -263,8 +266,9 @@
   .icy_title("Removing Variable", level_adjust = -3)
   
   # Get all variables
+  metadata_sections <- .get_metadata_sections()
   all_vars <- unique(unlist(lapply(
-    template_data[!names(template_data) %in% c("types", "descriptions", "notes", "options", "inheritances")],
+    template_data[!names(template_data) %in% metadata_sections],
     names
   )))
   
@@ -305,8 +309,9 @@
   removed_from <- character(0)
   
   # Remove from data sections
+  metadata_sections <- .get_metadata_sections()
   for (section in names(template_data)) {
-    if (!section %in% c("types", "descriptions", "notes", "options", "inheritances")) {
+    if (!section %in% metadata_sections) {
       if (var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL
         removed_from <- c(removed_from, section)
@@ -315,7 +320,6 @@
   }
   
   # Remove from metadata
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
   for (section in metadata_sections) {
     if (section %in% names(template_data) && 
         var_name %in% names(template_data[[section]])) {
@@ -345,8 +349,8 @@
   .icy_title("Managing Sections", level_adjust = -3)
   
   # Show current sections
-  data_sections <- setdiff(names(template_data), 
-                          c("types", "descriptions", "notes", "options", "inheritances"))
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
   
   .icy_text("Current sections:")
   if (length(data_sections) > 0) {
@@ -424,7 +428,7 @@
   }
   
   # Ask about inheritance
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   other_sections <- setdiff(names(template_data), c(section_name, metadata_sections))
   
   if (length(other_sections) > 0) {
@@ -474,8 +478,8 @@
 #' @keywords internal
 .copy_to_section_interactive <- function(template_data, verbose = TRUE) {
   # Get all available sections
-  data_sections <- setdiff(names(template_data), 
-                          c("types", "descriptions", "notes", "options", "inheritances"))
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
   
   if (length(data_sections) == 0) {
     .icy_alert("No sections available to copy from")
@@ -609,7 +613,7 @@
 #' @keywords internal
 .configure_inheritance_interactive <- function(template_data, verbose = TRUE) {
   # Get data sections (exclude metadata)
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   if (length(data_sections) <= 1) {

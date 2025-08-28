@@ -300,7 +300,8 @@ update_template <- function(action = NULL,
     # Remove from specified sections
     if ("all" %in% sections) {
       # Remove from all data sections (not metadata)
-      data_sections <- setdiff(names(template_data), c("descriptions", "types", "notes", "options"))
+      metadata_sections <- .get_metadata_sections()
+      data_sections <- setdiff(names(template_data), metadata_sections)
       target_sections <- data_sections
     } else {
       target_sections <- sections
@@ -314,7 +315,7 @@ update_template <- function(action = NULL,
     }
     
     # Remove from metadata sections
-    metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+    metadata_sections <- .get_metadata_sections()
     for (section in metadata_sections) {
       if (section %in% names(template_data) && var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL

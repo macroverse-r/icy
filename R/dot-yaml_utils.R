@@ -98,7 +98,7 @@
 #' @return List with 'data' and 'metadata' components
 #' @keywords internal
 .separate_yaml_sections <- function(template_data) {
-  metadata_sections <- c("types", "descriptions", "notes", "options", "inheritances")
+  metadata_sections <- .get_metadata_sections()
   
   data_sections <- list()
   metadata <- list()
@@ -118,28 +118,5 @@
 }
 
 
-#' Reconstruct Template Structure
-#'
-#' Reconstructs a complete template structure from separated data and metadata.
-#'
-#' @param data_sections Data sections (default, production, etc.)
-#' @param metadata Metadata sections (descriptions, types, etc.)
-#' @return Complete template structure
-#' @keywords internal
-.reconstruct_template <- function(data_sections, metadata) {
-  # Start with data sections
-  template_data <- data_sections
-  
-  # Add metadata sections in standard order
-  metadata_order <- c("descriptions", "types", "notes", "options")
-  
-  for (section in metadata_order) {
-    if (section %in% names(metadata) && length(metadata[[section]]) > 0) {
-      template_data[[section]] <- metadata[[section]]
-    }
-  }
-  
-  return(template_data)
-}
 
 

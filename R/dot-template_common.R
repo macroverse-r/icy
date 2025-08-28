@@ -264,10 +264,33 @@ NULL
   lines <- readLines(template_path, warn = FALSE)
   header_lines <- character(0)
   
+  # Get ALL section titles from centralized definitions to detect section comments
+  section_titles <- character(0)
+  all_definitions <- .get_metadata_definitions()
+  if (!is.null(all_definitions)) {
+    section_titles <- sapply(all_definitions, function(def) def$title, USE.NAMES = FALSE)
+  }
+  
   for (line in lines) {
+    # Check if this line matches any section title pattern
+    if (length(section_titles) > 0) {
+      line_content <- gsub("^\\s*#\\s*", "", line)  # Remove leading # and whitespace
+      is_section_comment <- any(sapply(section_titles, function(title) {
+        # Check if line starts with this section title
+        startsWith(line_content, title)
+      }))
+      
+      if (is_section_comment) {
+        # Stop reading header when we hit a section comment
+        break
+      }
+    }
+    
     if (grepl("^\\s*#", line)) {
+      # Regular comment line - part of header
       header_lines <- c(header_lines, line)
     } else if (nchar(trimws(line)) == 0) {
+      # Empty line - part of header
       header_lines <- c(header_lines, line)
     } else {
       # Stop at first non-comment, non-empty line
@@ -322,8 +345,9 @@ NULL
     
     tryCatch({
       # Get existing variables for validation
+      metadata_sections <- .get_metadata_sections()
       existing_vars <- unique(unlist(lapply(
-        current_template_data[!names(current_template_data) %in% c("descriptions", "types", "notes", "options")],
+        current_template_data[!names(current_template_data) %in% metadata_sections],
         names
       )))
       
@@ -442,7 +466,8 @@ NULL
     # Update in specified sections
     if ("all" %in% sections) {
       # Return all data sections (exclude metadata)
-      target_sections <- setdiff(names(template_data), c("descriptions", "types", "notes", "options"))
+      metadata_sections <- .get_metadata_sections()
+      target_sections <- setdiff(names(template_data), metadata_sections)
     } else {
       target_sections <- sections
     }
