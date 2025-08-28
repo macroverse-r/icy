@@ -57,8 +57,15 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     tmpl_section <- "default"
   }
 
-  # Use default naming convention if fn_local is not specified
-  if (is.null(fn_local)) {
+  # Use file pairing system for intelligent filename derivation
+  if (is.null(fn_local) && !is.null(fn_tmpl)) {
+    # Derive fn_local from fn_tmpl using existing pairing system
+    fn_local <- .generate_corresponding_file(fn_tmpl, "local")
+    if (verbose) {
+      .icy_text(paste0("Derived local filename: ", fn_local))
+    }
+  } else if (is.null(fn_local)) {
+    # Use default pattern only if both are NULL
     fn_local <- .pattern(
       package = package,
       case_format = case_format,
@@ -86,7 +93,16 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_warn(paste0("Overwriting existing local config YAML file: ", existing))
   }
 
-  # Read template
+  # Read template - with intelligent derivation if needed
+  if (is.null(fn_tmpl) && !is.null(fn_local)) {
+    # Derive fn_tmpl from fn_local using existing pairing system
+    derived_fn_tmpl <- .generate_corresponding_file(fn_local, "template")
+    if (verbose) {
+      .icy_text(paste0("Derived template filename: ", derived_fn_tmpl))
+    }
+    fn_tmpl <- derived_fn_tmpl
+  }
+  
   tmpl_path <- find_template(
     package = package,
     fn_tmpl = fn_tmpl,

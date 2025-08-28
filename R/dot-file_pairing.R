@@ -8,6 +8,49 @@
 #' @keywords internal
 NULL
 
+#' Check File Existence with Package Context Awareness
+#'
+#' Checks if a file exists, considering package directory structure.
+#' When in a package directory and given just a filename, also checks inst/.
+#'
+#' @param filename File path or name to check
+#' @param package Package name for context
+#' @param is_template Logical, TRUE for templates (check inst/), FALSE for locals
+#' @return Full path to file if exists, NULL otherwise
+#' @keywords internal
+.check_file_exists <- function(filename, package, is_template = TRUE) {
+  # If it's a full path or file exists as-is, return it
+  if (file.exists(filename)) {
+    return(normalizePath(filename, winslash = "/"))
+  }
+  
+  # If it contains path separators, don't search elsewhere
+  if (grepl("[/\\\\]", filename)) {
+    return(NULL)
+  }
+  
+  # Prepare list of files to check (with and without YAML extensions)
+  files_to_check <- filename
+  
+  # If filename doesn't have an extension, try common YAML extensions
+  if (!grepl("\\.(ya?ml)$", filename, ignore.case = TRUE)) {
+    files_to_check <- c(filename, paste0(filename, ".yml"), paste0(filename, ".yaml"))
+  }
+  
+  # Just a filename - check in appropriate directories
+  if (is_template && .is_pkg_dir(package)) {
+    # For templates in package dev, check inst/
+    for (file_variant in files_to_check) {
+      inst_path <- file.path("inst", file_variant)
+      if (file.exists(inst_path)) {
+        return(normalizePath(inst_path, winslash = "/"))
+      }
+    }
+  }
+  
+  return(NULL)
+}
+
 #' Check File Pairing Status (Non-Exception Version)
 #'
 #' Checks the status of template/local file pairing without throwing exceptions.
@@ -24,13 +67,15 @@ NULL
   
   # First, validate existence of provided files
   if (!is.null(fn_tmpl)) {
-    # Check for exact match first
-    if (file.exists(fn_tmpl)) {
-      # Exact match found, proceed normally
+    # Smart check for file existence
+    exact_path <- .check_file_exists(fn_tmpl, package, is_template = TRUE)
+    
+    if (!is.null(exact_path)) {
+      # Found file directly
       tmpl_status <- "exact_match"
-      actual_tmpl <- fn_tmpl
+      actual_tmpl <- exact_path
     } else {
-      # Try to find fuzzy match using existing infrastructure
+      # Search in package directories
       found_tmpl <- .find_matching_pattern(
         package = package,
         fn_pattern = fn_tmpl,
@@ -39,9 +84,21 @@ NULL
       )
       
       if (length(found_tmpl) > 0) {
-        # Fuzzy match found
-        tmpl_status <- "fuzzy_match"
-        actual_tmpl <- found_tmpl[1]  # Use first match if multiple
+        # Check if any found file has exact same basename
+        exact_matches <- found_tmpl[basename(found_tmpl) == basename(fn_tmpl)]
+        
+        if (length(exact_matches) > 0) {
+          # Exact basename match - treat as exact match!
+          tmpl_status <- "exact_match"
+          actual_tmpl <- exact_matches[1]
+          if (verbose && !grepl("[/\\\\]", fn_tmpl)) {
+            .icy_text(paste0("Found ", basename(fn_tmpl), " in: ", dirname(exact_matches[1])))
+          }
+        } else {
+          # True fuzzy match - different basename
+          tmpl_status <- "fuzzy_match"
+          actual_tmpl <- found_tmpl[1]
+        }
       } else {
         # No match at all
         return(list(
@@ -54,7 +111,7 @@ NULL
       }
     }
     
-    # Store the fuzzy match information for later use
+    # Only return fuzzy status for TRUE fuzzy matches
     if (tmpl_status == "fuzzy_match") {
       return(list(
         status = "template_fuzzy_match",
@@ -68,13 +125,15 @@ NULL
   }
   
   if (!is.null(fn_local)) {
-    # Check for exact match first
-    if (file.exists(fn_local)) {
-      # Exact match found, proceed normally
+    # Smart check for file existence (locals don't check inst/)
+    exact_path <- .check_file_exists(fn_local, package, is_template = FALSE)
+    
+    if (!is.null(exact_path)) {
+      # Found file directly
       local_status <- "exact_match"
-      actual_local <- fn_local
+      actual_local <- exact_path
     } else {
-      # Try to find fuzzy match using existing infrastructure
+      # Search in user config directories
       found_local <- .find_matching_pattern(
         package = package,
         fn_pattern = fn_local,
@@ -83,9 +142,21 @@ NULL
       )
       
       if (length(found_local) > 0) {
-        # Fuzzy match found
-        local_status <- "fuzzy_match"
-        actual_local <- found_local[1]  # Use first match if multiple
+        # Check if any found file has exact same basename
+        exact_matches <- found_local[basename(found_local) == basename(fn_local)]
+        
+        if (length(exact_matches) > 0) {
+          # Exact basename match - treat as exact match!
+          local_status <- "exact_match"
+          actual_local <- exact_matches[1]
+          if (verbose && !grepl("[/\\\\]", fn_local)) {
+            .icy_text(paste0("Found ", basename(fn_local), " in: ", dirname(exact_matches[1])))
+          }
+        } else {
+          # True fuzzy match - different basename
+          local_status <- "fuzzy_match"
+          actual_local <- found_local[1]
+        }
       } else {
         # No match at all
         return(list(
@@ -98,7 +169,7 @@ NULL
       }
     }
     
-    # Store the fuzzy match information for later use
+    # Only return fuzzy status for TRUE fuzzy matches  
     if (local_status == "fuzzy_match") {
       return(list(
         status = "local_fuzzy_match",

@@ -1,3 +1,48 @@
+#' Calculate String Similarity for Fuzzy Matching
+#'
+#' Uses multiple strategies to find similar filenames
+#' @param pattern The pattern to search for (user input)
+#' @param candidate A candidate filename to compare against
+#' @return Numeric similarity score between 0 and 1
+#' @keywords internal
+.calculate_filename_similarity <- function(pattern, candidate) {
+  # Work with basenames only, remove paths
+  pattern_base <- basename(pattern)
+  candidate_base <- basename(candidate)
+  
+  # Remove extensions for comparison
+  pattern_no_ext <- sub("\\.(ya?ml)$", "", pattern_base, ignore.case = TRUE)
+  candidate_no_ext <- sub("\\.(ya?ml)$", "", candidate_base, ignore.case = TRUE)
+  
+  # Case-insensitive comparison
+  pattern_lower <- tolower(pattern_no_ext)
+  candidate_lower <- tolower(candidate_no_ext)
+  
+  # Perfect match (ignoring case and extension)
+  if (pattern_lower == candidate_lower) {
+    return(1.0)
+  }
+  
+  # Calculate edit distance (typos, missing chars)
+  edit_dist <- adist(pattern_lower, candidate_lower)[1,1]
+  max_len <- max(nchar(pattern_lower), nchar(candidate_lower))
+  
+  # Normalize by length to get similarity
+  if (max_len > 0) {
+    similarity <- 1 - (edit_dist / max_len)
+    
+    # Boost score if one is a substring of the other
+    if (grepl(pattern_lower, candidate_lower, fixed = TRUE) || 
+        grepl(candidate_lower, pattern_lower, fixed = TRUE)) {
+      similarity <- similarity * 1.2  # Boost but cap at 1
+    }
+    
+    return(min(1, similarity))
+  }
+  
+  return(0)
+}
+
 #' Search for YAML Files Matching Pattern in Package Directory
 #'
 #' Performs recursive search for YAML configuration files matching a specified
@@ -49,18 +94,28 @@
     full.names = TRUE
   )
 
-  # Filter for files matching our pattern
-  matching_files <- yaml_files[grepl(fn_pattern, yaml_files, ignore.case = TRUE)]
+  # Calculate similarity scores for all files
+  similarities <- sapply(yaml_files, function(f) {
+    .calculate_filename_similarity(fn_pattern, f)
+  })
+  
+  # Filter files with reasonable similarity (threshold of 0.5)
+  good_matches <- yaml_files[similarities >= 0.5]
+  
+  if (length(good_matches) > 0) {
+    # Sort by similarity score (best matches first)
+    good_matches <- good_matches[order(similarities[similarities >= 0.5], decreasing = TRUE)]
+  }
 
   if (verbose) {
-    if (length(matching_files) == 0) {
+    if (length(good_matches) == 0) {
       .icy_warn(paste0("No YAML file in ", package_dir, " matching ", fn_pattern))
-    } else if (length(matching_files) > 1) {
+    } else if (length(good_matches) > 1) {
       .icy_warn(
-        paste0("Multiple config YAML files found: ", paste(basename(matching_files), collapse = ", "), ". Please ensure only one file is present.")
+        paste0("Multiple config YAML files found: ", paste(basename(good_matches), collapse = ", "), ". Using best match.")
       )
     }
   }
 
-  return(as.character(matching_files))
+  return(as.character(good_matches))
 }
