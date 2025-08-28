@@ -249,52 +249,6 @@ NULL
   }
 }
 
-#' Extract File Pattern from Custom Filename
-#'
-#' Analyzes a filename to extract the naming pattern, replacing type-specific
-#' parts (template/local indicators) with a placeholder for pattern matching.
-#'
-#' @param filename Character string with the filename to analyze
-#' @return Character string with pattern (type indicators replaced with {type})
-#' @keywords internal
-.extract_file_pattern <- function(filename) {
-  
-  # Define type indicators to look for
-  template_indicators <- c("template", "Template", "TEMPLATE", "tmpl", "Tmpl", "TMPL")
-  local_indicators <- c("local", "Local", "LOCAL", "config", "Config", "CONFIG")
-  
-  all_indicators <- c(template_indicators, local_indicators)
-  
-  # Find which indicator is present in the filename
-  pattern <- filename
-  found_indicator <- NULL
-  
-  for (indicator in all_indicators) {
-    if (grepl(indicator, filename, fixed = TRUE)) {
-      found_indicator <- indicator
-      # Replace the indicator with a placeholder
-      pattern <- gsub(indicator, "{type}", filename, fixed = TRUE)
-      break
-    }
-  }
-  
-  if (is.null(found_indicator)) {
-    # No standard indicator found, try to infer from common patterns
-    # Look for common separators before file extensions
-    if (grepl("_[^_]+\\.(yml|yaml)$", filename)) {
-      # Pattern like "prefix_something.yml" - assume something is the type
-      pattern <- gsub("_[^_]+\\.(yml|yaml)$", "_{type}.\\1", filename)
-    } else if (grepl("-[^-]+\\.(yml|yaml)$", filename)) {
-      # Pattern like "prefix-something.yml" - assume something is the type  
-      pattern <- gsub("-[^-]+\\.(yml|yaml)$", "-{type}.\\1", filename)
-    } else {
-      # Cannot extract pattern, return original
-      pattern <- filename
-    }
-  }
-  
-  return(pattern)
-}
 
 #' Generate Corresponding Filename
 #'
