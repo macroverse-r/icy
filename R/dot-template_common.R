@@ -242,60 +242,6 @@ NULL
   })
 }
 
-
-#' Read Template Header Comments
-#'
-#' Extracts header comments from template files for preservation during writes.
-#'
-#' @param template_path Path to template file
-#' @return Character vector of header lines
-#' @keywords internal
-.read_template_header <- function(template_path) {
-  if (!file.exists(template_path)) {
-    return(character(0))
-  }
-  
-  lines <- readLines(template_path, warn = FALSE)
-  header_lines <- character(0)
-  
-  # Get ALL section titles from centralized definitions to detect section comments
-  section_titles <- character(0)
-  all_definitions <- .get_metadata_definitions()
-  if (!is.null(all_definitions)) {
-    section_titles <- sapply(all_definitions, function(def) def$title, USE.NAMES = FALSE)
-  }
-  
-  for (line in lines) {
-    # Check if this line matches any section title pattern
-    if (length(section_titles) > 0) {
-      line_content <- gsub("^\\s*#\\s*", "", line)  # Remove leading # and whitespace
-      is_section_comment <- any(sapply(section_titles, function(title) {
-        # Check if line starts with this section title
-        startsWith(line_content, title)
-      }))
-      
-      if (is_section_comment) {
-        # Stop reading header when we hit a section comment
-        break
-      }
-    }
-    
-    if (grepl("^\\s*#", line)) {
-      # Regular comment line - part of header
-      header_lines <- c(header_lines, line)
-    } else if (nchar(trimws(line)) == 0) {
-      # Empty line - part of header
-      header_lines <- c(header_lines, line)
-    } else {
-      # Stop at first non-comment, non-empty line
-      break
-    }
-  }
-  
-  return(header_lines)
-}
-
-
 #' Streamlined Variable Collection for Create Mode
 #'
 #' Simplified interactive variable collection specifically for create_template().

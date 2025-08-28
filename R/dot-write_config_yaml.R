@@ -247,27 +247,6 @@
   writeLines(complete_content, file_path)
 }
 
-
-#' Extract YAML Header Comments
-#' @keywords internal
-.extract_yaml_header <- function(file_path) {
-  lines <- readLines(file_path, warn = FALSE)
-  header_lines <- character(0)
-  
-  for (line in lines) {
-    # Only include comment lines - stop at first blank line or non-comment
-    if (grepl("^\\s*#", line)) {
-      header_lines <- c(header_lines, line)
-    } else {
-      # Stop at first non-comment line (including blank lines)
-      break
-    }
-  }
-  
-  return(header_lines)
-}
-
-
 #' Format YAML with Descriptive Section Comments
 #'
 #' Manually formats template YAML with comprehensive section descriptions

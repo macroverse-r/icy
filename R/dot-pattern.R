@@ -50,7 +50,7 @@
   )
   
   # Get the appropriate rule or default to snake_case
-  rule <- case_rules[[case_format]] %||% case_rules[["snake_case"]]
+  rule <- if (is.null(case_rules[[case_format]])) case_rules[["snake_case"]] else case_rules[[case_format]]
   
   # Build the pattern
   config_part <- rule$transform("config")

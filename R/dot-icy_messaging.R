@@ -155,20 +155,3 @@ NULL
     message(.apply_color("\u2139 ", "blue"), msg)
   }
 }
-
-#' Debug message
-#'
-#' @description
-#' Debug message function that uses contextual formatting when available.
-#' Falls back to simple message output when contextual is not available.
-#'
-#' @param msg Debug message
-#' @param ... Additional arguments passed to underlying functions
-.icy_debug <- function(msg, debug = get_config(package = "icy")[["ICY_DEBUG"]], ...) {
-  if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_debug(msg, debug = debug, ...)
-  } else {
-    message("[DEBUG] ", msg)
-  }
-}
-
