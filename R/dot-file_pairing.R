@@ -282,49 +282,6 @@ NULL
   return(matches)
 }
 
-#' Suggest Missing Files with Helpful Messages
-#'
-#' Provides helpful suggestions when auto-detection fails, including lists of
-#' available files and options for creating missing files.
-#'
-#' @param missing_type Character string, "template" or "local" 
-#' @param package Character string with package name
-#' @param provided_file Character string with the file that was provided
-#' @return Character string with formatted suggestions
-#' @keywords internal
-.suggest_missing_files <- function(missing_type, package, provided_file = NULL) {
-  
-  suggestions <- ""
-  
-  if (missing_type == "local") {
-    # Suggest creating local file or list available ones
-    user_dir <- TRUE
-    create_suggestion <- paste0("Create corresponding local file using icy::create_local()")
-    if (!is.null(provided_file)) {
-      expected_name <- .generate_corresponding_file(provided_file, "local")
-      create_suggestion <- paste0(
-        "Create '", expected_name, "' using icy::create_local(fn_local = '", expected_name, "')"
-      )
-    }
-    suggestions <- paste0("Suggestion: ", create_suggestion)
-    
-  } else if (missing_type == "template") {
-    # List available template files
-    user_dir <- FALSE
-    suggestions <- "Available template files in package directory:"
-  }
-  
-  # List available files of the missing type
-  available_files <- .list_available_files(missing_type, package, user_dir)
-  if (length(available_files) > 0) {
-    file_list <- paste0("  - ", basename(available_files), collapse = "\n")
-    suggestions <- paste0(suggestions, "\n", file_list)
-  } else {
-    suggestions <- paste0(suggestions, "\n  (No ", missing_type, " files found)")
-  }
-  
-  return(suggestions)
-}
 
 #' Interactive File Creation Helper
 #'

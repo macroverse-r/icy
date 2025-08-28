@@ -441,7 +441,7 @@ get_config <- function(package = get_package_name(),
       
       if (is.logical(original_value)) {
         # Convert to logical
-        config[[var_name]] <- .convert_to_logical(session_value)
+        config[[var_name]] <- .convert_by_type(session_value, "logical")
       } else if (is.numeric(original_value)) {
         # Convert to numeric
         converted <- suppressWarnings(as.numeric(session_value))
@@ -457,24 +457,6 @@ get_config <- function(package = get_package_name(),
 }
 
 
-#' Convert string to logical value
-#' @keywords internal
-.convert_to_logical <- function(value) {
-  if (is.na(value) || value == "") {
-    return(NA)
-  }
-  
-  lower_value <- tolower(trimws(value))
-  
-  if (lower_value %in% c("true", "t", "yes", "y", "1")) {
-    return(TRUE)
-  } else if (lower_value %in% c("false", "f", "no", "n", "0")) {
-    return(FALSE)
-  } else {
-    # Return the original string if we can't convert
-    return(value)
-  }
-}
 
 
 #' Get inheritance configuration from template

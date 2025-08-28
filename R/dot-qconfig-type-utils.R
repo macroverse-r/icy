@@ -7,50 +7,6 @@
 #' @keywords internal
 NULL
 
-#' Convert Return Value to Proper Type
-#'
-#' Internal helper function to convert string values to proper R types.
-#'
-#' @param value Raw value (character string or NULL)
-#' @param type Expected type
-#' @return Converted value with proper R type
-#' @keywords internal
-.convert_return_value <- function(value, type) {
-  # Return NULL as-is
-  if (is.null(value)) {
-    return(invisible(NULL))
-  }
-  
-  # Convert based on type
-  if (is.null(type)) {
-    return(invisible(value))  # No type specified, return as-is
-  }
-  
-  converted_value <- switch(type,
-    "character" = as.character(value),
-    "integer" = {
-      converted <- suppressWarnings(as.integer(value))
-      if (is.na(converted)) value else converted
-    },
-    "numeric" = {
-      converted <- suppressWarnings(as.numeric(value))
-      if (is.na(converted)) value else converted
-    },
-    "logical" = {
-      if (value %in% c("yes", "true", "TRUE", "True", "on", "1")) {
-        TRUE
-      } else if (value %in% c("no", "false", "FALSE", "False", "off", "0")) {
-        FALSE
-      } else {
-        value  # Return original if can't convert
-      }
-    },
-    # Default: return as-is
-    value
-  )
-  
-  return(invisible(converted_value))
-}
 
 #' Validate Input Type
 #'
@@ -80,8 +36,15 @@ NULL
       if (is.na(numeric_val)) {
         return(paste0("'", value, "' is not a valid integer"))
       }
+      
+      # Check for integer overflow
+      integer_val <- suppressWarnings(as.integer(numeric_val))
+      if (is.na(integer_val)) {
+        return(paste0("'", value, "' is too large for an integer (max: ", .Machine$integer.max, ")"))
+      }
+      
       # Check if it's a whole number (no decimal part)
-      if (numeric_val != as.integer(numeric_val)) {
+      if (numeric_val != integer_val) {
         return(paste0("'", value, "' is not a valid integer (decimals not allowed)"))
       }
       NULL
@@ -131,9 +94,17 @@ NULL
       if (is.na(converted)) value else converted
     },
     "logical" = {
-      if (value %in% c("yes", "true", "TRUE", "True", "on", "1")) {
+      # Handle NA and empty strings
+      if (is.na(value) || value == "") {
+        return(NA)
+      }
+      
+      # Normalize input for comparison
+      lower_value <- tolower(trimws(value))
+      
+      if (lower_value %in% c("yes", "true", "t", "y", "on", "1")) {
         TRUE
-      } else if (value %in% c("no", "false", "FALSE", "False", "off", "0")) {
+      } else if (lower_value %in% c("no", "false", "f", "n", "off", "0")) {
         FALSE
       } else {
         value  # Return original if can't convert

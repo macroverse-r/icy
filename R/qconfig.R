@@ -163,5 +163,5 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
                                        final_allow_custom, params$allow_create_dir, params$resolve_paths, params$fn_tmpl, params$fn_local)
   
   # Convert to proper type and return
-  return(.convert_return_value(raw_result, final_type))
+  return(.convert_by_type(raw_result, final_type))
 }
