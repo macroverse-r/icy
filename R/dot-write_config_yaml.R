@@ -18,7 +18,7 @@
 #' @param create_if_missing Logical; if TRUE (default), creates parent directories
 #'   if they don't exist. The file itself is always created/updated.
 #' @param custom_header Character vector of header lines to add to the file.
-#'   Each element becomes a line. If NULL, preserves existing header or adds none.
+#'   Each element becomes a line. If NULL, no header.
 #' @param append_sections Logical; if FALSE (default for templates), replaces the
 #'   entire section. If TRUE (default for configs), merges with existing variables.
 #' @param strict_template Logical; if TRUE, removes any variables not defined in the
@@ -160,8 +160,8 @@
   header_lines <- if (!is.null(custom_header)) {
     custom_header
   } else {
-    # Generate fresh header with appropriate date label
-    .generate_template_header(package, is_update = file_exists)
+    # Empty header
+    NULL
   }
   
   # Write to file
@@ -311,10 +311,10 @@
     }
     
     if (!is.null(section_def)) {
-      # Use centralized definition
+      # Use centralized definition - add # prefix programmatically
       comment_lines <- c(
         paste("#", section_def$title),
-        section_def$description
+        paste("#", section_def$description)
       )
     } else {
       # Fallback for other data sections
@@ -333,7 +333,7 @@
     info <- section_descriptions[[section]]
     comment_lines <- c(
       paste("#", info$title),
-      info$description
+      paste("#", info$description)
     )
     
     formatted_sections[[section]] <- format_section(section, config_data[[section]], comment_lines)

@@ -128,26 +128,8 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_text(paste0(" - local_path = ", local_path))
   }
 
-  # Generate custom header based on header parameter
-  custom_header <- if (identical(header, "none") || is.null(header)) {
-    character(0)  # No header
-  } else if (identical(header, "local")) {
-    # Generate local header using template system
-    local_header_template <- .get_header_template("local")
-    if (!is.null(local_header_template)) {
-      sapply(local_header_template, function(line) {
-        line <- gsub("\\{PACKAGE\\}", toupper(package), line)
-        line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
-        return(line)
-      }, USE.NAMES = FALSE)
-    } else {
-      character(0)
-    }
-  } else if (is.character(header)) {
-    header  # Custom header provided
-  } else {
-    character(0)  # Fallback
-  }
+  # Generate header using unified function
+  custom_header <- .generate_header(package, type = header)
   
   # Extract all data sections from template (exclude metadata sections)
   metadata_sections <- .get_metadata_sections()

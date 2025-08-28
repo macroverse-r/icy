@@ -27,7 +27,9 @@ For local configs, use find_local() to get this path.}
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}
 to detect the calling package. Used for validation against templates.}
 
-\item{section}{Character string for the section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").
+Use NULL or "" to write variables at root level without section wrapping.
+When NULL/"", var_list should contain the complete YAML structure.}
 
 \item{template_file}{Character string with path to template file for validation.
 If NULL and package is provided, will look for the package's template.}
@@ -36,7 +38,7 @@ If NULL and package is provided, will look for the package's template.}
 if they don't exist. The file itself is always created/updated.}
 
 \item{custom_header}{Character vector of header lines to add to the file.
-Each element becomes a line. If NULL, preserves existing header or adds none.}
+Each element becomes a line. If NULL, no header.}
 
 \item{append_sections}{Logical; if FALSE (default for templates), replaces the
 entire section. If TRUE (default for configs), merges with existing variables.}

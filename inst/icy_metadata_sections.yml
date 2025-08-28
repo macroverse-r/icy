@@ -11,18 +11,18 @@
 # Header templates for generated configuration files
 header:
   template:
-    - "# {PACKAGE} Configuration Template"
-    - "#"
-    - "# This file serves as the blueprint for your package configuration."
-    - "# A local copy will be created for users when the package loads."
-    - "# Users should edit their local config file, not this template."
-    - "# Generated on: {DATE}"
+    title: "{PACKAGE} Configuration Template"
+    description:
+      - "This file serves as the blueprint for your package configuration."
+      - "A local copy will be created for users when the package loads."
+      - "Users should edit their local config file, not this template."
+      - "{DATE}"
   local:
-    - "# {PACKAGE} Local Configuration"
-    - "#"
-    - "# Edit this file to customize your package settings."
-    - "# Local changes will override template defaults."
-    - "# Created on: {DATE}"
+    title: "{PACKAGE} Local Configuration"
+    description:
+      - "Edit this file to customize your package settings."
+      - "Local changes will override template defaults."
+      - "{DATE}"
 
 # Standard order for metadata sections in template files
 metadata_sections:
@@ -38,36 +38,36 @@ definitions:
   default:
     title: "Default configuration values"
     description:
-      - "# This section defines the standard configuration variables and their default values"
-      - "# that will be used when the package loads. Users can override these in their local"
-      - "# configuration files. All variables should follow the naming convention: PACKAGE_VARIABLE"
+      - "This section defines the standard configuration variables and their default values"
+      - "that will be used when the package loads. Users can override these in their local"
+      - "configuration files. All variables should follow the naming convention: PACKAGE_VARIABLE"
   types:
     title: "Variable type definitions (metadata)"
     description:
-      - "# Specifies the expected data type for each variable to enable validation and"
-      - "# proper handling. Supported types: character, logical, integer, numeric, path"
-      - "# Example: MY_VAR: character"
+      - "Specifies the expected data type for each variable to enable validation and"
+      - "proper handling. Supported types: character, logical, integer, numeric, path"
+      - "Example: MY_VAR: character"
   descriptions:
     title: "Human-readable descriptions for each variable (metadata)"
     description:
-      - "# Provides clear explanations of what each configuration variable controls,"
-      - "# helping users understand the impact of changing values. These descriptions"
-      - "# appear in interactive configuration tools and documentation."
+      - "Provides clear explanations of what each configuration variable controls,"
+      - "helping users understand the impact of changing values. These descriptions"
+      - "appear in interactive configuration tools and documentation."
   notes:
     title: "Additional notes or warnings for variables (metadata)"
     description:
-      - "# Optional section for important warnings, caveats, or additional context that"
-      - "# doesn't fit in the main description. Use for security warnings, deprecation"
-      - "# notices, or special instructions."
+      - "Optional section for important warnings, caveats, or additional context that"
+      - "doesn't fit in the main description. Use for security warnings, deprecation"
+      - "notices, or special instructions."
   options:
     title: "Valid options for choice-based variables (metadata)"
     description:
-      - "# Defines the allowed values for variables that should be restricted to a"
-      - "# specific set of choices. Values outside these options will trigger validation"
-      - "# warnings. Useful for enumerated settings like log levels or modes."
+      - "Defines the allowed values for variables that should be restricted to a"
+      - "specific set of choices. Values outside these options will trigger validation"
+      - "warnings. Useful for enumerated settings like log levels or modes."
   inheritances:
     title: "Section inheritance relationships (metadata)"
     description:
-      - "# Defines parent-child relationships between configuration sections, allowing"
-      - "# sections to inherit values from others. Child sections override inherited values."
-      - "# Example: production: default (production inherits from default)"
+      - "Defines parent-child relationships between configuration sections, allowing"
+      - "sections to inherit values from others. Child sections override inherited values."
+      - "Example: production: default (production inherits from default)"

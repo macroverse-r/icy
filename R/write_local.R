@@ -133,7 +133,7 @@ write_local <- function(var_list,
     section = section,
     template_file = fn_tmpl,
     create_if_missing = FALSE,  # Already handled above
-    custom_header = NULL,       # Local configs don't use custom headers
+    custom_header = .generate_header(package, type = "local"),  # Preserve local headers
     append_sections = TRUE,     # Always merge for local configs
     strict_template = TRUE,     # Remove non-template vars (matches write_local)
     verbose = FALSE            # We handle our own messages

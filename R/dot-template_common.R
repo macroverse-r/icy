@@ -216,8 +216,8 @@ NULL
   }
   
   tryCatch({
-    # Always generate fresh header with appropriate date label
-    header <- .generate_template_header(package, is_update = file.exists(file_path))
+    # Generate header using unified function
+    header <- .generate_header(package, type = "template")
     
     # Write using unified write_config_yaml approach
     .write_config_yaml(
