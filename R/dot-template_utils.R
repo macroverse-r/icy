@@ -7,7 +7,7 @@
 #' @param additional_lines Optional character vector of additional header lines
 #' @return Character vector of header lines
 #' @keywords internal
-.generate_template_header <- function(package, additional_lines = NULL) {
+.generate_template_header <- function(package, additional_lines = NULL, is_update = FALSE) {
   # Try to get header template from centralized YAML
   header_template <- .get_header_template()
   
@@ -15,7 +15,12 @@
     # Use centralized template with substitutions
     header <- sapply(header_template, function(line) {
       line <- gsub("\\{PACKAGE\\}", toupper(package), line)
-      line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
+      # Use appropriate date label
+      if (is_update) {
+        line <- gsub("Generated on: \\{DATE\\}", paste("Last updated on:", Sys.Date()), line)
+      } else {
+        line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
+      }
       return(line)
     }, USE.NAMES = FALSE)
   } else {

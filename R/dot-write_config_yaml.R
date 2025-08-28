@@ -103,12 +103,8 @@
   }
   
   # Read existing file if present
-  existing_header <- character(0)
-  config_data <- if (file.exists(file_path)) {
-    # Extract header if no custom header provided
-    if (is.null(custom_header)) {
-      existing_header <- .extract_yaml_header(file_path)
-    }
+  file_exists <- file.exists(file_path)
+  config_data <- if (file_exists) {
     # Read existing data
     tryCatch(
       yaml::read_yaml(file_path),
@@ -158,13 +154,12 @@
     }
   }
   
-  # Determine header to use
+  # Determine header to use - always generate fresh header
   header_lines <- if (!is.null(custom_header)) {
     custom_header
-  } else if (length(existing_header) > 0) {
-    existing_header
   } else {
-    character(0)
+    # Generate fresh header with appropriate date label
+    .generate_template_header(package, is_update = file_exists)
   }
   
   # Write to file
@@ -245,8 +240,8 @@
     yaml_lines <- strsplit(yaml_content, "\n")[[1]]
   }
   
-  # Combine header and content (sections handle their own spacing)
-  complete_content <- c(header_lines, yaml_lines)
+  # Combine header and content with one blank line between
+  complete_content <- c(header_lines, "", yaml_lines)
   
   # Write to file
   writeLines(complete_content, file_path)

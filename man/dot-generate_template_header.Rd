@@ -4,7 +4,7 @@
 \alias{.generate_template_header}
 \title{Generate Template Header}
 \usage{
-.generate_template_header(package, additional_lines = NULL)
+.generate_template_header(package, additional_lines = NULL, is_update = FALSE)
 }
 \arguments{
 \item{package}{Package name}
