@@ -11,7 +11,9 @@ create_local(
   tmpl_section = "default",
   overwrite = FALSE,
   case_format = "snake_case",
-  verbose = FALSE
+  header = "local",
+  verbose = FALSE,
+  debug = FALSE
 )
 }
 \arguments{
@@ -33,7 +35,13 @@ the "default" section.}
 \item{case_format}{Character string indicating the case format to use for filenames.
 Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
+\item{header}{Character string or vector specifying the header for the local config file.
+Options: "local" (default, uses local config header), "none" (no header),
+or custom character vector for custom header.}
+
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
+
+\item{debug}{Logical. If TRUE, displays detailed path information. Defaults to FALSE.}
 }
 \value{
 Character string with the full path to the created local config file.

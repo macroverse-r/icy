@@ -8,7 +8,7 @@
 # Changes here will affect template validation, YAML formatting,
 # and all template-related functions throughout the package.
 
-# Header template for generated template files
+# Header templates for generated configuration files
 header:
   template:
     - "# {PACKAGE} Configuration Template"
@@ -17,6 +17,12 @@ header:
     - "# A local copy will be created for users when the package loads."
     - "# Users should edit their local config file, not this template."
     - "# Generated on: {DATE}"
+  local:
+    - "# {PACKAGE} Local Configuration"
+    - "#"
+    - "# Edit this file to customize your package settings."
+    - "# Local changes will override template defaults."
+    - "# Created on: {DATE}"
 
 # Standard order for metadata sections in template files
 metadata_sections:

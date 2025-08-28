@@ -21,7 +21,11 @@
 #'   (default: FALSE).
 #' @param case_format Character string indicating the case format to use for filenames.
 #'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param header Character string or vector specifying the header for the local config file.
+#'   Options: "local" (default, uses local config header), "none" (no header), 
+#'   or custom character vector for custom header.
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
+#' @param debug Logical. If TRUE, displays detailed path information. Defaults to FALSE.
 #'
 #' @return Character string with the full path to the created local config file.
 #'
@@ -44,7 +48,9 @@ create_local <- function(package = get_package_name(verbose = FALSE),
                          tmpl_section = "default",
                          overwrite = FALSE,
                          case_format = "snake_case",
-                         verbose = FALSE) {
+                         header = "local",
+                         verbose = FALSE,
+                         debug = FALSE) {
 
   if (!is.character(tmpl_section)) {
     .icy_warn("tmpl_section must be a character string. Using 'default' instead.")
@@ -114,7 +120,7 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     local_path <- fn_local
   }
 
-  if (verbose) {
+  if (debug) {
     fun <- as.character(sys.call())
     .icy_text(paste0("From ", fun, ":"))
     .icy_text(paste0(" - fn_local = ", fn_local))
@@ -122,16 +128,49 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_text(paste0(" - local_path = ", local_path))
   }
 
+  # Generate custom header based on header parameter
+  custom_header <- if (identical(header, "none") || is.null(header)) {
+    character(0)  # No header
+  } else if (identical(header, "local")) {
+    # Generate local header using template system
+    local_header_template <- .get_header_template("local")
+    if (!is.null(local_header_template)) {
+      sapply(local_header_template, function(line) {
+        line <- gsub("\\{PACKAGE\\}", toupper(package), line)
+        line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
+        return(line)
+      }, USE.NAMES = FALSE)
+    } else {
+      character(0)
+    }
+  } else if (is.character(header)) {
+    header  # Custom header provided
+  } else {
+    character(0)  # Fallback
+  }
+  
+  # Extract all data sections from template (exclude metadata sections)
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(tmpl_config), metadata_sections)
+  
+  # Build complete local config with all data sections
+  local_config_data <- list()
+  for (section_name in data_sections) {
+    if (section_name %in% names(tmpl_config)) {
+      local_config_data[[section_name]] <- tmpl_config[[section_name]]
+    }
+  }
+  
   # Write the local config file using unified icy YAML writer
   # This provides template validation, variable ordering, and proper NULL handling
   .write_config_yaml(
-    var_list = tmpl_config[[tmpl_section]],
+    var_list = local_config_data,
     file_path = local_path,
     package = package,
-    section = tmpl_section,
+    section = NULL,  # Writing complete structure with multiple sections
     template_file = tmpl_path,
     create_if_missing = TRUE,
-    custom_header = NULL,  # No custom header for local configs
+    custom_header = custom_header,
     append_sections = FALSE,  # Creating new file, don't append
     strict_template = FALSE,  # Keep all template variables
     verbose = FALSE  # Handle messaging in create_local
@@ -141,5 +180,5 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_success(paste0("Created local config file: ", local_path))
   }
 
-  return(local_path)
+  return(invisible(local_path))
 }

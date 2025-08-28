@@ -4,7 +4,10 @@
 \alias{.get_header_template}
 \title{Get Header Template}
 \usage{
-.get_header_template()
+.get_header_template(type = "template")
+}
+\arguments{
+\item{type}{Character string specifying header type ("template" or "local")}
 }
 \value{
 Character vector of header template lines, or NULL if unavailable

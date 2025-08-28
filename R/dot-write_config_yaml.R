@@ -11,6 +11,8 @@
 #' @param package Character string with the package name. Defaults to `get_package_name()`
 #'   to detect the calling package. Used for validation against templates.
 #' @param section Character string for the section in the YAML file (default: "default").
+#'   Use NULL or "" to write variables at root level without section wrapping.
+#'   When NULL/"", var_list should contain the complete YAML structure.
 #' @param template_file Character string with path to template file for validation.
 #'   If NULL and package is provided, will look for the package's template.
 #' @param create_if_missing Logical; if TRUE (default), creates parent directories
@@ -64,7 +66,7 @@
       # Specific template file provided
       valid_vars <- tryCatch({
         template_config <- yaml::read_yaml(template_file)
-        if (section != "" && section %in% names(template_config)) {
+        if (!is.null(section) && section != "" && section %in% names(template_config)) {
           names(template_config[[section]])
         } else {
           names(template_config)
@@ -120,7 +122,7 @@
   # Update the configuration data
   if (!append_sections || length(config_data) == 0) {
     # Replace mode or new file
-    if (section != "" && !is.null(section)) {
+    if (!is.null(section) && section != "") {
       config_data <- list()
       config_data[[section]] <- var_list
     } else {
@@ -128,7 +130,7 @@
     }
   } else {
     # Append/merge mode
-    if (section != "" && !is.null(section)) {
+    if (!is.null(section) && section != "") {
       config_data <- .update_yaml_section(config_data, var_list, section)
     } else {
       config_data <- .update_yaml_root(config_data, var_list)
@@ -136,7 +138,7 @@
   }
   
   # Reorder variables to match template order if we have valid_vars
-  if (!is.null(valid_vars) && section != "" && !is.null(section)) {
+  if (!is.null(valid_vars) && !is.null(section) && section != "") {
     if (section %in% names(config_data)) {
       current_vars <- names(config_data[[section]])
       if (strict_template) {
