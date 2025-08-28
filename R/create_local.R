@@ -99,8 +99,6 @@ create_local <- function(package = get_package_name(verbose = FALSE),
       "i" = paste0("Available components: ", paste(names(tmpl_config), collapse = ", "))
     ))
   }
-  local_config <- list()
-  local_config[[tmpl_section]] <- tmpl_config[[tmpl_section]]
 
   # Determine the full path for local config file
   # If fn_local is just a filename, place it in the package directory
@@ -124,14 +122,20 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_text(paste0(" - local_path = ", local_path))
   }
 
-  # Create the directory if it doesn't exist
-  local_dir <- dirname(local_path)
-  if (!dir.exists(local_dir)) {
-    dir.create(local_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-
-  # Write the local config file
-  yaml::write_yaml(local_config, local_path)
+  # Write the local config file using unified icy YAML writer
+  # This provides template validation, variable ordering, and proper NULL handling
+  .write_config_yaml(
+    var_list = tmpl_config[[tmpl_section]],
+    file_path = local_path,
+    package = package,
+    section = tmpl_section,
+    template_file = tmpl_path,
+    create_if_missing = TRUE,
+    custom_header = NULL,  # No custom header for local configs
+    append_sections = FALSE,  # Creating new file, don't append
+    strict_template = FALSE,  # Keep all template variables
+    verbose = FALSE  # Handle messaging in create_local
+  )
 
   if (verbose) {
     .icy_success(paste0("Created local config file: ", local_path))
