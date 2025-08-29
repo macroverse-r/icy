@@ -4,7 +4,7 @@
 \alias{.confirm_fuzzy_match}
 \title{Interactive Fuzzy Match Confirmation}
 \usage{
-.confirm_fuzzy_match(original_input, fuzzy_match, file_type)
+.confirm_fuzzy_match(original_input, fuzzy_match, file_type, param_name = NULL)
 }
 \arguments{
 \item{original_input}{Character string with the user's original input}
@@ -12,6 +12,8 @@
 \item{fuzzy_match}{Character string with the fuzzy-matched filename}
 
 \item{file_type}{Character string, "template" or "local"}
+
+\item{param_name}{Character string, parameter name like "fn_tmpl" or "fn_local" for clearer messaging}
 }
 \value{
 Character string with confirmed filename, or NULL if user declines

@@ -4,7 +4,7 @@
 \alias{.find_corresponding_file}
 \title{Find Corresponding File Using Existing Infrastructure}
 \usage{
-.find_corresponding_file(filename, target_type, package, user_dir)
+.find_corresponding_file(filename, target_type, package, type)
 }
 \arguments{
 \item{filename}{Character string with the original filename}
@@ -13,7 +13,7 @@
 
 \item{package}{Character string with package name}
 
-\item{user_dir}{Logical, whether to search in user directory}
+\item{type}{Character string specifying file type ("local" or "template")}
 }
 \value{
 Character vector of matching file paths

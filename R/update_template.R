@@ -102,7 +102,7 @@ update_template <- function(action = NULL,
                            template_data = NULL) {
   
   # Find template file first (needed for both modes)
-  template_path <- find_template(package = package, fn_tmpl = fn_tmpl, case_format = case_format)
+  template_path <- find_file(package = package, fn_tmpl = fn_tmpl, pairing = TRUE, case_format = case_format)$fn_tmpl
   
   if (is.null(template_path)) {
     .icy_stop(paste0("No template configuration file found for package ", package))

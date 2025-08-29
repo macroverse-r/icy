@@ -57,31 +57,21 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     tmpl_section <- "default"
   }
 
-  # Use file pairing system for intelligent filename derivation
-  if (is.null(fn_local) && !is.null(fn_tmpl)) {
-    # Derive fn_local from fn_tmpl using existing pairing system
-    fn_local <- .generate_corresponding_file(fn_tmpl, "local")
-    if (verbose) {
-      .icy_text(paste0("Derived local filename: ", fn_local))
-    }
-  } else if (is.null(fn_local)) {
-    # Use default pattern only if both are NULL
-    fn_local <- .pattern(
-      package = package,
-      case_format = case_format,
-      file = "local",
-      yml = TRUE
-    )
-  }
-
-  # Check if local config already exists
-  existing <- find_local(
+  # Use find_file for intelligent filename derivation and pairing
+  files <- find_file(
     package = package,
+    fn_tmpl = fn_tmpl,
     fn_local = fn_local,
+    pairing = TRUE,  # Let find_file handle all derivation logic
+    exact = TRUE,    # Use exact matching for checking existing files
     case_format = case_format,
     verbose = FALSE
   )
-
+  
+  existing <- files$fn_local
+  tmpl_path <- files$fn_tmpl
+  
+  # Check if local config already exists
   if (!is.null(existing) && !overwrite) {
     if (verbose) {
       .icy_warn(c(paste0("Local config YAML file already exists: ", existing),
@@ -93,22 +83,7 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     .icy_warn(paste0("Overwriting existing local config YAML file: ", existing))
   }
 
-  # Read template - with intelligent derivation if needed
-  if (is.null(fn_tmpl) && !is.null(fn_local)) {
-    # Derive fn_tmpl from fn_local using existing pairing system
-    derived_fn_tmpl <- .generate_corresponding_file(fn_local, "template")
-    if (verbose) {
-      .icy_text(paste0("Derived template filename: ", derived_fn_tmpl))
-    }
-    fn_tmpl <- derived_fn_tmpl
-  }
-  
-  tmpl_path <- find_template(
-    package = package,
-    fn_tmpl = fn_tmpl,
-    case_format = case_format
-  )
-
+  # Check if template was found
   if (is.null(tmpl_path)) {
     .icy_stop(paste0("No template config found for package ", package))
   }
@@ -123,14 +98,21 @@ create_local <- function(package = get_package_name(verbose = FALSE),
   }
 
   # Determine the full path for local config file
-  # If fn_local is just a filename, place it in the package directory
+  # If fn_local is just a filename, place it in the appropriate directory
   if (!grepl("[/\\\\]", fn_local)) {
-    # If in package directory: local location = template location
+    # Get the local config directory (uses new type parameter)
+    local_dir <- get_package_path(package = package, type = "local")
+    
+    # If in package directory, ensure directory structure exists
     if (.is_pkg_dir(package = package)) {
-      local_path <- file.path(dirname(tmpl_path), fn_local)
-    } else {
-      local_path <- file.path(get_package_path(package = package), fn_local)
+      # Ensure inst/local_config/ directory exists
+      .ensure_directory_exists(local_dir, verbose = verbose)
+      
+      # Ensure .Rbuildignore excludes this directory
+      .ensure_rbuildignore_excludes_local_config(verbose = verbose)
     }
+    
+    local_path <- file.path(local_dir, fn_local)
   } else {
     # If fn_local contains path separators, use it as-is (user is responsible)
     local_path <- fn_local
@@ -140,7 +122,7 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     fun <- as.character(sys.call())
     .icy_text(paste0("From ", fun, ":"))
     .icy_text(paste0(" - fn_local = ", fn_local))
-    .icy_text(paste0(" - package_dir = ", get_package_path(package = package)))
+    .icy_text(paste0(" - local_config_dir = ", get_package_path(package = package, type = "local")))
     .icy_text(paste0(" - local_path = ", local_path))
   }
 

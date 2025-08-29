@@ -15,9 +15,10 @@
 #' consistently for both package developers and end users.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
-#' @param user_dir Logical. If TRUE, uses `tools::R_user_dir()` to locate the package directory. Defaults to TRUE.
+#' @param type Character string specifying the type of configuration files to locate.
+#'   Options: "local" (user-specific configs, default) or "template" (package-provided configs).
 #' @param pkg_first Logical. If TRUE, checks if the current working directory is the package directory first. Defaults to TRUE.
-#' @param ud_which Character string. Passed to `tools::R_user_dir()` which parameter. Defaults to "config".
+#' @param user_dir Deprecated. Use `type` parameter instead. Logical for backwards compatibility.
 #'
 #' @return Character string with the absolute path to the package's root directory.
 #'
@@ -41,23 +42,38 @@
 #'
 #' @export
 get_package_path <- function(package = get_package_name(),
-                            user_dir = TRUE,
+                            type = "local",
                             pkg_first = TRUE,
+                            user_dir = NULL,
                             ud_which = "config") {
 
+  # Handle deprecated user_dir parameter
+  if (!is.null(user_dir)) {
+    .icy_warn("Parameter 'user_dir' is deprecated. Use 'type' parameter instead.")
+    type <- if (user_dir) "local" else "template"
+  }
+  
+  # Validate type parameter
+  if (!type %in% c("local", "template")) {
+    .icy_stop("Parameter 'type' must be either 'local' or 'template'")
+  }
+  
   # First try: use current working directory if it seems to be a R package directory
   if (pkg_first && .is_pkg_dir(package = package)) {
-    return(getwd())
+    if (type == "template") {
+      return(file.path(getwd(), "inst"))
+    } else {  # type == "local"
+      return(file.path(getwd(), "inst", "local_config"))
+    }
   }
   
   # Second try: for installed package
-  # use tools::R_user_dir() if user_dir is TRUE (default)
-  if (user_dir) {
-    path <- suppressWarnings(tools::R_user_dir(package = package,
-                                               which = ud_which))
-  } else {
-    # use system.file if not referring to user_dir
+  if (type == "template") {
+    # Templates are in package installation directory
     path <- suppressWarnings(system.file(package = package))
+  } else {  # type == "local"
+    # Local configs are in user config directory
+    path <- suppressWarnings(tools::R_user_dir(package = package, which = ud_which))
   }
 
   if (path != "") {

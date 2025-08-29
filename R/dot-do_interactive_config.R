@@ -37,7 +37,7 @@
   
   # Display current value if available
   current_value <- tryCatch({
-    config <- get_config(package = package, section = section, yaml_file = fn_local)
+    config <- get_config(package = package, section = section, fn_local = fn_local)
     config[[var_name]]
   }, error = function(e) NULL)
   

@@ -86,12 +86,13 @@ write_local <- function(var_list,
   original_session_vars <- .get_current_session_vars(package, section)
   
   # Find or create local config file
-  local_path <- find_local(
+  local_path <- find_file(
     package = package,
     fn_local = fn_local,
+    pairing = TRUE,
     case_format = case_format,
     verbose = FALSE
-  )
+  )$fn_local
   
   # Create if missing
   if (is.null(local_path)) {

@@ -13,3 +13,4 @@
 tmp*/
 results*/
 excl*/
+^inst/local_config/

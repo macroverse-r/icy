@@ -92,7 +92,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
   template_config <- if (is.null(fn_tmpl)) {
     get_config(package = package, section = section, origin = "template")
   } else {
-    .get_config_template(package = package, section = section, yaml_file = fn_tmpl)
+    .get_config_template(package = package, section = section, resolved_template_path = fn_tmpl)
   }
   if (is.null(template_config) || length(template_config) == 0) {
     .icy_stop(paste0("No template configuration found for package '", package, "'"))
@@ -227,7 +227,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
     write_location <- switch(write,
       "local" = {
         # Get the actual path of the local config file that was written to
-        find_local(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)
+        find_file(package = package, fn_local = fn_local, pairing = TRUE, case_format = "snake_case", verbose = FALSE)$fn_local
       },
       "renviron" = "~/.Renviron file", 
       "session" = "current R session",

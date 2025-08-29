@@ -4,14 +4,14 @@
 \alias{.list_available_files}
 \title{List Available Files of Specified Type}
 \usage{
-.list_available_files(file_type, package, user_dir)
+.list_available_files(file_type, package, type)
 }
 \arguments{
 \item{file_type}{Character string, "template" or "local"}
 
 \item{package}{Character string with package name}
 
-\item{user_dir}{Logical, whether to search in user directory}
+\item{type}{Character string specifying file type ("local" or "template")}
 }
 \value{
 Character vector of available file paths

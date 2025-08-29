@@ -11,10 +11,12 @@
 #'   - "renviron": Read from .Renviron file
 #'   - "priority": Read with priority order (.Renviron > local config)
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param yaml_file Character string with the name or path to the YAML file. If NULL,
-#'   the function will search for the appropriate file based on the origin.
+#' @param fn_tmpl Character string with the name or path to the template YAML file. 
+#'   If NULL, uses default template for the package.
+#' @param fn_local Character string with the name or path to the local YAML file.
+#'   If NULL, uses default local config for the package.
 #' @param case_format Character string indicating the case format to use for
-#'   searching the YAML file if `yaml_file` is NULL. Options are:
+#'   searching YAML files if no specific files are provided. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param inherit Character string specifying a section to inherit values from, or
 #'   0 to explicitly disable inheritance. If NULL (default), the function checks 
@@ -29,6 +31,8 @@
 #' @param validate Logical. If TRUE (default), validates the template structure
 #'   and checks for issues like circular inheritance. Set to FALSE to skip 
 #'   validation for performance or to work with templates that have known issues.
+#' @param confirm_fuzzy Logical. If TRUE (default), prompts for confirmation when fuzzy 
+#'   matches are used in file searching. Set to FALSE for non-interactive use.
 #'
 #' @return Named list of environment variable configurations.
 #'
@@ -46,17 +50,24 @@
 #' # Get production config with defaults inherited from default section
 #' prod_config <- get_config(package = "mypackage", section = "production", 
 #'                          inherit = "default", origin = "template")
+#'
+#' # Use specific template and local files
+#' config <- get_config(package = "mypackage", 
+#'                     fn_tmpl = "custom_template.yml",
+#'                     fn_local = "custom_local.yml")
 #' }
 #'
 #' @export
 get_config <- function(package = get_package_name(),
                        origin = "priority",
                        section = "default",
-                       yaml_file = NULL,
+                       fn_tmpl = NULL,
+                       fn_local = NULL,
                        case_format = "snake_case",
                        inherit = NULL,
                        verbose = FALSE,
-                       validate = TRUE) {
+                       validate = TRUE,
+                       confirm_fuzzy = TRUE) {
 
   # Validate origin parameter
   valid_origins <- c("template", "local", "renviron", "priority")
@@ -67,12 +78,34 @@ get_config <- function(package = get_package_name(),
     ))
   }
   
+  # Resolve file paths once at the beginning
+  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
+    # Use whichever filename is provided for searching
+    # find_file will handle pairing to get both files
+    resolved_files <- find_file(
+      package = package,
+      fn_local = fn_local,
+      fn_tmpl = fn_tmpl,
+      pairing = TRUE,  # Always TRUE for simplicity
+      confirm_fuzzy = confirm_fuzzy,
+      case_format = case_format,
+      verbose = verbose
+    )
+    
+    resolved_local_path <- resolved_files$fn_local
+    resolved_template_path <- resolved_files$fn_tmpl
+  } else {
+    # No specific file provided, will find defaults
+    resolved_local_path <- NULL
+    resolved_template_path <- NULL
+  }
+  
   # Validate template if enabled and using template/local origin
-  if (origin %in% c("template", "local") && validate) {
+  if (origin %in% c("template", "local") && validate && !is.null(resolved_template_path)) {
     # Quick validation for performance
     validation <- validate_template(
       package = package,
-      fn_tmpl = yaml_file,
+      fn_tmpl = basename(resolved_template_path),  # Use resolved path
       case_format = case_format,
       verbose = FALSE,
       quick = TRUE
@@ -92,7 +125,7 @@ get_config <- function(package = get_package_name(),
     config <- .get_config_template(
       package = package,
       section = section,
-      yaml_file = yaml_file,
+      resolved_template_path = resolved_template_path,
       case_format = case_format,
       verbose = verbose
     )
@@ -100,7 +133,7 @@ get_config <- function(package = get_package_name(),
     config <- .get_config_local(
       package = package,
       section = section,
-      yaml_file = yaml_file,
+      resolved_local_path = resolved_local_path,
       case_format = case_format,
       verbose = verbose
     )
@@ -108,7 +141,7 @@ get_config <- function(package = get_package_name(),
     config <- .get_config_renviron(
       package = package,
       section = section,
-      yaml_file = yaml_file,
+      resolved_template_path = resolved_template_path,
       case_format = case_format,
       verbose = verbose
     )
@@ -116,7 +149,8 @@ get_config <- function(package = get_package_name(),
     config <- .get_config_priority(
       package = package,
       section = section,
-      yaml_file = yaml_file,
+      resolved_local_path = resolved_local_path,
+      resolved_template_path = resolved_template_path,
       case_format = case_format,
       verbose = verbose
     )
@@ -134,7 +168,7 @@ get_config <- function(package = get_package_name(),
   if (is.null(inherit) && origin %in% c("template", "local", "priority")) {
     template_inherit <- .get_inherit_config(
       package = package,
-      yaml_file = yaml_file,
+      resolved_template_path = resolved_template_path,
       case_format = case_format
     )
     
@@ -166,7 +200,8 @@ get_config <- function(package = get_package_name(),
       package = package,
       origin = origin,
       section = inherit,
-      yaml_file = yaml_file,
+      fn_tmpl = fn_tmpl,
+      fn_local = fn_local,
       case_format = case_format,
       inherit = NULL,  # Critical: prevent double-processing of inheritance
       verbose = FALSE
@@ -184,50 +219,34 @@ get_config <- function(package = get_package_name(),
 #' @keywords internal
 .get_config_local <- function(package = get_package_name(),
                               section = "default",
-                              yaml_file = NULL,
+                              resolved_local_path = NULL,
                               case_format = "snake_case",
                               verbose = FALSE) {
-  # Find the YAML file
-  if (is.null(yaml_file)) {
-    yaml_file <- find_local(
+  # Use resolved path if provided, otherwise find defaults
+  if (is.null(resolved_local_path)) {
+    # Find default local config file
+    config_file_path <- find_file(
       package = package,
+      pairing = TRUE,
       case_format = case_format,
       verbose = verbose
-    )
+    )$fn_local
 
-    if (is.null(yaml_file)) {
+    if (is.null(config_file_path)) {
       return(list()) # Return empty list if no local config exists
     }
   } else {
-    # If yaml_file is provided, use pattern matching
-    if (!file.exists(yaml_file)) {
-      # Try pattern matching
-      matching_files <- .find_matching_pattern(
-        package = package,
-        fn_pattern = yaml_file,
-        user_dir = TRUE,
-        verbose = verbose
-      )
-      
-      if (length(matching_files) == 0) {
-        .icy_stop(paste0("Local YAML file not found: ", yaml_file))
-      } else if (length(matching_files) > 1) {
-        .icy_warn(paste0("Multiple files found matching '", yaml_file, "'. Using: ", matching_files[1]))
-        yaml_file <- matching_files[1]
-      } else {
-        yaml_file <- matching_files[1]
-      }
-    }
+    config_file_path <- resolved_local_path
   }
 
   if (verbose) {
-    .icy_text(paste0("Reading local config from: ", yaml_file))
+    .icy_text(paste0("Reading local config from: ", config_file_path))
   }
 
   # Read the YAML file
   tryCatch(
     {
-      config_data <- yaml::read_yaml(yaml_file)
+      config_data <- yaml::read_yaml(config_file_path)
 
       # Extract user section
       if (!section %in% names(config_data)) {
@@ -256,49 +275,33 @@ get_config <- function(package = get_package_name(),
 #' @keywords internal
 .get_config_template <- function(package = get_package_name(),
                                  section = "default",
-                                 yaml_file = NULL,
+                                 resolved_template_path = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
-  # Find the YAML file
-  if (is.null(yaml_file)) {
-    yaml_file <- find_template(
+  # Use resolved path if provided, otherwise find defaults
+  if (is.null(resolved_template_path)) {
+    # Find default template config file
+    config_file_path <- find_file(
       package = package,
+      pairing = TRUE,
       case_format = case_format
-    )
+    )$fn_tmpl
 
-    if (is.null(yaml_file)) {
+    if (is.null(config_file_path)) {
       .icy_stop(paste0("No template configuration file found for package ", package))
     }
   } else {
-    # If yaml_file is provided, use pattern matching
-    if (!file.exists(yaml_file)) {
-      # Try pattern matching
-      matching_files <- .find_matching_pattern(
-        package = package,
-        fn_pattern = yaml_file,
-        user_dir = FALSE,  # Templates are in package installation dir
-        verbose = verbose
-      )
-      
-      if (length(matching_files) == 0) {
-        .icy_stop(paste0("Template YAML file not found: ", yaml_file))
-      } else if (length(matching_files) > 1) {
-        .icy_warn(paste0("Multiple files found matching '", yaml_file, "'. Using: ", matching_files[1]))
-        yaml_file <- matching_files[1]
-      } else {
-        yaml_file <- matching_files[1]
-      }
-    }
+    config_file_path <- resolved_template_path
   }
 
   if (verbose) {
-    .icy_text(paste0("Reading template config from: ", yaml_file))
+    .icy_text(paste0("Reading template config from: ", config_file_path))
   }
 
   # Read the YAML file
   tryCatch(
     {
-      config_data <- yaml::read_yaml(yaml_file)
+      config_data <- yaml::read_yaml(config_file_path)
 
       # Extract user section
       if (!section %in% names(config_data)) {
@@ -327,7 +330,7 @@ get_config <- function(package = get_package_name(),
 #' @keywords internal
 .get_config_renviron <- function(package = get_package_name(),
                                  section = "default",
-                                 yaml_file = NULL,
+                                 resolved_template_path = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
   # Get path to .Renviron
@@ -379,8 +382,9 @@ get_config <- function(package = get_package_name(),
       {
         .get_config_template(package = package,
                              section = section,
-                             yaml_file = yaml_file,
-                             case_format = case_format)
+                             resolved_template_path = resolved_template_path,
+                             case_format = case_format,
+                             verbose = FALSE)
       },
       error = function(e) NULL
     )
@@ -404,14 +408,15 @@ get_config <- function(package = get_package_name(),
 #' @keywords internal
 .get_config_priority <- function(package = get_package_name(),
                                  section = "default",
-                                 yaml_file = NULL,
+                                 resolved_local_path = NULL,
+                                 resolved_template_path = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
   # Get configurations from both sources
   local_config <- .get_config_local(
     package = package,
     section = section,
-    yaml_file = yaml_file,
+    resolved_local_path = resolved_local_path,
     case_format = case_format,
     verbose = verbose
   )
@@ -419,7 +424,7 @@ get_config <- function(package = get_package_name(),
   renviron_config <- .get_config_renviron(
     package = package,
     section = section,
-    yaml_file = yaml_file,
+    resolved_template_path = resolved_template_path,
     case_format = case_format,
     verbose = verbose
   )
@@ -464,38 +469,24 @@ get_config <- function(package = get_package_name(),
 #' Reads the inheritances section from a template YAML file if it exists.
 #'
 #' @param package Package name
-#' @param yaml_file Optional path to YAML file
+#' @param resolved_template_path Optional path to resolved template YAML file
 #' @param case_format Case format for file searching
 #' @return Named list mapping sections to their parent sections, or NULL if no inheritances section
 #' @keywords internal
-.get_inherit_config <- function(package, yaml_file = NULL, case_format = "snake_case") {
-  # Find the template file
-  if (is.null(yaml_file)) {
-    template_file <- find_template(
+.get_inherit_config <- function(package, resolved_template_path = NULL, case_format = "snake_case") {
+  # Use resolved path if provided, otherwise find defaults
+  if (is.null(resolved_template_path)) {
+    template_file <- find_file(
       package = package,
+      pairing = TRUE,
       case_format = case_format
-    )
+    )$fn_tmpl
     
     if (is.null(template_file)) {
       return(NULL)  # No template, no inheritance
     }
   } else {
-    template_file <- yaml_file
-    # Check if file exists
-    if (!file.exists(template_file)) {
-      # Try pattern matching
-      matching_files <- .find_matching_pattern(
-        package = package,
-        fn_pattern = template_file,
-        user_dir = FALSE,
-        verbose = FALSE
-      )
-      
-      if (length(matching_files) == 0) {
-        return(NULL)  # File not found
-      }
-      template_file <- matching_files[1]
-    }
+    template_file <- resolved_template_path
   }
   
   # Read template and extract inherit section

@@ -4,12 +4,16 @@
 \alias{.get_inherit_config}
 \title{Get inheritance configuration from template}
 \usage{
-.get_inherit_config(package, yaml_file = NULL, case_format = "snake_case")
+.get_inherit_config(
+  package,
+  resolved_template_path = NULL,
+  case_format = "snake_case"
+)
 }
 \arguments{
 \item{package}{Package name}
 
-\item{yaml_file}{Optional path to YAML file}
+\item{resolved_template_path}{Optional path to resolved template YAML file}
 
 \item{case_format}{Case format for file searching}
 }

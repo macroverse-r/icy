@@ -10,7 +10,8 @@ load_config(
   section = "default",
   unset = list(),
   ensure_local = TRUE,
-  yaml_file = NULL,
+  fn_tmpl = NULL,
+  fn_local = NULL,
   case_format = "snake_case",
   verbose = FALSE
 )
@@ -35,11 +36,14 @@ in any configuration source. Names should match template variable names.}
 \item{ensure_local}{Logical. If TRUE (default), creates a local configuration file
 if it doesn't exist. Only applies when origin includes local config.}
 
-\item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
+\item{fn_tmpl}{Character string with the name or path to the YAML template file. If NULL,
+the function will search for the appropriate file based on the origin.}
+
+\item{fn_local}{Character string with the name or path to the YAML local config file. If NULL,
 the function will search for the appropriate file based on the origin.}
 
 \item{case_format}{Character string indicating the case format to use for
-searching the YAML file if \code{yaml_file} is NULL. Options are:
+searching the YAML files if \code{fn_tmpl} and \code{fn_local} are NULL. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}

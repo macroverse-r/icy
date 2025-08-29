@@ -14,7 +14,7 @@
     config <- if (is.null(fn_tmpl)) {
       get_config(package = package, origin = "template", section = section)
     } else {
-      .get_config_template(package = package, section = section, yaml_file = fn_tmpl)
+      .get_config_template(package = package, section = section, resolved_template_path = fn_tmpl)
     }
     
     if (!is.null(config) && var_name %in% names(config)) {

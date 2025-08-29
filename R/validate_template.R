@@ -56,11 +56,12 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   # Find template file
-  template_file <- find_template(
+  template_file <- find_file(
     package = package,
     fn_tmpl = fn_tmpl,
+    pairing = TRUE,
     case_format = case_format
-  )
+  )$fn_tmpl
   
   if (is.null(template_file)) {
     result$valid <- FALSE

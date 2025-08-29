@@ -10,7 +10,8 @@ show_config(
   section = "default",
   display = "sources",
   fn_tmpl = NULL,
-  fn_local = NULL
+  fn_local = NULL,
+  confirm_fuzzy = TRUE
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ If NULL (default), uses the standard template file for the package.}
 
 \item{fn_local}{Character string with the name or path to a custom local YAML config file.
 If NULL (default), uses the standard local config file for the package.}
+
+\item{confirm_fuzzy}{Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.}
 }
 \value{
 Invisibly returns a data frame with variable names, values, and sources.

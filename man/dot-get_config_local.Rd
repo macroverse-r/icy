@@ -7,7 +7,7 @@
 .get_config_local(
   package = get_package_name(),
   section = "default",
-  yaml_file = NULL,
+  resolved_local_path = NULL,
   case_format = "snake_case",
   verbose = FALSE
 )

@@ -17,6 +17,7 @@
 #'   If NULL (default), uses the standard template file for the package.
 #' @param fn_local Character string with the name or path to a custom local YAML config file.
 #'   If NULL (default), uses the standard local config file for the package.
+#' @param confirm_fuzzy Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.
 #'
 #' @return Invisibly returns a data frame with variable names, values, and sources.
 #'
@@ -41,7 +42,25 @@ show_config <- function(package = get_package_name(),
                         section = "default",
                         display = "sources",
                         fn_tmpl = NULL,
-                        fn_local = NULL) {
+                        fn_local = NULL,
+                        confirm_fuzzy = TRUE) {
+
+  # Resolve file paths once at the beginning to avoid multiple confirmations
+  resolved_local_path <- NULL
+  resolved_template_path <- NULL
+  
+  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
+    resolved_files <- find_file(
+      package = package,
+      fn_local = fn_local,
+      fn_tmpl = fn_tmpl,
+      pairing = TRUE,
+      confirm_fuzzy = confirm_fuzzy,
+      verbose = FALSE
+    )
+    resolved_local_path <- resolved_files$fn_local
+    resolved_template_path <- resolved_files$fn_tmpl
+  }
 
   # Get all possible variable names if not specified
   if (is.null(var_names)) {
@@ -51,7 +70,9 @@ show_config <- function(package = get_package_name(),
         names(get_config(package = package,
                          origin = "template",
                          section = section,
-                         yaml_file = fn_tmpl))
+                         fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
+                         fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
+                         confirm_fuzzy = FALSE))
       },
       error = function(e) NULL
     )
@@ -62,7 +83,9 @@ show_config <- function(package = get_package_name(),
         names(get_config(package = package,
                          origin = "local",
                          section = section,
-                         yaml_file = fn_local))
+                         fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
+                         fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
+                         confirm_fuzzy = FALSE))
       },
       error = function(e) NULL
     )
@@ -87,14 +110,24 @@ show_config <- function(package = get_package_name(),
   # Get values from different sources
   renviron_config <- tryCatch(
     {
-      get_config(package = package, origin = "renviron", section = section)
+      get_config(package = package, 
+                 origin = "renviron", 
+                 section = section,
+                 fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
+                 fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
+                 confirm_fuzzy = FALSE)
     },
     error = function(e) list()
   )
 
   local_config <- tryCatch(
     {
-      get_config(package = package, origin = "local", section = section, yaml_file = fn_local)
+      get_config(package = package, 
+                 origin = "local", 
+                 section = section,
+                 fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
+                 fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
+                 confirm_fuzzy = FALSE)
     },
     error = function(e) list()
   )
@@ -140,7 +173,9 @@ show_config <- function(package = get_package_name(),
 
   # Display results based on mode
   if (display == "full") {
-    .show_config_full(package, status_df, renviron_config, local_config, section)
+    .show_config_full(package, status_df, renviron_config, local_config, section, 
+                     fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
+                     fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path))
   } else {
     .show_config_standard(package, status_df, display)
   }
@@ -185,10 +220,10 @@ show_config <- function(package = get_package_name(),
 
 #' Full display mode for show_config
 #' @keywords internal
-.show_config_full <- function(package, status_df, renviron_config, local_config, section) {
+.show_config_full <- function(package, status_df, renviron_config, local_config, section, fn_tmpl = NULL, fn_local = NULL) {
   # Show template configuration
   template_config <- tryCatch({
-    get_config(package = package, origin = "template", section = section)
+    get_config(package = package, origin = "template", section = section, fn_tmpl = fn_tmpl, fn_local = fn_local, confirm_fuzzy = FALSE)
   }, error = function(e) list())
   
   if (length(template_config) > 0) {

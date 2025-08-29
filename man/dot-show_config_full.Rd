@@ -4,7 +4,15 @@
 \alias{.show_config_full}
 \title{Full display mode for show_config}
 \usage{
-.show_config_full(package, status_df, renviron_config, local_config, section)
+.show_config_full(
+  package,
+  status_df,
+  renviron_config,
+  local_config,
+  section,
+  fn_tmpl = NULL,
+  fn_local = NULL
+)
 }
 \description{
 Full display mode for show_config

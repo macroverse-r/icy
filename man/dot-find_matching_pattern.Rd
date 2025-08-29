@@ -7,8 +7,9 @@
 .find_matching_pattern(
   package = get_package_name(),
   fn_pattern,
-  user_dir = TRUE,
-  verbose = FALSE
+  type = "local",
+  verbose = FALSE,
+  user_dir = NULL
 )
 }
 \arguments{
@@ -18,11 +19,13 @@ Defaults to \code{get_package_name()} to detect the calling package.}
 \item{fn_pattern}{Character string with the filename pattern to match against YAML files.
 Uses regex pattern matching (case-insensitive).}
 
-\item{user_dir}{Logical indicating whether to search in user directory (TRUE, default)
-or package installation directory (FALSE).}
+\item{type}{Character string specifying the type of configuration files to search for.
+Options: "local" (user-specific configs, default) or "template" (package-provided configs).}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the search process
 and warnings for multiple/no matches. Defaults to FALSE.}
+
+\item{user_dir}{Deprecated. Use \code{type} parameter instead. Logical for backwards compatibility.}
 }
 \value{
 Character vector of matching file paths. Empty vector if no matches found.

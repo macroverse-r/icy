@@ -25,10 +25,12 @@
 #'   in any configuration source. Names should match template variable names.
 #' @param ensure_local Logical. If TRUE (default), creates a local configuration file 
 #'   if it doesn't exist. Only applies when origin includes local config.
-#' @param yaml_file Character string with the name or path to the YAML file. If NULL,
+#' @param fn_tmpl Character string with the name or path to the YAML template file. If NULL,
+#'   the function will search for the appropriate file based on the origin.
+#' @param fn_local Character string with the name or path to the YAML local config file. If NULL,
 #'   the function will search for the appropriate file based on the origin.
 #' @param case_format Character string indicating the case format to use for
-#'   searching the YAML file if `yaml_file` is NULL. Options are:
+#'   searching the YAML files if `fn_tmpl` and `fn_local` are NULL. Options are:
 #'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param verbose Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.
 #'
@@ -59,7 +61,8 @@ load_config <- function(package = get_package_name(),
                         section = "default",
                         unset = list(),
                         ensure_local = TRUE,
-                        yaml_file = NULL,
+                        fn_tmpl = NULL,
+                        fn_local = NULL,
                         case_format = "snake_case",
                         verbose = FALSE) {
 
@@ -74,7 +77,8 @@ load_config <- function(package = get_package_name(),
       package = package,
       origin = "template",
       section = "default",
-      yaml_file = yaml_file,
+      fn_tmpl = fn_tmpl,
+      fn_local = fn_local,
       case_format = case_format
     )
   }, error = function(e) {
@@ -103,7 +107,7 @@ load_config <- function(package = get_package_name(),
   if (ensure_local && origin %in% c("local", "priority")) {
     # Check if local config exists
     local_file <- tryCatch({
-      find_local(package = package, case_format = case_format)
+      find_file(package = package, pairing = TRUE, case_format = case_format)$fn_local
     }, error = function(e) NULL)
     
     if (is.null(local_file)) {
@@ -127,7 +131,8 @@ load_config <- function(package = get_package_name(),
       package = package,
       origin = origin,
       section = section,
-      yaml_file = yaml_file,
+      fn_tmpl = fn_tmpl,
+      fn_local = fn_local,
       case_format = case_format
     )
   }, error = function(e) {

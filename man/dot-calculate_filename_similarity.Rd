@@ -4,17 +4,27 @@
 \alias{.calculate_filename_similarity}
 \title{Calculate String Similarity for Fuzzy Matching}
 \usage{
-.calculate_filename_similarity(pattern, candidate)
+.calculate_filename_similarity(
+  pattern,
+  candidate,
+  package = NULL,
+  debug = FALSE
+)
 }
 \arguments{
 \item{pattern}{The pattern to search for (user input)}
 
 \item{candidate}{A candidate filename to compare against}
+
+\item{package}{Package name to remove from comparison (optional)}
+
+\item{debug}{Logical. If TRUE, displays detailed similarity calculations. Defaults to FALSE.}
 }
 \value{
 Numeric similarity score between 0 and 1
 }
 \description{
-Uses multiple strategies to find similar filenames
+Uses dual scoring approach to find similar filenames: full string similarity
+and content-based similarity after removing generic terms and package name.
 }
 \keyword{internal}

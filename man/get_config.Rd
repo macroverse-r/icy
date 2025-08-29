@@ -8,11 +8,13 @@ get_config(
   package = get_package_name(),
   origin = "priority",
   section = "default",
-  yaml_file = NULL,
+  fn_tmpl = NULL,
+  fn_local = NULL,
   case_format = "snake_case",
   inherit = NULL,
   verbose = FALSE,
-  validate = TRUE
+  validate = TRUE,
+  confirm_fuzzy = TRUE
 )
 }
 \arguments{
@@ -28,11 +30,14 @@ get_config(
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
-\item{yaml_file}{Character string with the name or path to the YAML file. If NULL,
-the function will search for the appropriate file based on the origin.}
+\item{fn_tmpl}{Character string with the name or path to the template YAML file.
+If NULL, uses default template for the package.}
+
+\item{fn_local}{Character string with the name or path to the local YAML file.
+If NULL, uses default local config for the package.}
 
 \item{case_format}{Character string indicating the case format to use for
-searching the YAML file if \code{yaml_file} is NULL. Options are:
+searching YAML files if no specific files are provided. Options are:
 "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
 \item{inherit}{Character string specifying a section to inherit values from, or
@@ -50,6 +55,9 @@ Only works with "template" and "local" origins.}
 \item{validate}{Logical. If TRUE (default), validates the template structure
 and checks for issues like circular inheritance. Set to FALSE to skip
 validation for performance or to work with templates that have known issues.}
+
+\item{confirm_fuzzy}{Logical. If TRUE (default), prompts for confirmation when fuzzy
+matches are used in file searching. Set to FALSE for non-interactive use.}
 }
 \value{
 Named list of environment variable configurations.
@@ -73,6 +81,11 @@ config <- get_config(package = "mypackage", origin = "priority")
 # Get production config with defaults inherited from default section
 prod_config <- get_config(package = "mypackage", section = "production", 
                          inherit = "default", origin = "template")
+
+# Use specific template and local files
+config <- get_config(package = "mypackage", 
+                    fn_tmpl = "custom_template.yml",
+                    fn_local = "custom_local.yml")
 }
 
 }

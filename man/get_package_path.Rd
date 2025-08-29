@@ -6,19 +6,21 @@
 \usage{
 get_package_path(
   package = get_package_name(),
-  user_dir = TRUE,
+  type = "local",
   pkg_first = TRUE,
+  user_dir = NULL,
   ud_which = "config"
 )
 }
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{user_dir}{Logical. If TRUE, uses \code{tools::R_user_dir()} to locate the package directory. Defaults to TRUE.}
+\item{type}{Character string specifying the type of configuration files to locate.
+Options: "local" (user-specific configs, default) or "template" (package-provided configs).}
 
 \item{pkg_first}{Logical. If TRUE, checks if the current working directory is the package directory first. Defaults to TRUE.}
 
-\item{ud_which}{Character string. Passed to \code{tools::R_user_dir()} which parameter. Defaults to "config".}
+\item{user_dir}{Deprecated. Use \code{type} parameter instead. Logical for backwards compatibility.}
 }
 \value{
 Character string with the absolute path to the package's root directory.
