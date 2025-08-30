@@ -230,13 +230,19 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   }
   
   # Unified file validation and pairing
-  paired_files <- .validate_file_pairing(
+  paired_files <- find_config_files(
+    package = package,
     fn_tmpl = fn_tmpl,
     fn_local = fn_local,
-    package = package,
-    section = section,
+    fuzzy = TRUE,
+    confirm_fuzzy = TRUE,
     verbose = verbose
   )
+  
+  # Check if template was found
+  if (is.null(paired_files$fn_tmpl)) {
+    .icy_stop(paste0("Template file not found for package ", package))
+  }
   
   # Update parameters with validated files
   fn_tmpl <- paired_files$fn_tmpl

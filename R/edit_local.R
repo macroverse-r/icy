@@ -56,10 +56,9 @@ edit_local <- function(package = get_package_name(),
                       verbose = TRUE) {
   
   # Find the local config file
-  local_path <- find_file(
+  local_path <- find_config_files(
     package = package,
     fn_local = fn_local,
-    pairing = TRUE,
     verbose = FALSE
   )$fn_local
   

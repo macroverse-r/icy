@@ -80,13 +80,12 @@ get_config <- function(package = get_package_name(),
   
   # Resolve file paths once at the beginning
   if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    # Use whichever filename is provided for searching
-    # find_file will handle pairing to get both files
-    resolved_files <- find_file(
+    # Use find_config_files to get both files
+    resolved_files <- find_config_files(
       package = package,
       fn_local = fn_local,
       fn_tmpl = fn_tmpl,
-      pairing = TRUE,  # Always TRUE for simplicity
+      fuzzy = TRUE,
       confirm_fuzzy = confirm_fuzzy,
       case_format = case_format,
       verbose = verbose
@@ -229,12 +228,12 @@ get_config <- function(package = get_package_name(),
   # Use resolved path if provided, otherwise find defaults
   if (is.null(resolved_local_path)) {
     # Find default local config file
-    config_file_path <- find_file(
+    config_files <- find_config_files(
       package = package,
-      pairing = TRUE,
       case_format = case_format,
       verbose = verbose
-    )$fn_local
+    )
+    config_file_path <- config_files$fn_local
 
     if (is.null(config_file_path)) {
       return(list()) # Return empty list if no local config exists
@@ -285,11 +284,11 @@ get_config <- function(package = get_package_name(),
   # Use resolved path if provided, otherwise find defaults
   if (is.null(resolved_template_path)) {
     # Find default template config file
-    config_file_path <- find_file(
+    config_files <- find_config_files(
       package = package,
-      pairing = TRUE,
       case_format = case_format
-    )$fn_tmpl
+    )
+    config_file_path <- config_files$fn_tmpl
 
     if (is.null(config_file_path)) {
       .icy_stop(paste0("No template configuration file found for package ", package))
@@ -450,7 +449,7 @@ get_config <- function(package = get_package_name(),
       
       if (is.logical(original_value)) {
         # Convert to logical
-        config[[var_name]] <- .convert_by_type(session_value, "logical")
+        config[[var_name]] <- ._qconfig_convert_by_type(session_value, "logical")
       } else if (is.numeric(original_value)) {
         # Convert to numeric
         converted <- suppressWarnings(as.numeric(session_value))
@@ -480,11 +479,11 @@ get_config <- function(package = get_package_name(),
 .get_inherit_config <- function(package, resolved_template_path = NULL, case_format = "snake_case") {
   # Use resolved path if provided, otherwise find defaults
   if (is.null(resolved_template_path)) {
-    template_file <- find_file(
+    config_files <- find_config_files(
       package = package,
-      pairing = TRUE,
       case_format = case_format
-    )$fn_tmpl
+    )
+    template_file <- config_files$fn_tmpl
     
     if (is.null(template_file)) {
       return(NULL)  # No template, no inheritance

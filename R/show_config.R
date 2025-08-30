@@ -50,11 +50,11 @@ show_config <- function(package = get_package_name(),
   resolved_template_path <- NULL
   
   if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    resolved_files <- find_file(
+    resolved_files <- find_config_files(
       package = package,
       fn_local = fn_local,
       fn_tmpl = fn_tmpl,
-      pairing = TRUE,
+      fuzzy = TRUE,
       confirm_fuzzy = confirm_fuzzy,
       verbose = FALSE
     )
@@ -143,9 +143,9 @@ show_config <- function(package = get_package_name(),
     if (!is.na(session_value)) {
       status_df$value[i] <- session_value
       # Determine if session value matches a config source
-      if (var %in% names(renviron_config) && !is.null(renviron_config[[var]]) && renviron_config[[var]] == session_value) {
+      if (var %in% names(renviron_config) && !is.null(renviron_config[[var]]) && !is.na(renviron_config[[var]]) && renviron_config[[var]] == session_value) {
         status_df$source[i] <- "session = .Renviron"
-      } else if (var %in% names(local_config) && !is.null(local_config[[var]]) && local_config[[var]] == session_value) {
+      } else if (var %in% names(local_config) && !is.null(local_config[[var]]) && !is.na(local_config[[var]]) && local_config[[var]] == session_value) {
         status_df$source[i] <- "session = local"
       } else {
         status_df$source[i] <- "session"
@@ -199,7 +199,7 @@ show_config <- function(package = get_package_name(),
     colored_value <- .format_value_with_color(var, value)
 
     # Format source information
-    if (display == "sources" && value != "(not set)") {
+    if (display == "sources" && !is.na(value) && value != "(not set)") {
       source_color <- switch(source,
         ".Renviron" = "magenta",
         "local config" = "blue", 
@@ -314,8 +314,8 @@ show_config <- function(package = get_package_name(),
   
   value_str <- as.character(value)
   
-  if (value_str == null_replacement) {
-    return(.apply_color(value_str, "grey"))
+  if (is.na(value_str) || value_str == null_replacement) {
+    return(.apply_color(if(is.na(value_str)) null_replacement else value_str, "grey"))
   } else if (grepl("_DIR$|_PATH$", var)) {
     # File paths in green
     return(.apply_color(value_str, "green"))

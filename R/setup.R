@@ -75,13 +75,19 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
   
   # Early detection and handling of file pairing issues
   if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    paired_files <- .validate_file_pairing(
+    paired_files <- find_config_files(
+      package = package,
       fn_tmpl = fn_tmpl,
       fn_local = fn_local,
-      package = package,
-      section = section,
+      fuzzy = TRUE,
+      confirm_fuzzy = TRUE,
       verbose = verbose
     )
+    
+    # Check if files were found
+    if (is.null(paired_files$fn_tmpl)) {
+      .icy_stop(paste0("Template file not found for package ", package))
+    }
     
     # Update file parameters with validated results
     fn_tmpl <- paired_files$fn_tmpl
@@ -227,7 +233,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
     write_location <- switch(write,
       "local" = {
         # Get the actual path of the local config file that was written to
-        find_file(package = package, fn_local = fn_local, pairing = TRUE, case_format = "snake_case", verbose = FALSE)$fn_local
+        find_config_files(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)$fn_local
       },
       "renviron" = "~/.Renviron file", 
       "session" = "current R session",

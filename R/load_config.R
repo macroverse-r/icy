@@ -107,7 +107,7 @@ load_config <- function(package = get_package_name(),
   if (ensure_local && origin %in% c("local", "priority")) {
     # Check if local config exists
     local_file <- tryCatch({
-      find_file(package = package, pairing = TRUE, case_format = case_format)$fn_local
+      find_config_files(package = package, case_format = case_format)$fn_local
     }, error = function(e) NULL)
     
     if (is.null(local_file)) {

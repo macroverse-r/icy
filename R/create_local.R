@@ -57,13 +57,12 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     tmpl_section <- "default"
   }
 
-  # Use find_file for intelligent filename derivation and pairing
-  files <- find_file(
+  # Use find_config_files for intelligent filename derivation and pairing
+  files <- find_config_files(
     package = package,
     fn_tmpl = fn_tmpl,
     fn_local = fn_local,
-    pairing = TRUE,  # Let find_file handle all derivation logic
-    exact = TRUE,    # Use exact matching for checking existing files
+    fuzzy = FALSE,    # Use exact matching for checking existing files
     case_format = case_format,
     verbose = FALSE
   )
