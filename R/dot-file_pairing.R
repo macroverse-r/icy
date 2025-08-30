@@ -134,8 +134,8 @@ NULL
     if (tmpl_result$status == "not_found") {
       return(list(
         status = "template_not_found",
-        fn_tmpl = fn_tmpl,
-        fn_local = fn_local,
+        fn_tmpl = fn_tmpl,  # Keep input since template not found
+        fn_local = if(exists("actual_local")) actual_local else fn_local,  # Return actual path if local was found
         missing_type = NULL,
         suggested_name = NULL
       ))
@@ -144,7 +144,7 @@ NULL
         status = "template_fuzzy_match",
         fn_tmpl = fn_tmpl,           # Original input
         actual_tmpl = tmpl_result$path,   # Fuzzy matched file
-        fn_local = fn_local,
+        fn_local = if(exists("actual_local")) actual_local else fn_local,  # Return actual path if local was found
         missing_type = NULL,
         suggested_name = NULL
       ))
@@ -160,15 +160,15 @@ NULL
     if (local_result$status == "not_found") {
       return(list(
         status = "local_not_found",
-        fn_tmpl = fn_tmpl,
-        fn_local = fn_local,
+        fn_tmpl = if(exists("actual_tmpl")) actual_tmpl else fn_tmpl,  # Return actual path if template was found
+        fn_local = fn_local,  # Keep input since local not found
         missing_type = NULL,
         suggested_name = NULL
       ))
     } else if (local_result$status == "fuzzy_match") {
       return(list(
         status = "local_fuzzy_match",
-        fn_tmpl = fn_tmpl,
+        fn_tmpl = if(exists("actual_tmpl")) actual_tmpl else fn_tmpl,  # Return actual path if template was found
         fn_local = fn_local,           # Original input
         actual_local = local_result$path,   # Fuzzy matched file
         missing_type = NULL,

@@ -108,9 +108,14 @@ find_file <- function(package = get_package_name(),
         result$source <- "exact_match"
       }
     }
+    
+    # Return NULL for files that don't exist, actual paths for files that do
+    tmpl_return <- if (result$status == "template_not_found") NULL else result$fn_tmpl
+    local_return <- if (result$status == "local_not_found") NULL else result$fn_local
+    
     return(list(
-      fn_tmpl = result$fn_tmpl,
-      fn_local = result$fn_local,
+      fn_tmpl = tmpl_return,
+      fn_local = local_return,
       source = result$source
     ))
   }
@@ -239,29 +244,83 @@ find_file <- function(package = get_package_name(),
       .icy_stop("When no filenames provided, pairing must be TRUE to find default files")
     }
     
-    # Use default filenames (not regex patterns)
-    fn_tmpl <- .pattern(
+    # Generate default filenames (not regex patterns)
+    default_tmpl <- .pattern(
       package = package,
       case_format = case_format,
       file = "template",
       yml = TRUE  # Get actual filename, not regex
     )
-    fn_local <- .pattern(
+    default_local <- .pattern(
       package = package,
       case_format = case_format,
       file = "local",
       yml = TRUE  # Get actual filename, not regex
     )
     
-    # Recursive call with defaults
-    return(find_file(
+    # Check for template directly
+    tmpl_result <- .check_single_file(
+      filename = default_tmpl,
       package = package,
-      fn_tmpl = fn_tmpl,
-      fn_local = fn_local,
-      pairing = TRUE,
-      confirm_fuzzy = confirm_fuzzy,
-      case_format = case_format,
+      is_template = TRUE,
+      exact = exact,
       verbose = verbose
-    ))
+    )
+    
+    # Handle fuzzy confirmation for template if needed
+    tmpl_path <- NULL
+    if (tmpl_result$status == "fuzzy_match" && confirm_fuzzy) {
+      confirmed <- .confirm_fuzzy_match(
+        original_input = default_tmpl,
+        fuzzy_match = tmpl_result$path,
+        file_type = "template",
+        param_name = "fn_tmpl"
+      )
+      tmpl_path <- confirmed  # Will be NULL if user declines
+    } else if (tmpl_result$status != "not_found") {
+      tmpl_path <- tmpl_result$path
+    }
+    
+    # Check for local directly
+    local_result <- .check_single_file(
+      filename = default_local,
+      package = package,
+      is_template = FALSE,
+      exact = exact,
+      verbose = verbose
+    )
+    
+    # Handle fuzzy confirmation for local if needed
+    local_path <- NULL
+    if (local_result$status == "fuzzy_match" && confirm_fuzzy) {
+      confirmed <- .confirm_fuzzy_match(
+        original_input = default_local,
+        fuzzy_match = local_result$path,
+        file_type = "local",
+        param_name = "fn_local"
+      )
+      local_path <- confirmed  # Will be NULL if user declines
+    } else if (local_result$status != "not_found") {
+      local_path <- local_result$path
+    }
+    
+    # Determine source based on results
+    if (!is.null(tmpl_path) && !is.null(local_path)) {
+      if (tmpl_result$status == "fuzzy_match" || local_result$status == "fuzzy_match") {
+        source <- "fuzzy_match"
+      } else {
+        source <- "pair_found"
+      }
+    } else if (!is.null(tmpl_path) || !is.null(local_path)) {
+      if (tmpl_result$status == "fuzzy_match" || local_result$status == "fuzzy_match") {
+        source <- "fuzzy_match"
+      } else {
+        source <- "exact_match"
+      }
+    } else {
+      source <- "not_found"
+    }
+    
+    return(list(fn_tmpl = tmpl_path, fn_local = local_path, source = source))
   }
 }

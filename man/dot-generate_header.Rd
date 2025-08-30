@@ -4,7 +4,12 @@
 \alias{.generate_header}
 \title{Generate Header}
 \usage{
-.generate_header(package, type = "template", additional_lines = NULL)
+.generate_header(
+  package,
+  type = "template",
+  additional_lines = NULL,
+  template_source = NULL
+)
 }
 \arguments{
 \item{package}{Character string with package name}
@@ -13,6 +18,8 @@
 NULL, or custom character vector)}
 
 \item{additional_lines}{Optional character vector of additional header lines}
+
+\item{template_source}{Character string with path to template file for local configs}
 }
 \value{
 Character vector of header lines, or character(0) for no header

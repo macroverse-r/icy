@@ -196,12 +196,16 @@ get_config <- function(package = get_package_name(),
     
     # Get the base config to inherit from - RECURSIVELY to get full inheritance chain
     # Pass inherit=NULL to let it auto-detect from template but prevent infinite recursion
+    # Only pass filenames if user originally specified them (not when using defaults)
+    recursive_fn_tmpl <- if (!is.null(fn_tmpl) && !is.null(resolved_template_path)) basename(resolved_template_path) else NULL
+    recursive_fn_local <- if (!is.null(fn_local) && !is.null(resolved_local_path)) basename(resolved_local_path) else NULL
+    
     base_config <- get_config(
       package = package,
       origin = origin,
       section = inherit,
-      fn_tmpl = fn_tmpl,
-      fn_local = fn_local,
+      fn_tmpl = recursive_fn_tmpl,
+      fn_local = recursive_fn_local,
       case_format = case_format,
       inherit = NULL,  # Critical: prevent double-processing of inheritance
       verbose = FALSE

@@ -56,9 +56,10 @@
 #' @param type Character string specifying header type ("template", "local", "none", 
 #'   NULL, or custom character vector)
 #' @param additional_lines Optional character vector of additional header lines
+#' @param template_source Character string with path to template file for local configs
 #' @return Character vector of header lines, or character(0) for no header
 #' @keywords internal
-.generate_header <- function(package, type = "template", additional_lines = NULL) {
+.generate_header <- function(package, type = "template", additional_lines = NULL, template_source = NULL) {
   # Handle special cases
   if (identical(type, "none") || is.null(type)) {
     return(character(0))
@@ -107,6 +108,10 @@
     description_lines <- sapply(header_template$description, function(line) {
       line <- gsub("\\{PACKAGE\\}", toupper(package), line)
       line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
+      # Handle template source for local configs
+      if (!is.null(template_source)) {
+        line <- gsub("\\{TEMPLATE_SOURCE\\}", basename(template_source), line)
+      }
       return(line)
     }, USE.NAMES = FALSE)
     

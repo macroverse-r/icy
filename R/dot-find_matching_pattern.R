@@ -93,7 +93,7 @@
 #' core file discovery mechanism used by configuration loading functions.
 #'
 #' The search algorithm:
-#' 1. Locates the package directory using `get_package_path()`
+#' 1. Locates the package directory using `get_config_dir()`
 #' 2. Recursively finds all YAML files (*.yml, *.yaml) in the directory tree
 #' 3. Filters results using case-insensitive pattern matching
 #' 4. Returns full file paths for matched files
@@ -107,7 +107,6 @@
 #'   Options: "local" (user-specific configs, default) or "template" (package-provided configs).
 #' @param verbose Logical. If TRUE, displays informative messages about the search process
 #'   and warnings for multiple/no matches. Defaults to FALSE.
-#' @param user_dir Deprecated. Use `type` parameter instead. Logical for backwards compatibility.
 #'
 #' @return Character vector of matching file paths. Empty vector if no matches found.
 #'
@@ -115,13 +114,7 @@
 .find_matching_pattern <- function(package = get_package_name(),
                                    fn_pattern,
                                    type = "local",
-                                   verbose = FALSE,
-                                   user_dir = NULL) {
-  # Handle deprecated user_dir parameter
-  if (!is.null(user_dir)) {
-    .icy_warn("Parameter 'user_dir' is deprecated. Use 'type' parameter instead.")
-    type <- if (user_dir) "local" else "template"
-  }
+                                   verbose = FALSE) {
   
   # Validate type parameter
   if (!type %in% c("local", "template")) {
@@ -131,7 +124,7 @@
   # Get the package path
   tryCatch(
     {
-      package_dir <- get_package_path(
+      package_dir <- get_config_dir(
         package = package,
         type = type
       )

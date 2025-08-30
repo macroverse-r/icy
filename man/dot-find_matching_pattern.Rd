@@ -8,8 +8,7 @@
   package = get_package_name(),
   fn_pattern,
   type = "local",
-  verbose = FALSE,
-  user_dir = NULL
+  verbose = FALSE
 )
 }
 \arguments{
@@ -24,8 +23,6 @@ Options: "local" (user-specific configs, default) or "template" (package-provide
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the search process
 and warnings for multiple/no matches. Defaults to FALSE.}
-
-\item{user_dir}{Deprecated. Use \code{type} parameter instead. Logical for backwards compatibility.}
 }
 \value{
 Character vector of matching file paths. Empty vector if no matches found.
@@ -38,7 +35,7 @@ core file discovery mechanism used by configuration loading functions.
 \details{
 The search algorithm:
 \enumerate{
-\item Locates the package directory using \code{get_package_path()}
+\item Locates the package directory using \code{get_config_dir()}
 \item Recursively finds all YAML files (*.yml, *.yaml) in the directory tree
 \item Filters results using case-insensitive pattern matching
 \item Returns full file paths for matched files

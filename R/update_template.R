@@ -339,5 +339,112 @@ update_template <- function(action = NULL,
 }
 
 
+# Internal functions used only by update_template() ----
+
+#' Interactive Template Builder
+#' @keywords internal
+._update_template_interactive_builder <- function(template_data, package, template_file, 
+                                         verbose = TRUE, debug = FALSE) {
+  
+  # Check if template is empty (new template)
+  metadata_sections <- .get_metadata_sections()
+  all_vars <- unique(unlist(lapply(
+    template_data[!names(template_data) %in% metadata_sections],
+    names
+  )))
+  is_empty_template <- length(all_vars) == 0
+  
+  # For empty templates, start directly with adding a variable
+  if (is_empty_template) {
+    if (verbose) {
+      empty_msg <- "Template is empty... (automatically opting for adding a first variable)"
+      .icy_text(.apply_color(empty_msg, "gray"))
+    }
+    template_data <- ._update_template_add_variable_interactive(template_data, package, verbose, debug)
+    # Auto-save after adding the first variable
+    if (!is.null(template_file) && file.exists(template_file)) {
+      .write_template_with_header(
+        template_data = template_data,
+        file_path = template_file,
+        package = package,
+        verbose = verbose,
+        auto_save = TRUE
+      )
+    }
+  }
+  
+  repeat {
+    .icy_text("")
+    action <- ._update_template_select_action()
+    
+    if (action == "done" || action == "quit") {
+      break
+    }
+    
+    template_data <- switch(action,
+      "add" = ._update_template_add_variable_interactive(template_data, package, verbose, debug),
+      "update" = ._update_template_update_variable_interactive(template_data, package, verbose),
+      "remove" = ._update_template_remove_variable_interactive(template_data, verbose),
+      "section" = ._update_template_manage_sections_interactive(template_data, package, verbose),
+      "view" = .show_template_summary(template_data, show_values = TRUE, show_metadata = TRUE),
+      template_data
+    )
+    
+    # Auto-save after each change
+    if (action %in% c("add", "update", "remove", "section")) {
+      if (!is.null(template_file) && file.exists(template_file)) {
+        .write_template_with_header(
+          template_data = template_data,
+          file_path = template_file,
+          package = package,
+          verbose = verbose,
+          auto_save = TRUE
+        )
+      }
+    }
+  }
+  
+  return(template_data)
+}
+
+#' Select Template Action
+#' @keywords internal
+._update_template_select_action <- function() {
+  actions <- c(
+    "Add new variable",
+    "Update existing variable", 
+    "Remove variable",
+    "Manage sections",
+    "View template",
+    "Finish & Exit"
+  )
+  
+  .icy_text(.apply_color("-----------", color = "gray"))
+  .icy_text(.apply_color("Select an option:", color = "brown"))
+  .icy_bullets(actions, bullet = "1:")
+  .icy_text(paste0("Enter your choice: ", .apply_color("(1-6)", color = "gray")))
+  
+  repeat {
+    choice <- trimws(readline())
+    
+    if (choice %in% as.character(1:6)) {
+      .icy_text(.apply_color("-----------", color = "gray"))
+      return(switch(choice,
+                    "1" = "add",
+                    "2" = "update", 
+                    "3" = "remove",
+                    "4" = "section",
+                    "5" = "view",
+                    "6" = "done"
+                    ))
+    } else if (tolower(choice) %in% c("q", "quit", "exit")) {
+      return("quit")
+    }
+    
+    .icy_alert("Please enter a number 1-6, or 'q' to quit")
+  }
+}
+
+
 
 

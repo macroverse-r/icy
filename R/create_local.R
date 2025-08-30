@@ -98,10 +98,21 @@ create_local <- function(package = get_package_name(verbose = FALSE),
   }
 
   # Determine the full path for local config file
-  # If fn_local is just a filename, place it in the appropriate directory
+  # If fn_local is NULL, generate default filename
+  if (is.null(fn_local)) {
+    # Generate default local filename using same pattern as find_file
+    fn_local <- .pattern(
+      package = package,
+      case_format = case_format,
+      file = "local",
+      yml = TRUE
+    )
+  }
+  
+  # If fn_local is just a filename, place it in the appropriate directory  
   if (!grepl("[/\\\\]", fn_local)) {
-    # Get the local config directory (uses new type parameter)
-    local_dir <- get_package_path(package = package, type = "local")
+    # Get the local config directory
+    local_dir <- get_config_dir(package = package, type = "local")
     
     # If in package directory, ensure directory structure exists
     if (.is_pkg_dir(package = package)) {
@@ -122,14 +133,14 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     fun <- as.character(sys.call())
     .icy_text(paste0("From ", fun, ":"))
     .icy_text(paste0(" - fn_local = ", fn_local))
-    .icy_text(paste0(" - local_config_dir = ", get_package_path(package = package, type = "local")))
+    .icy_text(paste0(" - local_config_dir = ", get_config_dir(package = package, type = "local")))
     .icy_text(paste0(" - local_path = ", local_path))
   }
 
-  # Generate header using unified function
-  custom_header <- .generate_header(package, type = header)
+  # Generate header using unified function with template source
+  custom_header <- .generate_header(package, type = header, template_source = tmpl_path)
   
-  # Extract all data sections from template (exclude metadata sections)
+  # Extract all data sections from template (exclude metadata sections except inheritances)
   metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(tmpl_config), metadata_sections)
   
@@ -139,6 +150,11 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     if (section_name %in% names(tmpl_config)) {
       local_config_data[[section_name]] <- tmpl_config[[section_name]]
     }
+  }
+  
+  # Include inheritances section as editable metadata for users
+  if ("inheritances" %in% names(tmpl_config)) {
+    local_config_data[["inheritances"]] <- tmpl_config[["inheritances"]]
   }
   
   # Write the local config file using unified icy YAML writer
