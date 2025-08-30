@@ -449,7 +449,7 @@ get_config <- function(package = get_package_name(),
       
       if (is.logical(original_value)) {
         # Convert to logical
-        config[[var_name]] <- ._qconfig_convert_by_type(session_value, "logical")
+        config[[var_name]] <- .convert_by_type(session_value, "logical")
       } else if (is.numeric(original_value)) {
         # Convert to numeric
         converted <- suppressWarnings(as.numeric(session_value))

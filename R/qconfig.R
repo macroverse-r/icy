@@ -163,7 +163,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
                                        final_allow_custom, params$allow_create_dir, params$resolve_paths, params$fn_tmpl, params$fn_local)
   
   # Convert to proper type and return
-  return(._qconfig_convert_by_type(raw_result, final_type))
+  return(.convert_by_type(raw_result, final_type))
 }
 
 
@@ -305,41 +305,6 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   )
 }
 
-#' Convert Value by Type
-#' @keywords internal
-._qconfig_convert_by_type <- function(value, type) {
-  if (is.null(type)) {
-    return(value)
-  }
-  
-  switch(type,
-    "character" = as.character(value),
-    "integer" = {
-      converted <- suppressWarnings(as.integer(value))
-      if (is.na(converted)) value else converted
-    },
-    "numeric" = {
-      converted <- suppressWarnings(as.numeric(value))
-      if (is.na(converted)) value else converted
-    },
-    "logical" = {
-      if (is.na(value) || value == "") {
-        return(NA)
-      }
-      
-      lower_value <- tolower(trimws(value))
-      
-      if (lower_value %in% c("yes", "true", "t", "y", "on", "1")) {
-        TRUE
-      } else if (lower_value %in% c("no", "false", "f", "n", "off", "0")) {
-        FALSE
-      } else {
-        value
-      }
-    },
-    value
-  )
-}
 
 #' Parse Selection Input with Resolution Mode Suffixes
 #' @keywords internal
@@ -541,7 +506,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     switch(write,
       "local" = {
         config_list <- list()
-        converted_value <- ._qconfig_convert_by_type(value, type)
+        converted_value <- .convert_by_type(value, type)
         config_list[[var_name]] <- converted_value
         write_local(var_list = config_list, package = package, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
         if (verbose) {

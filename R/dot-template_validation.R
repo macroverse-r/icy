@@ -152,7 +152,9 @@
   
   # Check numeric types
   if (is.numeric(value)) {
-    if (value == as.integer(value)) {
+    # Check if it can be represented as integer without overflow
+    int_val <- suppressWarnings(as.integer(value))
+    if (!is.na(int_val) && value == int_val) {
       return("integer")
     } else {
       return("numeric")
@@ -189,6 +191,50 @@
 
 
 
+#' Convert Value to Specified Type
+#'
+#' Converts a value to the specified type. Used for type consistency
+#' when merging configurations from different sources (YAML, environment variables, etc.).
+#'
+#' @param value Value to convert
+#' @param type Target type: "character", "integer", "numeric", "logical", or "path"
+#' @return Converted value, or original value if conversion fails
+#' @keywords internal
+.convert_by_type <- function(value, type) {
+  if (is.null(type)) {
+    return(value)
+  }
+  
+  switch(type,
+    "character" = as.character(value),
+    "integer" = {
+      converted <- suppressWarnings(as.integer(value))
+      if (is.na(converted)) value else converted
+    },
+    "numeric" = {
+      converted <- suppressWarnings(as.numeric(value))
+      if (is.na(converted)) value else converted
+    },
+    "logical" = {
+      if (is.na(value) || value == "") {
+        return(NA)
+      }
+      
+      lower_value <- tolower(trimws(value))
+      
+      if (lower_value %in% c("yes", "true", "t", "y", "on", "1")) {
+        TRUE
+      } else if (lower_value %in% c("no", "false", "f", "n", "off", "0")) {
+        FALSE
+      } else {
+        value
+      }
+    },
+    "path" = as.character(value),
+    value  # Return unchanged for unknown types
+  )
+}
+
 #' Parse Input Value
 #'
 #' Parses user input to appropriate R type.
@@ -206,7 +252,13 @@
   
   # Check for numeric values
   if (grepl("^-?[0-9]+$", value_str)) {
-    return(as.integer(value_str))
+    # Try integer first, but check for overflow
+    int_val <- suppressWarnings(as.integer(value_str))
+    if (!is.na(int_val)) {
+      return(int_val)
+    }
+    # If integer conversion failed (overflow), try numeric
+    return(as.numeric(value_str))
   }
   if (grepl("^-?[0-9]*\\.[0-9]+$", value_str)) {
     return(as.numeric(value_str))

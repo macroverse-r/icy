@@ -128,7 +128,7 @@ NULL
     default = default_value,
     description = description,
     type = type,
-    note = if(nchar(note) > 0) note else NULL,
+    note = if(!is.na(note) && nchar(note) > 0) note else NULL,
     options = options
   ))
 }
@@ -159,21 +159,21 @@ NULL
   }
   
   # Add metadata
-  if (!is.null(var_info$description) && nchar(var_info$description) > 0) {
+  if (!is.null(var_info$description) && !is.na(var_info$description) && nchar(var_info$description) > 0) {
     if (!"descriptions" %in% names(template_data)) {
       template_data$descriptions <- list()
     }
     template_data$descriptions[[var_info$name]] <- var_info$description
   }
   
-  if (!is.null(var_info$type)) {
+  if (!is.null(var_info$type) && !is.na(var_info$type)) {
     if (!"types" %in% names(template_data)) {
       template_data$types <- list()
     }
     template_data$types[[var_info$name]] <- var_info$type
   }
   
-  if (!is.null(var_info$note) && nchar(var_info$note) > 0) {
+  if (!is.null(var_info$note) && !is.na(var_info$note) && nchar(var_info$note) > 0) {
     if (!"notes" %in% names(template_data)) {
       template_data$notes <- list()
     }

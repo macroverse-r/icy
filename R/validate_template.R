@@ -137,6 +137,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
 }
 
 
+
 #' Validate Template Inheritance
 #'
 #' Checks for circular dependencies and validates inheritance chains in templates.
@@ -194,15 +195,31 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   # Build dependency graph and check for cycles
   result$graph <- inherit_map
   
-  # Check each section for circular dependencies
+  # Check each section for circular dependencies and depth
   for (section in names(inherit_map)) {
+    parent <- inherit_map[[section]]
+    
+    # Skip NULL inheritance
+    if (is.null(parent)) next
+    
+    # Check for self-inheritance (special case)
+    if (section == parent) {
+      result$valid <- FALSE
+      result$cycles <- c(result$cycles, paste0(section, " → ", section))
+      result$errors <- c(result$errors,
+                        paste0("Section '", section, "' cannot inherit from itself"))
+      next
+    }
+    
+    # Check if this relationship exists in a cycle
+    # We need to trace the full path for error reporting
     visited <- character()
     current <- section
     depth <- 0
     
     while (!is.null(current) && current %in% names(inherit_map)) {
       if (current %in% visited) {
-        # Circular dependency detected
+        # Circular dependency detected - extract the cycle
         cycle_path <- c(visited[seq(which(visited == current), length(visited))], current)
         result$valid <- FALSE
         result$cycles <- c(result$cycles, paste(cycle_path, collapse = " → "))
