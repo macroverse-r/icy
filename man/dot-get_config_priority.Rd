@@ -13,7 +13,25 @@
   verbose = FALSE
 )
 }
+\arguments{
+\item{package}{Package name}
+
+\item{section}{Section in YAML file}
+
+\item{resolved_local_path}{Pre-resolved local file path}
+
+\item{resolved_template_path}{Pre-resolved template file path}
+
+\item{case_format}{Case format for file searching}
+
+\item{verbose}{Show informative messages}
+}
+\value{
+Named list with merged configuration following priority order
+}
 \description{
-Get configuration with priority resolution
+Merges configurations from all sources following the priority hierarchy:
+Template (lowest) → Local → .Renviron → Session (highest).
+Template values serve as defaults that can be overridden by higher priority sources.
 }
 \keyword{internal}

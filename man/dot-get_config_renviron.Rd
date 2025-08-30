@@ -13,6 +13,8 @@
 )
 }
 \description{
-Get configuration from .Renviron file
+Reads configuration from the user's .Renviron file, filtering for variables
+that match the package's template. Only returns environment variables that
+are defined in the template to avoid including unrelated variables.
 }
 \keyword{internal}

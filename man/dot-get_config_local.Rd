@@ -13,6 +13,8 @@
 )
 }
 \description{
-Get configuration from local file
+Reads configuration from the user's local YAML file, typically stored in
+the user's config directory (~/.config/R/package/ or similar).
+Returns an empty list if the local file doesn't exist.
 }
 \keyword{internal}

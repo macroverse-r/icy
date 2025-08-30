@@ -1,15 +1,16 @@
 #' Get Environment Variable Configuration
 #'
-#' Reads environment variable configuration from different origins (template, local, or .Renviron).
-#' This function is typically used within an R package to retrieve environment variable
-#' configurations based on the specified origin.
+#' Reads environment variable configuration from different origins (template, local, .Renviron, 
+#' or merged with priority resolution). This function is typically used within an R package to 
+#' retrieve environment variable configurations based on the specified origin.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param origin Character string specifying where to read the configuration from:
 #'   - "template": Read from the package's template YAML file (read-only blueprint)
 #'   - "local": Read from the user's local configuration file (default)
-#'   - "renviron": Read from .Renviron file
-#'   - "priority": Read with priority order (.Renviron > local config)
+#'   - "renviron": Read from .Renviron file (filtered by package prefix)
+#'   - "priority": Merge all sources with priority order: Session > .Renviron > Local > Template.
+#'     Template values serve as defaults that are overridden by higher priority sources.
 #' @param section Character string for the section in the YAML file (default: "default").
 #' @param fn_tmpl Character string with the name or path to the template YAML file. 
 #'   If NULL, uses default template for the package.
@@ -38,13 +39,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Get configuration from template
+#' # Get configuration from template (package defaults)
 #' template_config <- get_config(package = "mypackage", origin = "template")
 #'
-#' # Get configuration from local file
+#' # Get configuration from local file (user customizations)
 #' local_config <- get_config(package = "mypackage", origin = "local")
 #'
-#' # Get configuration with priority resolution
+#' # Get merged configuration with priority resolution
+#' # Template values are used as base, overridden by local/.Renviron/session
+#' # If no local config exists, template values are still returned
 #' config <- get_config(package = "mypackage", origin = "priority")
 #'
 #' # Get production config with defaults inherited from default section
@@ -219,6 +222,11 @@ get_config <- function(package = get_package_name(),
 
 
 #' Get configuration from local file
+#' 
+#' Reads configuration from the user's local YAML file, typically stored in
+#' the user's config directory (~/.config/R/package/ or similar).
+#' Returns an empty list if the local file doesn't exist.
+#' 
 #' @keywords internal
 .get_config_local <- function(package = get_package_name(),
                               section = "default",
@@ -265,6 +273,43 @@ get_config <- function(package = get_package_name(),
         return(list())
       }
 
+      # Resolve variable references and paths
+      if (length(config) > 0) {
+        # First resolve variable references
+        config <- .resolve_variable_references(config)
+        
+        # Then get types from template for path resolution
+        template_types <- tryCatch({
+          template_files <- find_config_files(
+            package = package,
+            fn_tmpl = NULL,
+            fn_local = NULL,
+            case_format = case_format,
+            verbose = FALSE,
+            confirm_fuzzy = FALSE
+          )
+          if (!is.null(template_files$fn_tmpl) && file.exists(template_files$fn_tmpl)) {
+            template_data <- yaml::read_yaml(template_files$fn_tmpl)
+            if ("types" %in% names(template_data)) {
+              template_data$types
+            } else {
+              list()
+            }
+          } else {
+            list()
+          }
+        }, error = function(e) list())
+        
+        # Resolve paths for variables with type="path"
+        for (var_name in names(config)) {
+          if (!is.null(template_types[[var_name]]) && template_types[[var_name]] == "path") {
+            if (is.character(config[[var_name]])) {
+              config[[var_name]] <- .resolve_special_path(config[[var_name]], package, config)
+            }
+          }
+        }
+      }
+
       return(config)
     },
     error = function(e) {
@@ -275,6 +320,11 @@ get_config <- function(package = get_package_name(),
 
 
 #' Get configuration from template file
+#' 
+#' Reads configuration from the package's template YAML file, typically stored
+#' in the package's inst/ directory. This provides the default configuration
+#' blueprint that users can customize via local config files.
+#' 
 #' @keywords internal
 .get_config_template <- function(package = get_package_name(),
                                  section = "default",
@@ -320,6 +370,25 @@ get_config <- function(package = get_package_name(),
         return(list())  # Return empty list, same as .get_config_local()
       }
 
+      # Resolve variable references and path variables using template types
+      if (length(config) > 0) {
+        # First resolve variable references
+        config <- .resolve_variable_references(config)
+        
+        # Then resolve path variables if types are defined
+        if ("types" %in% names(config_data)) {
+          template_types <- config_data$types
+          
+          for (var_name in names(config)) {
+            if (!is.null(template_types[[var_name]]) && template_types[[var_name]] == "path") {
+              if (is.character(config[[var_name]])) {
+                config[[var_name]] <- .resolve_special_path(config[[var_name]], package, config)
+              }
+            }
+          }
+        }
+      }
+
       return(config)
     },
     error = function(e) {
@@ -330,6 +399,11 @@ get_config <- function(package = get_package_name(),
 
 
 #' Get configuration from .Renviron file
+#' 
+#' Reads configuration from the user's .Renviron file, filtering for variables
+#' that match the package's template. Only returns environment variables that
+#' are defined in the template to avoid including unrelated variables.
+#' 
 #' @keywords internal
 .get_config_renviron <- function(package = get_package_name(),
                                  section = "default",
@@ -408,6 +482,18 @@ get_config <- function(package = get_package_name(),
 
 
 #' Get configuration with priority resolution
+#' 
+#' Merges configurations from all sources following the priority hierarchy:
+#' Template (lowest) → Local → .Renviron → Session (highest).
+#' Template values serve as defaults that can be overridden by higher priority sources.
+#' 
+#' @param package Package name
+#' @param section Section in YAML file
+#' @param resolved_local_path Pre-resolved local file path
+#' @param resolved_template_path Pre-resolved template file path
+#' @param case_format Case format for file searching
+#' @param verbose Show informative messages
+#' @return Named list with merged configuration following priority order
 #' @keywords internal
 .get_config_priority <- function(package = get_package_name(),
                                  section = "default",
@@ -415,7 +501,15 @@ get_config <- function(package = get_package_name(),
                                  resolved_template_path = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
-  # Get configurations from both sources
+  # Get configurations from all sources (template → local → .Renviron → session)
+  template_config <- .get_config_template(
+    package = package,
+    section = section,
+    resolved_template_path = resolved_template_path,
+    case_format = case_format,
+    verbose = verbose
+  )
+  
   local_config <- .get_config_local(
     package = package,
     section = section,
@@ -432,9 +526,14 @@ get_config <- function(package = get_package_name(),
     verbose = verbose
   )
 
-  # Merge with .Renviron taking priority
-  config <- local_config
+  # Start with template as base (lowest priority)
+  config <- template_config
 
+  # Override with local config values
+  for (var_name in names(local_config)) {
+    config[[var_name]] <- local_config[[var_name]]
+  }
+  
   # Override with .Renviron values
   for (var_name in names(renviron_config)) {
     config[[var_name]] <- renviron_config[[var_name]]
@@ -457,6 +556,58 @@ get_config <- function(package = get_package_name(),
       } else {
         # Keep as character
         config[[var_name]] <- session_value
+      }
+    }
+  }
+
+  # Resolve variable references FIRST (before path resolution)
+  # This allows ${VAR_NAME} references to be resolved before path keywords
+  if (length(config) > 0) {
+    config <- .resolve_variable_references(config)
+  }
+  
+  # Final path resolution step - resolve any path variables that might have been
+  # overridden by .Renviron or session (which would be unresolved strings)
+  if (length(config) > 0) {
+    # Get types from template to identify path variables
+    template_types <- tryCatch({
+      if (!is.null(resolved_template_path) && file.exists(resolved_template_path)) {
+        template_data <- yaml::read_yaml(resolved_template_path)
+        if ("types" %in% names(template_data)) {
+          template_data$types
+        } else {
+          list()
+        }
+      } else {
+        # Try to find template if path not provided
+        template_files <- find_config_files(
+          package = package,
+          fn_tmpl = NULL,
+          fn_local = NULL,
+          case_format = case_format,
+          verbose = FALSE,
+          confirm_fuzzy = FALSE
+        )
+        if (!is.null(template_files$fn_tmpl) && file.exists(template_files$fn_tmpl)) {
+          template_data <- yaml::read_yaml(template_files$fn_tmpl)
+          if ("types" %in% names(template_data)) {
+            template_data$types
+          } else {
+            list()
+          }
+        } else {
+          list()
+        }
+      }
+    }, error = function(e) list())
+    
+    # Resolve paths for variables with type="path"
+    # Pass the resolved config so path resolution can also use variable references
+    for (var_name in names(config)) {
+      if (!is.null(template_types[[var_name]]) && template_types[[var_name]] == "path") {
+        if (is.character(config[[var_name]])) {
+          config[[var_name]] <- .resolve_special_path(config[[var_name]], package, config)
+        }
       }
     }
   }

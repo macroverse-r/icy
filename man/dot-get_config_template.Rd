@@ -13,6 +13,8 @@
 )
 }
 \description{
-Get configuration from template file
+Reads configuration from the package's template YAML file, typically stored
+in the package's inst/ directory. This provides the default configuration
+blueprint that users can customize via local config files.
 }
 \keyword{internal}

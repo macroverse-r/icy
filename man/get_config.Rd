@@ -24,8 +24,9 @@ get_config(
 \itemize{
 \item "template": Read from the package's template YAML file (read-only blueprint)
 \item "local": Read from the user's local configuration file (default)
-\item "renviron": Read from .Renviron file
-\item "priority": Read with priority order (.Renviron > local config)
+\item "renviron": Read from .Renviron file (filtered by package prefix)
+\item "priority": Merge all sources with priority order: Session > .Renviron > Local > Template.
+Template values serve as defaults that are overridden by higher priority sources.
 }}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
@@ -63,19 +64,21 @@ matches are used in file searching. Set to FALSE for non-interactive use.}
 Named list of environment variable configurations.
 }
 \description{
-Reads environment variable configuration from different origins (template, local, or .Renviron).
-This function is typically used within an R package to retrieve environment variable
-configurations based on the specified origin.
+Reads environment variable configuration from different origins (template, local, .Renviron,
+or merged with priority resolution). This function is typically used within an R package to
+retrieve environment variable configurations based on the specified origin.
 }
 \examples{
 \dontrun{
-# Get configuration from template
+# Get configuration from template (package defaults)
 template_config <- get_config(package = "mypackage", origin = "template")
 
-# Get configuration from local file
+# Get configuration from local file (user customizations)
 local_config <- get_config(package = "mypackage", origin = "local")
 
-# Get configuration with priority resolution
+# Get merged configuration with priority resolution
+# Template values are used as base, overridden by local/.Renviron/session
+# If no local config exists, template values are still returned
 config <- get_config(package = "mypackage", origin = "priority")
 
 # Get production config with defaults inherited from default section

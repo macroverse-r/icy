@@ -153,6 +153,67 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     arg_only <- params$arg_only
   }
   
+  # Add variable references for path types
+  if (!is.null(final_type) && final_type == "path") {
+    # Get current config and template types to identify available variable references
+    current_config <- tryCatch({
+      get_config(package = params$package, section = params$section, fn_local = params$fn_local)
+    }, error = function(e) list())
+    
+    # Get template types for better variable identification
+    template_types <- tryCatch({
+      template_files <- find_config_files(
+        package = params$package,
+        fn_tmpl = params$fn_tmpl,
+        fn_local = params$fn_local,
+        case_format = "snake_case",
+        verbose = FALSE,
+        confirm_fuzzy = FALSE
+      )
+      if (!is.null(template_files$fn_tmpl) && file.exists(template_files$fn_tmpl)) {
+        template_data <- yaml::read_yaml(template_files$fn_tmpl)
+        if ("types" %in% names(template_data)) {
+          template_data$types
+        } else {
+          list()
+        }
+      } else {
+        list()
+      }
+    }, error = function(e) list())
+    
+    # Get available variable references
+    available_vars <- ._qconfig_get_available_variables(current_config, params$var_name, template_types)
+    
+    # Add variable references to options
+    if (length(available_vars) > 0) {
+      var_references <- paste0("${", available_vars, "}")
+      
+      # Add to final_options
+      if (is.null(final_options)) {
+        final_options <- var_references
+      } else {
+        # Insert variable references after standard keywords but before custom options
+        # Standard keywords are usually at the beginning (getwd, tempdir, home, etc.)
+        keyword_pattern <- "^(getwd|tempdir|home|cache|config|data|\\.|\\.\\./).*"
+        keyword_indices <- which(grepl(keyword_pattern, final_options))
+        
+        if (length(keyword_indices) > 0) {
+          # Insert after keywords
+          insert_pos <- max(keyword_indices) + 1
+          if (insert_pos <= length(final_options)) {
+            final_options <- c(final_options[1:(insert_pos-1)], var_references, final_options[insert_pos:length(final_options)])
+          } else {
+            final_options <- c(final_options, var_references)
+          }
+        } else {
+          # No keywords found, add at beginning
+          final_options <- c(var_references, final_options)
+        }
+      }
+    }
+  }
+  
   # Determine final allow_custom setting
   final_allow_custom <- ._qconfig_determine_allow_custom(final_type, params$allow_custom)
   
@@ -377,41 +438,55 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   )
 }
 
-#' Resolve Special Path Keywords
+
+#' Get Available Variable References for qconfig
+#' 
+#' Returns a list of available path-type variables that can be used as references.
+#' Excludes the current variable to prevent self-reference.
+#' 
+#' @param current_config Current configuration list
+#' @param current_var_name Name of the variable being configured (to exclude from options)
+#' @param template_types Named list of variable types from template
+#' @return Character vector of variable names that can be referenced
 #' @keywords internal
-._qconfig_resolve_special_path <- function(path_string, package = NULL) {
-  .resolve_keyword <- function(keyword) {
-    switch(keyword,
-      "home" = path.expand("~"),
-      "cache" = tools::R_user_dir(package, "cache"),
-      "config" = tools::R_user_dir(package, "config"), 
-      "data" = tools::R_user_dir(package, "data"),
-      "tempdir" = tempdir(),
-      "getwd" = getwd(),
-      "." = getwd(),
-      ".." = dirname(getwd()),
-      keyword
-    )
+._qconfig_get_available_variables <- function(current_config, current_var_name, template_types = list()) {
+  if (length(current_config) == 0) {
+    return(character(0))
   }
   
-  if (grepl("[|/\\\\]", path_string)) {
-    if (grepl("\\|", path_string)) {
-      parts <- strsplit(path_string, "\\|")[[1]]
-    } else if (grepl("/", path_string)) {
-      parts <- strsplit(path_string, "/")[[1]]
-    } else if (grepl("\\\\", path_string)) {
-      parts <- strsplit(path_string, "\\\\")[[1]]
+  # Get all variables that are path types and not the current variable
+  available_vars <- character(0)
+  
+  for (var_name in names(current_config)) {
+    # Skip the current variable to prevent self-reference
+    if (var_name == current_var_name) {
+      next
     }
     
-    base_path <- .resolve_keyword(parts[1])
-    if (length(parts) > 1) {
-      return(do.call(file.path, c(list(base_path), parts[-1])))
+    # Check if it's a path type (either from template types or by inference)
+    is_path_type <- FALSE
+    
+    if (!is.null(template_types[[var_name]]) && template_types[[var_name]] == "path") {
+      is_path_type <- TRUE
     } else {
-      return(base_path)
+      # Infer if it might be a path by checking the value
+      value <- current_config[[var_name]]
+      if (is.character(value) && length(value) == 1) {
+        # Check if it looks like a path (contains special keywords or path separators)
+        if (grepl("^(getwd|tempdir|home|cache|config|data|\\.|\\.\\.)", value) ||
+            grepl("[/\\\\~]", value) || 
+            grepl("\\$\\{[A-Z_][A-Z0-9_]*\\}", value)) {
+          is_path_type <- TRUE
+        }
+      }
+    }
+    
+    if (is_path_type) {
+      available_vars <- c(available_vars, var_name)
     }
   }
   
-  return(.resolve_keyword(path_string))
+  return(available_vars)
 }
 
 #' Check if Value Contains Special Path Keywords
@@ -563,11 +638,12 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     .icy_text(wrapped_description)
   }
   
-  # Display current value if available
-  current_value <- tryCatch({
-    config <- get_config(package = package, section = section, fn_local = fn_local)
-    config[[var_name]]
-  }, error = function(e) NULL)
+  # Get current configuration for variable resolution and display
+  current_config <- tryCatch({
+    get_config(package = package, section = section, fn_local = fn_local)
+  }, error = function(e) list())
+  
+  current_value <- current_config[[var_name]]
   
   if (!is.null(current_value)) {
     .icy_text("")
@@ -662,7 +738,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
       
       # For path types, resolve special paths for display
       display_value <- if (!is.null(type) && type == "path") {
-        resolved <- ._qconfig_resolve_special_path(option_value, package)
+        resolved <- .resolve_special_path(option_value, package, current_config)
         
         # Also resolve relative paths to absolute paths for display
         absolute_path <- tryCatch({
@@ -708,7 +784,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
         # Use the first keyword option number for examples
         example_num <- keyword_indices[1]
         example_keyword <- options[example_num]
-        example_resolved <- ._qconfig_resolve_special_path(example_keyword, package)
+        example_resolved <- .resolve_special_path(example_keyword, package, current_config)
         
         # Make resolved path absolute for display
         example_absolute <- tryCatch({
@@ -753,7 +829,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
               .icy_alert("Path cannot be empty")
               next
             }
-            resolved_custom_input <- ._qconfig_resolve_special_path(custom_input, package)
+            resolved_custom_input <- .resolve_special_path(custom_input, package, current_config)
             path_result <- ._qconfig_process_path_input(resolved_custom_input, allow_create_dir = allow_create_dir)
             if (path_result$success) {
               selected_value <- path_result$path
@@ -812,7 +888,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
         
         # For path types, handle validation
         if (!is.null(type) && type == "path") {
-          resolved_path <- ._qconfig_resolve_special_path(selected_value, package)
+          resolved_path <- .resolve_special_path(selected_value, package, current_config)
           path_result <- ._qconfig_process_path_input(resolved_path, allow_create_dir = allow_create_dir)
           if (!path_result$success) {
             if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
@@ -837,7 +913,12 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   
   # Apply path processing for manual input
   if (!is.null(type) && type == "path" && is_manual_input) {
-    resolved_manual_input <- ._qconfig_resolve_special_path(selected_value, package)
+    # Get current config for variable resolution
+    current_config_manual <- tryCatch({
+      get_config(package = package, section = section, fn_local = fn_local)
+    }, error = function(e) list())
+    
+    resolved_manual_input <- .resolve_special_path(selected_value, package, current_config_manual)
     path_result <- ._qconfig_process_path_input(resolved_manual_input, allow_create_dir = allow_create_dir)
     if (!path_result$success) {
       .icy_stop(paste0("Manual path input is invalid: ", path_result$message))

@@ -235,6 +235,181 @@
   )
 }
 
+#' Resolve Special Path Keywords
+#'
+#' Resolves special keywords in path strings to actual paths.
+#' Supports keywords like "home", "tempdir", "getwd" and path composition with pipe separator.
+#' Also resolves variable references like ${VAR_NAME} when config is provided.
+#'
+#' @param path_string Path string potentially containing keywords or variable references
+#' @param package Package name for package-specific directories
+#' @param config Optional named list of configuration for resolving ${VAR_NAME} references
+#' @return Resolved path string
+#' @keywords internal
+.resolve_special_path <- function(path_string, package = NULL, config = NULL) {
+  # First resolve variable references if config is provided
+  if (!is.null(config) && is.character(path_string)) {
+    pattern <- "\\$\\{([A-Z_][A-Z0-9_]*)\\}"
+    matches <- gregexpr(pattern, path_string, perl = TRUE)
+    
+    if (matches[[1]][1] != -1) {
+      # Extract matched variable names
+      match_starts <- matches[[1]]
+      match_lengths <- attr(matches[[1]], "match.length")
+      capture_starts <- attr(matches[[1]], "capture.start")
+      capture_lengths <- attr(matches[[1]], "capture.length")
+      
+      # Process from end to beginning to maintain positions
+      for (i in length(match_starts):1) {
+        full_match <- substr(path_string, match_starts[i], 
+                           match_starts[i] + match_lengths[i] - 1)
+        ref_var_name <- substr(path_string, capture_starts[i], 
+                             capture_starts[i] + capture_lengths[i] - 1)
+        
+        # Check if referenced variable exists in config
+        if (ref_var_name %in% names(config)) {
+          ref_value <- config[[ref_var_name]]
+          # Replace the reference with the resolved value
+          path_string <- sub(full_match, ref_value, path_string, fixed = TRUE)
+        }
+      }
+    }
+  }
+  
+  .resolve_keyword <- function(keyword) {
+    switch(keyword,
+      "home" = path.expand("~"),
+      "cache" = tools::R_user_dir(package, "cache"),
+      "config" = tools::R_user_dir(package, "config"), 
+      "data" = tools::R_user_dir(package, "data"),
+      "tempdir" = tempdir(),
+      "getwd" = getwd(),
+      "." = getwd(),
+      ".." = dirname(getwd()),
+      keyword
+    )
+  }
+  
+  if (grepl("[|/\\\\]", path_string)) {
+    if (grepl("\\|", path_string)) {
+      parts <- strsplit(path_string, "\\|")[[1]]
+    } else if (grepl("/", path_string)) {
+      parts <- strsplit(path_string, "/")[[1]]
+    } else if (grepl("\\\\", path_string)) {
+      parts <- strsplit(path_string, "\\\\")[[1]]
+    }
+    
+    base_path <- .resolve_keyword(parts[1])
+    if (length(parts) > 1) {
+      return(do.call(file.path, c(list(base_path), parts[-1])))
+    } else {
+      return(base_path)
+    }
+  }
+  
+  return(.resolve_keyword(path_string))
+}
+
+#' Resolve Variable References in Configuration
+#'
+#' Resolves ${VAR_NAME} patterns in configuration values by substituting them
+#' with actual values from the configuration. Handles nested references and
+#' detects circular dependencies.
+#'
+#' @param config Named list of configuration variables
+#' @param visited Character vector of variable names being resolved (for circular detection)
+#' @param max_depth Maximum recursion depth to prevent infinite loops
+#' @return Configuration list with all variable references resolved
+#' @keywords internal
+.resolve_variable_references <- function(config, visited = character(), max_depth = 10) {
+  if (length(config) == 0) {
+    return(config)
+  }
+  
+  if (length(visited) >= max_depth) {
+    stop("Maximum variable reference depth exceeded. Check for circular references.")
+  }
+  
+  resolved_config <- config
+  
+  for (var_name in names(config)) {
+    value <- config[[var_name]]
+    
+    # Only process character values that might contain references
+    if (!is.character(value) || is.na(value) || is.null(value)) {
+      next
+    }
+    
+    # Check if this variable is currently being resolved (circular reference)
+    if (var_name %in% visited) {
+      warning(paste0("Circular reference detected for variable '", var_name, 
+                     "'. Using original value."))
+      next
+    }
+    
+    # Find all ${VAR_NAME} patterns
+    pattern <- "\\$\\{([A-Z_][A-Z0-9_]*)\\}"
+    matches <- gregexpr(pattern, value, perl = TRUE)
+    
+    if (matches[[1]][1] != -1) {
+      # Extract matched variable names
+      match_starts <- matches[[1]]
+      match_lengths <- attr(matches[[1]], "match.length")
+      capture_starts <- attr(matches[[1]], "capture.start")
+      capture_lengths <- attr(matches[[1]], "capture.length")
+      
+      # Process from end to beginning to maintain positions
+      for (i in length(match_starts):1) {
+        full_match <- substr(value, match_starts[i], 
+                           match_starts[i] + match_lengths[i] - 1)
+        ref_var_name <- substr(value, capture_starts[i], 
+                             capture_starts[i] + capture_lengths[i] - 1)
+        
+        # Check if referenced variable exists
+        if (ref_var_name %in% names(config)) {
+          # Get the referenced value
+          ref_value <- config[[ref_var_name]]
+          
+          # If the referenced value also contains references, resolve them first
+          if (is.character(ref_value) && grepl(pattern, ref_value)) {
+            # Check if we would create a circular reference
+            if (ref_var_name %in% c(visited, var_name)) {
+              warning(paste0("Circular reference detected: ", var_name, " -> ", ref_var_name, ". Using original value."))
+            } else {
+              # Recursively resolve the referenced variable with full config context
+              temp_config <- list()
+              temp_config[[ref_var_name]] <- ref_value
+              # Add all other variables for context in recursive resolution
+              for (other_var in names(config)) {
+                if (other_var != ref_var_name) {
+                  temp_config[[other_var]] <- config[[other_var]]
+                }
+              }
+              resolved_temp <- .resolve_variable_references(
+                temp_config,
+                c(visited, var_name),
+                max_depth
+              )
+              ref_value <- resolved_temp[[ref_var_name]]
+            }
+          }
+          
+          # Replace the reference with the resolved value
+          value <- sub(full_match, ref_value, value, fixed = TRUE)
+        } else {
+          warning(paste0("Variable '", ref_var_name, 
+                        "' referenced in '", var_name, 
+                        "' but not defined. Keeping reference as-is."))
+        }
+      }
+      
+      resolved_config[[var_name]] <- value
+    }
+  }
+  
+  return(resolved_config)
+}
+
 #' Parse Input Value
 #'
 #' Parses user input to appropriate R type.
