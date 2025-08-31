@@ -1,0 +1,35 @@
+# R build artifacts
+*.tar.gz
+*.Rcheck/
+..Rcheck/
+*.Rout
+*.Rout.fail
+
+# R temporary files
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# RStudio files
+*.Rproj
+
+# OS files
+.DS_Store
+Thumbs.db
+*~
+
+# Documentation build files
+inst/doc
+/doc/
+/Meta/
+vignettes/*.html
+vignettes/*.pdf
+
+# Package development
+*.o
+*.so
+*.dll
+
+# Local configuration (user-specific)
+inst/local_config/
