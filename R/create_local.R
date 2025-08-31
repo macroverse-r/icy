@@ -151,9 +151,18 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     }
   }
   
-  # Include inheritances section as editable metadata for users
+  # Always include inheritances section (required for local configs)
+  # Use template's inheritances if available, otherwise empty list
   if ("inheritances" %in% names(tmpl_config)) {
-    local_config_data[["inheritances"]] <- tmpl_config[["inheritances"]]
+    # Convert NULL to empty list to ensure it gets written
+    inheritances_value <- tmpl_config[["inheritances"]]
+    if (is.null(inheritances_value)) {
+      inheritances_value <- list()
+    }
+    local_config_data[["inheritances"]] <- inheritances_value
+  } else {
+    # Ensure inheritances section exists even if template doesn't have it
+    local_config_data[["inheritances"]] <- list()
   }
   
   # Write the local config file using unified icy YAML writer

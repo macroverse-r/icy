@@ -157,13 +157,23 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
   )
   
   if (!"inheritances" %in% names(template_data)) {
+    result$valid <- FALSE
+    result$errors <- c(result$errors, "Template must include an 'inheritances' section (can be empty)")
     return(result)
   }
   
   inherit_map <- template_data$inheritances
-  if (!is.list(inherit_map)) {
+  
+  # Validate type: must be NULL or a list
+  if (!is.null(inherit_map) && !is.list(inherit_map)) {
     result$valid <- FALSE
     result$errors <- c(result$errors, "Inherit section must be a named list")
+    return(result)
+  }
+  
+  # If no inheritances defined, nothing more to validate
+  if (is.null(inherit_map) || length(inherit_map) == 0) {
+    # Return valid result since empty inheritances is allowed
     return(result)
   }
   

@@ -2,18 +2,24 @@
 % Please edit documentation in R/get_config.R
 \name{.get_inherit_config}
 \alias{.get_inherit_config}
-\title{Get inheritance configuration from template}
+\title{Get inheritance configuration from appropriate source}
 \usage{
 .get_inherit_config(
   package,
+  origin = "template",
   resolved_template_path = NULL,
+  resolved_local_path = NULL,
   case_format = "snake_case"
 )
 }
 \arguments{
 \item{package}{Package name}
 
+\item{origin}{Origin to determine which file to read ("template", "local", "priority")}
+
 \item{resolved_template_path}{Optional path to resolved template YAML file}
+
+\item{resolved_local_path}{Optional path to resolved local YAML file}
 
 \item{case_format}{Case format for file searching}
 }
@@ -21,6 +27,7 @@
 Named list mapping sections to their parent sections, or NULL if no inheritances section
 }
 \description{
-Reads the inheritances section from a template YAML file if it exists.
+Reads the inheritances section from either template or local config based on origin.
+For local origin, reads from local config. For template/priority, reads from template.
 }
 \keyword{internal}

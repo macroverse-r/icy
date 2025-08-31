@@ -81,9 +81,9 @@ get_config <- function(package = get_package_name(),
     ))
   }
   
-  # Resolve file paths once at the beginning
-  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    # Use find_config_files to get both files
+  # Always resolve file paths for origins that need them
+  if (origin %in% c("template", "local", "priority")) {
+    # Use find_config_files to get both template and local files
     resolved_files <- find_config_files(
       package = package,
       fn_local = fn_local,
@@ -97,28 +97,46 @@ get_config <- function(package = get_package_name(),
     resolved_local_path <- resolved_files$fn_local
     resolved_template_path <- resolved_files$fn_tmpl
   } else {
-    # No specific file provided, will find defaults
+    # renviron origin doesn't need file resolution
     resolved_local_path <- NULL
     resolved_template_path <- NULL
   }
   
-  # Validate template if enabled and using template/local origin
-  if (origin %in% c("template", "local") && validate && !is.null(resolved_template_path)) {
-    # Quick validation for performance
-    validation <- validate_template(
-      package = package,
-      fn_tmpl = basename(resolved_template_path),  # Use resolved path
-      case_format = case_format,
-      verbose = FALSE,
-      quick = TRUE
-    )
-    
-    if (!validation$valid && length(validation$errors) > 0) {
-      .icy_stop(c(
-        "Template validation failed",
-        "x" = validation$errors[1],
-        "i" = "Use validate = FALSE to skip validation"
-      ))
+  # Validate configuration file based on origin
+  if (validate) {
+    if (origin == "template" && !is.null(resolved_template_path)) {
+      # Validate template file
+      validation <- validate_config_file(
+        file_path = resolved_template_path,
+        type = "template",
+        package = package,
+        verbose = FALSE
+      )
+      
+      if (!validation$valid && length(validation$errors) > 0) {
+        .icy_stop(c(
+          "Template validation failed",
+          "x" = validation$errors[1],
+          "i" = "Use validate = FALSE to skip validation"
+        ))
+      }
+    } else if (origin == "local" && !is.null(resolved_local_path)) {
+      # Validate local config file
+      validation <- validate_config_file(
+        file_path = resolved_local_path,
+        type = "local",
+        package = package,
+        template_path = resolved_template_path,
+        verbose = FALSE
+      )
+      
+      if (!validation$valid && length(validation$errors) > 0) {
+        .icy_stop(c(
+          "Local config validation failed",
+          "x" = validation$errors[1],
+          "i" = "Use validate = FALSE to skip validation"
+        ))
+      }
     }
   }
 
@@ -166,18 +184,22 @@ get_config <- function(package = get_package_name(),
     return(config)
   }
 
-  # Check for automatic inheritance from template if inherit is NULL
+  # Check for automatic inheritance from appropriate source if inherit is NULL
   if (is.null(inherit) && origin %in% c("template", "local", "priority")) {
-    template_inherit <- .get_inherit_config(
+    # For local origin, read inheritances from LOCAL config
+    # For template/priority, use template's inheritances
+    inherit_source <- .get_inherit_config(
       package = package,
+      origin = origin,
       resolved_template_path = resolved_template_path,
+      resolved_local_path = resolved_local_path,
       case_format = case_format
     )
     
-    if (!is.null(template_inherit)) {
+    if (!is.null(inherit_source)) {
       resolved_inherit <- .resolve_inheritance(
         section = section,
-        inherit_map = template_inherit,
+        inherit_map = inherit_source,
         verbose = verbose
       )
       
@@ -618,37 +640,61 @@ get_config <- function(package = get_package_name(),
 
 
 
-#' Get inheritance configuration from template
+#' Get inheritance configuration from appropriate source
 #'
-#' Reads the inheritances section from a template YAML file if it exists.
+#' Reads the inheritances section from either template or local config based on origin.
+#' For local origin, reads from local config. For template/priority, reads from template.
 #'
 #' @param package Package name
+#' @param origin Origin to determine which file to read ("template", "local", "priority")
 #' @param resolved_template_path Optional path to resolved template YAML file
+#' @param resolved_local_path Optional path to resolved local YAML file
 #' @param case_format Case format for file searching
 #' @return Named list mapping sections to their parent sections, or NULL if no inheritances section
 #' @keywords internal
-.get_inherit_config <- function(package, resolved_template_path = NULL, case_format = "snake_case") {
-  # Use resolved path if provided, otherwise find defaults
-  if (is.null(resolved_template_path)) {
+.get_inherit_config <- function(package, 
+                               origin = "template",
+                               resolved_template_path = NULL, 
+                               resolved_local_path = NULL,
+                               case_format = "snake_case") {
+  
+  # Determine which file to read based on origin
+  if (origin == "local" && !is.null(resolved_local_path)) {
+    # For local origin, read inheritances from LOCAL config
+    file_to_read <- resolved_local_path
+  } else if (origin == "local") {
+    # Need to find local file
     config_files <- find_config_files(
       package = package,
       case_format = case_format
     )
-    template_file <- config_files$fn_tmpl
+    file_to_read <- config_files$fn_local
     
-    if (is.null(template_file)) {
+    if (is.null(file_to_read)) {
+      return(NULL)  # No local config, no inheritance
+    }
+  } else if (!is.null(resolved_template_path)) {
+    # For template/priority origin with resolved path
+    file_to_read <- resolved_template_path
+  } else {
+    # Need to find template file
+    config_files <- find_config_files(
+      package = package,
+      case_format = case_format
+    )
+    file_to_read <- config_files$fn_tmpl
+    
+    if (is.null(file_to_read)) {
       return(NULL)  # No template, no inheritance
     }
-  } else {
-    template_file <- resolved_template_path
   }
   
-  # Read template and extract inherit section
+  # Read the determined file and extract inheritances section
   tryCatch({
-    template_data <- yaml::read_yaml(template_file)
+    config_data <- yaml::read_yaml(file_to_read)
     
-    if ("inheritances" %in% names(template_data)) {
-      return(template_data$inheritances)
+    if ("inheritances" %in% names(config_data)) {
+      return(config_data$inheritances)
     }
     
     return(NULL)
