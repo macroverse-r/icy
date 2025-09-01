@@ -38,6 +38,10 @@
 #' @param case_format Character string for template file search if fn_tmpl is NULL.
 #'   Options: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param verbose Logical. If TRUE (default), displays progress and confirmation messages.
+#' @param interactive Logical. If TRUE, runs in interactive mode. If FALSE (default),
+#'   uses provided parameters without user prompts.
+#' @param template_data Optional pre-loaded template data. If provided, uses this instead
+#'   of reading from file. Primarily for internal use.
 #'
 #' @return Logical indicating success (invisible). TRUE if operation completed successfully.
 #'
@@ -793,7 +797,7 @@ update_template <- function(action = NULL,
               template_data$inheritances <- list()
             }
             template_data$inheritances[[section_name]] <- parent_section
-            .icy_text(paste0("  → Set inheritance: '", section_name, "' inherits from '", parent_section, "'"))
+            .icy_text(paste0("  -> Set inheritance: '", section_name, "' inherits from '", parent_section, "'"))
           }
           break
         }
@@ -1146,7 +1150,7 @@ update_template <- function(action = NULL,
   # Show all relationships
   for (child in names(template_data$inheritances)) {
     parent <- template_data$inheritances[[child]]
-    .icy_text(paste0("  ", child, " → ", parent))
+    .icy_text(paste0("  ", child, " -> ", parent))
   }
   
   .icy_text("")

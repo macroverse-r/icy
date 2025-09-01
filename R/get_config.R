@@ -506,7 +506,7 @@ get_config <- function(package = get_package_name(),
 #' Get configuration with priority resolution
 #' 
 #' Merges configurations from all sources following the priority hierarchy:
-#' Template (lowest) → Local → .Renviron → Session (highest).
+#' Template (lowest) -> Local -> .Renviron -> Session (highest).
 #' Template values serve as defaults that can be overridden by higher priority sources.
 #' 
 #' @param package Package name
@@ -523,7 +523,7 @@ get_config <- function(package = get_package_name(),
                                  resolved_template_path = NULL,
                                  case_format = "snake_case",
                                  verbose = FALSE) {
-  # Get configurations from all sources (template → local → .Renviron → session)
+  # Get configurations from all sources (template -> local -> .Renviron -> session)
   template_config <- .get_config_template(
     package = package,
     section = section,

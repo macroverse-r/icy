@@ -31,7 +31,7 @@ Named list with merged configuration following priority order
 }
 \description{
 Merges configurations from all sources following the priority hierarchy:
-Template (lowest) → Local → .Renviron → Session (highest).
+Template (lowest) -> Local -> .Renviron -> Session (highest).
 Template values serve as defaults that can be overridden by higher priority sources.
 }
 \keyword{internal}

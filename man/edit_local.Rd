@@ -42,7 +42,7 @@ Invisibly returns the path to the edited file.
 }
 \description{
 Opens the local YAML configuration file for editing in your preferred editor.
-This provides a better experience than just \code{file.edit(find_local())} by
+This provides a better experience than just \code{file.edit(find_config_files())} by
 offering editor selection, validation, and session synchronization options.
 }
 \details{
@@ -67,7 +67,7 @@ edit_local("mypackage", verbose = FALSE)
 
 }
 \seealso{
-\code{\link{find_local}} for locating config files,
+\code{\link{find_config_files}} for locating config files,
 \code{\link{create_local}} for creating new config files,
 \code{\link{sync}} for syncing changes to R session
 }

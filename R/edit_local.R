@@ -1,7 +1,7 @@
 #' Edit Local Configuration File
 #'
 #' Opens the local YAML configuration file for editing in your preferred editor.
-#' This provides a better experience than just \code{file.edit(find_local())} by
+#' This provides a better experience than just \code{file.edit(find_config_files())} by
 #' offering editor selection, validation, and session synchronization options.
 #'
 #' The function locates the local configuration file using the existing fuzzy
@@ -43,7 +43,7 @@
 #' edit_local("mypackage", verbose = FALSE)
 #' }
 #'
-#' @seealso \code{\link{find_local}} for locating config files,
+#' @seealso \code{\link{find_config_files}} for locating config files,
 #'   \code{\link{create_local}} for creating new config files,
 #'   \code{\link{sync}} for syncing changes to R session
 #'
@@ -100,6 +100,7 @@ edit_local <- function(package = get_package_name(),
 #' @param file_path Path to file to edit
 #' @param editor Editor specification
 #' @param verbose Whether to show messages
+#' @importFrom utils file.edit
 #' @keywords internal
 .open_in_editor <- function(file_path, editor, verbose) {
   

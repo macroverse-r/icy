@@ -9,6 +9,8 @@
 \arguments{
 \item{msg}{Title text}
 
+\item{level_adjust}{Numeric. Adjustment to title level for contextual. Default: 0.}
+
 \item{...}{Additional arguments passed to underlying functions}
 }
 \description{

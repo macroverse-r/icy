@@ -57,6 +57,12 @@ searches for the standard template file for the package.}
 Options: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
 \item{verbose}{Logical. If TRUE (default), displays progress and confirmation messages.}
+
+\item{interactive}{Logical. If TRUE, runs in interactive mode. If FALSE (default),
+uses provided parameters without user prompts.}
+
+\item{template_data}{Optional pre-loaded template data. If provided, uses this instead
+of reading from file. Primarily for internal use.}
 }
 \value{
 Logical indicating success (invisible). TRUE if operation completed successfully.

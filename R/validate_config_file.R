@@ -219,7 +219,7 @@ validate_config_file <- function(file_path,
         result$valid <- FALSE
         result$errors <- c(result$errors,
                           paste0("Circular inheritance detected: ", 
-                                paste(cycle_path, collapse = " → ")))
+                                paste(cycle_path, collapse = " -> ")))
         break
       }
       visited <- c(visited, current)

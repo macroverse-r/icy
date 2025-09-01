@@ -124,7 +124,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   
   # Read template data using modular functions 
   template_description <- .get_description(params$var_name, params$package, params$fn_tmpl)
-  template_type <- .get_type(params$var_name, params$package, params$fn_tmpl)  # Already normalized boolean→logical
+  template_type <- .get_type(params$var_name, params$package, params$fn_tmpl)  # Already normalized boolean->logical
   template_options <- .get_option(params$var_name, params$package, params$fn_tmpl)
   template_note <- .get_note(params$var_name, params$package, params$fn_tmpl)
   

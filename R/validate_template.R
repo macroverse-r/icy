@@ -215,7 +215,7 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
     # Check for self-inheritance (special case)
     if (section == parent) {
       result$valid <- FALSE
-      result$cycles <- c(result$cycles, paste0(section, " → ", section))
+      result$cycles <- c(result$cycles, paste0(section, " -> ", section))
       result$errors <- c(result$errors,
                         paste0("Section '", section, "' cannot inherit from itself"))
       next
@@ -232,10 +232,10 @@ validate_template <- function(package = get_package_name(verbose = FALSE),
         # Circular dependency detected - extract the cycle
         cycle_path <- c(visited[seq(which(visited == current), length(visited))], current)
         result$valid <- FALSE
-        result$cycles <- c(result$cycles, paste(cycle_path, collapse = " → "))
+        result$cycles <- c(result$cycles, paste(cycle_path, collapse = " -> "))
         result$errors <- c(result$errors,
                           paste0("Circular inheritance detected: ", 
-                                paste(cycle_path, collapse = " → ")))
+                                paste(cycle_path, collapse = " -> ")))
         break
       }
       

@@ -78,7 +78,7 @@
 
 #' Get Type for Variable from Template
 #'
-#' Handles boolean → logical and dir → path normalization.
+#' Handles boolean -> logical and dir -> path normalization.
 #'
 #' @param var_name Variable name
 #' @param package Package name
