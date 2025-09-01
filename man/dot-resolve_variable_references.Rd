@@ -17,7 +17,7 @@
 Configuration list with all variable references resolved
 }
 \description{
-Resolves ${VAR_NAME} patterns in configuration values by substituting them
+Resolves \code{${VAR_NAME}} patterns in configuration values by substituting them
 with actual values from the configuration. Handles nested references and
 detects circular dependencies.
 }

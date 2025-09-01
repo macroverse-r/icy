@@ -535,27 +535,21 @@ print.icy_validation_result <- function(x, ...) {
   if (length(x$errors) > 0) {
     .icy_text("")
     .icy_text(.apply_color("ERRORS:", "red"))
-    for (error in x$errors) {
-      .icy_text(paste0("  • ", error))
-    }
+    .icy_bullets(x$errors, bullet = "-")
   }
   
   # Display warnings
   if (length(x$warnings) > 0) {
     .icy_text("")
     .icy_text(.apply_color("WARNINGS:", "yellow"))
-    for (warning in x$warnings) {
-      .icy_text(paste0("  • ", warning))
-    }
+    .icy_bullets(x$warnings, bullet = "-")
   }
   
   # Display info
   if (length(x$info) > 0 && length(x$errors) == 0 && length(x$warnings) == 0) {
     .icy_text("")
     .icy_text(.apply_color("INFO:", "gray"))
-    for (info in x$info) {
-      .icy_text(paste0("  i ", info))
-    }
+    .icy_bullets(x$info, bullet = "i")
   }
   
   # Summary statistics

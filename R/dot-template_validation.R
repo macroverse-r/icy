@@ -239,11 +239,11 @@
 #'
 #' Resolves special keywords in path strings to actual paths.
 #' Supports keywords like "home", "tempdir", "getwd" and path composition with pipe separator.
-#' Also resolves variable references like ${VAR_NAME} when config is provided.
+#' Also resolves variable references like \code{${VAR_NAME}} when config is provided.
 #'
 #' @param path_string Path string potentially containing keywords or variable references
 #' @param package Package name for package-specific directories
-#' @param config Optional named list of configuration for resolving ${VAR_NAME} references
+#' @param config Optional named list of configuration for resolving \code{${VAR_NAME}} references
 #' @return Resolved path string
 #' @keywords internal
 .resolve_special_path <- function(path_string, package = NULL, config = NULL) {
@@ -312,7 +312,7 @@
 
 #' Resolve Variable References in Configuration
 #'
-#' Resolves ${VAR_NAME} patterns in configuration values by substituting them
+#' Resolves \code{${VAR_NAME}} patterns in configuration values by substituting them
 #' with actual values from the configuration. Handles nested references and
 #' detects circular dependencies.
 #'

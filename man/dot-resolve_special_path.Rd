@@ -11,7 +11,7 @@
 
 \item{package}{Package name for package-specific directories}
 
-\item{config}{Optional named list of configuration for resolving ${VAR_NAME} references}
+\item{config}{Optional named list of configuration for resolving \code{${VAR_NAME}} references}
 }
 \value{
 Resolved path string
@@ -19,6 +19,6 @@ Resolved path string
 \description{
 Resolves special keywords in path strings to actual paths.
 Supports keywords like "home", "tempdir", "getwd" and path composition with pipe separator.
-Also resolves variable references like ${VAR_NAME} when config is provided.
+Also resolves variable references like \code{${VAR_NAME}} when config is provided.
 }
 \keyword{internal}
