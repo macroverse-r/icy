@@ -2,12 +2,12 @@
 % Please edit documentation in R/validate_config_file.R
 \name{.validate_config_inheritance}
 \alias{.validate_config_inheritance}
-\title{Validate Configuration Inheritance}
+\title{Validate Configuration Inheritance (Simple)}
 \usage{
 .validate_config_inheritance(config_data)
 }
 \description{
-Internal function to validate inheritance relationships in a config file.
-Used by both template and local validation.
+Simple inheritance validation for local configs.
+Checks basic structure and circular dependencies.
 }
 \keyword{internal}

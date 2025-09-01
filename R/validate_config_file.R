@@ -4,27 +4,35 @@
 #' Both template and local files must have an inheritances section, but
 #' different validation rules apply to each type.
 #'
-#' @param file_path Path to the configuration file to validate
-#' @param type Type of configuration file: "template" or "local"
+#' @param fn_tmpl Path to template configuration file. If NULL, will attempt to
+#'   find using package name. Used for validation when type="template" or as
+#'   reference when type="local".
+#' @param fn_local Path to local configuration file. If NULL, will attempt to
+#'   find using package name. Used for validation when type="local".
+#' @param type Type of configuration file to validate: "template" or "local"
 #' @param package Package name for context. If NULL, attempts to detect.
-#' @param template_path Path to template file (required for local validation)
 #' @param verbose Logical. If TRUE, shows detailed validation messages
-#' @param quick Logical. If TRUE, performs minimal validation for performance
 #'
 #' @return List with validation results containing:
 #'   \describe{
 #'     \item{valid}{Logical indicating if validation passed}
 #'     \item{errors}{Character vector of error messages}
 #'     \item{warnings}{Character vector of warning messages}
+#'     \item{info}{Character vector of informational messages (templates only)}
+#'     \item{structure}{Template structure information (templates only)}
+#'     \item{inheritance}{Inheritance validation results (templates only)}
+#'     \item{consistency}{Variable consistency results (templates only)}
 #'   }
 #'
 #' @details
 #' Template validation checks:
 #' \itemize{
 #'   \item Must have inheritances section (can be empty)
-#'   \item Validates inheritance relationships
-#'   \item Checks metadata sections (types, descriptions, options, notes)
-#'   \item Validates section structure
+#'   \item Validates structure including section and variable naming
+#'   \item Validates inheritance relationships and circular dependencies
+#'   \item Checks consistency between data and metadata sections
+#'   \item Validates types match declared values
+#'   \item Checks for orphaned metadata
 #' }
 #'
 #' Local validation checks:
@@ -38,47 +46,96 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Validate a template file
-#' result <- validate_config_file("inst/mypackage_config_template.yml", type = "template")
+#' # Validate a template file  
+#' result <- validate_config_file(type = "template")
 #' 
 #' # Validate a local config file
-#' result <- validate_config_file("~/.config/R/mypackage/config.yml", 
-#'                                type = "local",
-#'                                template_path = "inst/mypackage_config_template.yml")
+#' result <- validate_config_file(type = "local")
+#' 
+#' # Validate specific files
+#' result <- validate_config_file(fn_tmpl = "inst/mypackage_config_template.yml",
+#'                                type = "template")
+#' 
+#' # Validate local with specific template for comparison
+#' result <- validate_config_file(fn_local = "~/.config/R/mypackage/config.yml",
+#'                                fn_tmpl = "inst/mypackage_config_template.yml", 
+#'                                type = "local")
 #' }
 #'
 #' @export
-validate_config_file <- function(file_path,
+validate_config_file <- function(fn_tmpl = NULL,
+                                fn_local = NULL,
                                 type = c("template", "local"),
                                 package = NULL,
-                                template_path = NULL,
-                                verbose = FALSE,
-                                quick = FALSE) {
+                                verbose = FALSE) {
   
   type <- match.arg(type)
   
-  # Initialize result
-  result <- list(
-    valid = TRUE,
-    errors = character(),
-    warnings = character(),
-    file = file_path,
-    type = type
-  )
+  # Find config files if not provided
+  if (is.null(fn_tmpl) || is.null(fn_local)) {
+    if (is.null(package)) {
+      package <- get_package_name(verbose = FALSE)
+    }
+    
+    files <- find_config_files(package = package, verbose = FALSE)
+    
+    if (is.null(fn_tmpl)) {
+      fn_tmpl <- files$fn_tmpl
+    }
+    
+    if (is.null(fn_local)) {
+      fn_local <- files$fn_local
+    }
+  }
   
-  # Check file exists
-  if (!file.exists(file_path)) {
+  # Determine which file to validate based on type
+  file_to_validate <- if (type == "template") fn_tmpl else fn_local
+  
+  # Initialize result structure based on type
+  if (type == "template") {
+    result <- list(
+      valid = TRUE,
+      errors = character(),
+      warnings = character(),
+      info = character(),
+      inheritance = list(valid = TRUE),
+      structure = list(),
+      consistency = list(),
+      file = file_to_validate,
+      type = type
+    )
+  } else {
+    result <- list(
+      valid = TRUE,
+      errors = character(),
+      warnings = character(),
+      file = file_to_validate,
+      type = type
+    )
+  }
+  
+  # Check if the file to validate exists
+  if (is.null(file_to_validate) || !file.exists(file_to_validate)) {
     result$valid <- FALSE
-    result$errors <- c(result$errors, paste0("File not found: ", file_path))
+    if (is.null(file_to_validate)) {
+      result$errors <- c(result$errors, 
+                        paste0("No ", type, " configuration file found for package '", package, "'"))
+    } else {
+      result$errors <- c(result$errors, paste0("File not found: ", file_to_validate))
+    }
     return(result)
+  }
+  
+  if (type == "template") {
+    result$info <- c(result$info, paste0("Validating template: ", file_to_validate))
   }
   
   # Read the configuration file
   config_data <- tryCatch({
-    yaml::read_yaml(file_path)
+    yaml::read_yaml(file_to_validate)
   }, error = function(e) {
     result$valid <- FALSE
-    result$errors <- c(result$errors, paste0("Failed to parse YAML: ", e$message))
+    result$errors <- c(result$errors, paste0("Invalid YAML syntax: ", e$message))
     return(NULL)
   })
   
@@ -95,43 +152,70 @@ validate_config_file <- function(file_path,
     return(result)
   }
   
-  # Validate inheritances structure (common to both types)
-  inheritance_result <- .validate_config_inheritance(config_data)
-  if (!inheritance_result$valid) {
-    result$valid <- FALSE
-    result$errors <- c(result$errors, inheritance_result$errors)
-  }
-  result$warnings <- c(result$warnings, inheritance_result$warnings)
-  
   # Type-specific validation
   if (type == "template") {
-    # Template-specific validation
-    template_result <- .validate_template_specific(config_data, package, verbose)
-    result$valid <- result$valid && template_result$valid
-    result$errors <- c(result$errors, template_result$errors)
-    result$warnings <- c(result$warnings, template_result$warnings)
+    # Template uses comprehensive validation
+    
+    # Structure validation
+    structure_result <- .validate_template_structure(config_data)
+    result$structure <- structure_result
+    if (!structure_result$valid) {
+      result$valid <- FALSE
+      result$errors <- c(result$errors, structure_result$errors)
+    }
+    result$warnings <- c(result$warnings, structure_result$warnings)
+    
+    # Inheritance validation
+    if ("inheritances" %in% names(config_data)) {
+      inheritance_result <- .validate_template_inheritance(config_data)
+      result$inheritance <- inheritance_result
+      if (!inheritance_result$valid) {
+        result$valid <- FALSE
+        result$errors <- c(result$errors, inheritance_result$errors)
+      }
+      result$warnings <- c(result$warnings, inheritance_result$warnings)
+    }
+    
+    # Variable consistency validation
+    consistency_result <- .validate_template_variables(config_data)
+    result$consistency <- consistency_result
+    if (!consistency_result$valid) {
+      result$valid <- FALSE
+      result$errors <- c(result$errors, consistency_result$errors)
+    }
+    result$warnings <- c(result$warnings, consistency_result$warnings)
+    
+    # Type validation if types are present
+    if ("types" %in% names(config_data)) {
+      types_result <- .validate_template_types(config_data, package)
+      if (!types_result$valid) {
+        result$valid <- FALSE
+        result$errors <- c(result$errors, types_result$errors)
+      }
+      result$warnings <- c(result$warnings, types_result$warnings)
+    }
     
   } else if (type == "local") {
+    # Local validation - first validate inheritance, then specific checks
+    
+    # Validate inheritances structure (simpler version for local)
+    inheritance_result <- .validate_config_inheritance(config_data)
+    if (!inheritance_result$valid) {
+      result$valid <- FALSE
+      result$errors <- c(result$errors, inheritance_result$errors)
+    }
+    result$warnings <- c(result$warnings, inheritance_result$warnings)
+    
     # Local-specific validation requires template for comparison
-    if (is.null(template_path)) {
-      # Try to find template automatically
-      if (is.null(package)) {
-        package <- get_package_name(verbose = FALSE)
-      }
-      
-      files <- find_config_files(package = package, verbose = FALSE)
-      template_path <- files$fn_tmpl
-      
-      if (is.null(template_path)) {
-        result$warnings <- c(result$warnings, 
-                           "Cannot validate against template: template file not found")
-        return(result)
-      }
+    if (is.null(fn_tmpl)) {
+      result$warnings <- c(result$warnings, 
+                         "Cannot validate against template: template file not found")
+      return(result)
     }
     
     # Read template for validation
     template_data <- tryCatch({
-      yaml::read_yaml(template_path)
+      yaml::read_yaml(fn_tmpl)
     }, error = function(e) {
       result$warnings <- c(result$warnings,
                          paste0("Cannot read template for validation: ", e$message))
@@ -150,10 +234,10 @@ validate_config_file <- function(file_path,
 }
 
 
-#' Validate Configuration Inheritance
+#' Validate Configuration Inheritance (Simple)
 #' 
-#' Internal function to validate inheritance relationships in a config file.
-#' Used by both template and local validation.
+#' Simple inheritance validation for local configs.
+#' Checks basic structure and circular dependencies.
 #' 
 #' @keywords internal
 .validate_config_inheritance <- function(config_data) {
@@ -231,49 +315,377 @@ validate_config_file <- function(file_path,
 }
 
 
-#' Validate Template-Specific Requirements
-#' 
+#' Validate Template Inheritance
+#'
+#' Comprehensive inheritance validation for templates.
+#' Checks for circular dependencies and validates inheritance chains.
+#'
+#' @param template_data The parsed YAML template data
+#' @param max_depth Maximum allowed inheritance depth (default: 5)
+#' @return List with validation results
 #' @keywords internal
-.validate_template_specific <- function(config_data, package, verbose) {
+.validate_template_inheritance <- function(template_data, max_depth = 5) {
   result <- list(
     valid = TRUE,
     errors = character(),
-    warnings = character()
+    warnings = character(),
+    graph = list(),
+    cycles = character(),
+    max_depth = 0
   )
   
-  # Check for required metadata sections
-  metadata_sections <- c("types", "descriptions")
+  if (!"inheritances" %in% names(template_data)) {
+    result$valid <- FALSE
+    result$errors <- c(result$errors, "Template must include an 'inheritances' section (can be empty)")
+    return(result)
+  }
   
-  for (section in metadata_sections) {
-    if (!section %in% names(config_data)) {
+  inherit_map <- template_data$inheritances
+  
+  # Validate type: must be NULL or a list
+  if (!is.null(inherit_map) && !is.list(inherit_map)) {
+    result$valid <- FALSE
+    result$errors <- c(result$errors, "Inherit section must be a named list")
+    return(result)
+  }
+  
+  # If no inheritances defined, nothing more to validate
+  if (is.null(inherit_map) || length(inherit_map) == 0) {
+    # Return valid result since empty inheritances is allowed
+    return(result)
+  }
+  
+  # Get all sections (excluding metadata sections)
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
+  
+  # Check that all inheritance targets exist
+  for (section in names(inherit_map)) {
+    parent <- inherit_map[[section]]
+    
+    # Skip NULL inheritance (no parent)
+    if (is.null(parent)) next
+    
+    # Check section exists
+    if (!section %in% data_sections) {
       result$warnings <- c(result$warnings,
-                          paste0("Template is missing recommended section: '", section, "'"))
+                          paste0("Inheritance defined for non-existent section: '", section, "'"))
+    }
+    
+    # Check parent exists
+    if (!is.null(parent) && !parent %in% data_sections) {
+      result$valid <- FALSE
+      result$errors <- c(result$errors,
+                        paste0("Section '", section, "' inherits from non-existent section: '", parent, "'"))
     }
   }
   
-  # Validate types section if present
-  if ("types" %in% names(config_data)) {
-    types <- config_data$types
-    if (!is.null(types) && !is.list(types)) {
+  # Build dependency graph and check for cycles
+  result$graph <- inherit_map
+  
+  # Check each section for circular dependencies and depth
+  for (section in names(inherit_map)) {
+    parent <- inherit_map[[section]]
+    
+    # Skip NULL inheritance
+    if (is.null(parent)) next
+    
+    # Check for self-inheritance (special case)
+    if (section == parent) {
       result$valid <- FALSE
-      result$errors <- c(result$errors, "Types section must be a named list")
-    } else if (!is.null(types)) {
-      valid_types <- c("character", "logical", "integer", "numeric", "path")
-      for (var in names(types)) {
-        if (!types[[var]] %in% valid_types) {
+      result$cycles <- c(result$cycles, paste0(section, " -> ", section))
+      result$errors <- c(result$errors,
+                        paste0("Section '", section, "' cannot inherit from itself"))
+      next
+    }
+    
+    # Check if this relationship exists in a cycle
+    # We need to trace the full path for error reporting
+    visited <- character()
+    current <- section
+    depth <- 0
+    
+    while (!is.null(current) && current %in% names(inherit_map)) {
+      if (current %in% visited) {
+        # Circular dependency detected - extract the cycle
+        cycle_path <- c(visited[seq(which(visited == current), length(visited))], current)
+        result$valid <- FALSE
+        result$cycles <- c(result$cycles, paste(cycle_path, collapse = " -> "))
+        result$errors <- c(result$errors,
+                          paste0("Circular inheritance detected: ", 
+                                paste(cycle_path, collapse = " -> ")))
+        break
+      }
+      
+      visited <- c(visited, current)
+      current <- inherit_map[[current]]
+      depth <- depth + 1
+      
+      if (depth > max_depth) {
+        result$warnings <- c(result$warnings,
+                           paste0("Inheritance depth of ", depth, " for section '", section, 
+                                 "' exceeds recommended maximum (", max_depth, ")"))
+        result$max_depth <- max(result$max_depth, depth)
+        break
+      }
+    }
+    
+    result$max_depth <- max(result$max_depth, depth)
+  }
+  
+  return(result)
+}
+
+
+#' Validate Template Structure
+#'
+#' Validates the overall structure of the template including required sections
+#' and proper naming conventions.
+#'
+#' @param template_data The parsed YAML template data
+#' @return List with validation results
+#' @keywords internal
+.validate_template_structure <- function(template_data) {
+  result <- list(
+    valid = TRUE,
+    errors = character(),
+    warnings = character(),
+    sections = character(),
+    variables = character(),
+    has_default = FALSE,
+    yaml_valid = TRUE
+  )
+  
+  # Check for at least one data section
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
+  result$sections <- data_sections
+  
+  if (length(data_sections) == 0) {
+    result$valid <- FALSE
+    result$errors <- c(result$errors, "Template must contain at least one data section")
+    return(result)
+  }
+  
+  # Check for default section (recommended but not required)
+  result$has_default <- "default" %in% data_sections
+  if (!result$has_default) {
+    result$warnings <- c(result$warnings, 
+                        "Template does not contain a 'default' section (recommended)")
+  }
+  
+  # Validate section names
+  for (section in names(template_data)) {
+    # Check for invalid characters in section names
+    if (grepl("[^a-zA-Z0-9_.-]", section)) {
+      result$warnings <- c(result$warnings,
+                          paste0("Section name '", section, 
+                                "' contains special characters (recommended: alphanumeric, underscore, dash, dot)"))
+    }
+  }
+  
+  # Collect all variables from data sections
+  all_vars <- character()
+  for (section in data_sections) {
+    if (is.list(template_data[[section]])) {
+      vars <- names(template_data[[section]])
+      all_vars <- unique(c(all_vars, vars))
+      
+      # Validate variable names
+      for (var in vars) {
+        if (grepl("[^A-Z0-9_]", var)) {
           result$warnings <- c(result$warnings,
-                              paste0("Unknown type '", types[[var]], "' for variable '", var, "'"))
+                             paste0("Variable name '", var, 
+                                   "' should use UPPER_CASE with underscores"))
         }
       }
     }
   }
+  result$variables <- all_vars
   
-  # Validate options section if present
-  if ("options" %in% names(config_data)) {
-    options <- config_data$options
-    if (!is.null(options) && !is.list(options)) {
-      result$valid <- FALSE
-      result$errors <- c(result$errors, "Options section must be a named list")
+  return(result)
+}
+
+
+#' Validate Template Variable Consistency
+#'
+#' Checks consistency between variables in data sections and metadata sections.
+#'
+#' @param template_data The parsed YAML template data
+#' @return List with validation results
+#' @keywords internal
+.validate_template_variables <- function(template_data) {
+  result <- list(
+    valid = TRUE,
+    errors = character(),
+    warnings = character(),
+    orphaned_metadata = character(),
+    missing_metadata = character()
+  )
+  
+  # Get all variables from data sections
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
+  
+  all_data_vars <- character()
+  for (section in data_sections) {
+    if (is.list(template_data[[section]])) {
+      all_data_vars <- unique(c(all_data_vars, names(template_data[[section]])))
+    }
+  }
+  
+  # Check descriptions
+  if ("descriptions" %in% names(template_data)) {
+    desc_vars <- names(template_data$descriptions)
+    
+    # Find orphaned descriptions (descriptions for non-existent variables)
+    orphaned <- setdiff(desc_vars, all_data_vars)
+    if (length(orphaned) > 0) {
+      result$orphaned_metadata <- c(result$orphaned_metadata, orphaned)
+      result$warnings <- c(result$warnings,
+                          paste0("Descriptions exist for non-existent variables: ",
+                                paste(orphaned, collapse = ", ")))
+    }
+    
+    # Find missing descriptions (variables without descriptions)
+    missing <- setdiff(all_data_vars, desc_vars)
+    if (length(missing) > 0) {
+      result$missing_metadata <- c(result$missing_metadata, missing)
+      # This is info, not warning - descriptions are optional
+      if (length(missing) <= 3) {
+        result$warnings <- c(result$warnings,
+                           paste0("Variables without descriptions: ",
+                                 paste(missing, collapse = ", ")))
+      } else {
+        result$warnings <- c(result$warnings,
+                           paste0(length(missing), " variables lack descriptions"))
+      }
+    }
+  }
+  
+  # Check types
+  if ("types" %in% names(template_data)) {
+    type_vars <- names(template_data$types)
+    
+    # Find orphaned types
+    orphaned <- setdiff(type_vars, all_data_vars)
+    if (length(orphaned) > 0) {
+      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
+      result$warnings <- c(result$warnings,
+                          paste0("Types defined for non-existent variables: ",
+                                paste(orphaned, collapse = ", ")))
+    }
+  }
+  
+  # Check notes
+  if ("notes" %in% names(template_data)) {
+    note_vars <- names(template_data$notes)
+    
+    # Find orphaned notes
+    orphaned <- setdiff(note_vars, all_data_vars)
+    if (length(orphaned) > 0) {
+      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
+      result$warnings <- c(result$warnings,
+                          paste0("Notes exist for non-existent variables: ",
+                                paste(orphaned, collapse = ", ")))
+    }
+  }
+  
+  # Check options
+  if ("options" %in% names(template_data)) {
+    option_vars <- names(template_data$options)
+    
+    # Find orphaned options
+    orphaned <- setdiff(option_vars, all_data_vars)
+    if (length(orphaned) > 0) {
+      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
+      result$warnings <- c(result$warnings,
+                          paste0("Options defined for non-existent variables: ",
+                                paste(orphaned, collapse = ", ")))
+    }
+  }
+  
+  return(result)
+}
+
+
+#' Validate Template Types
+#'
+#' Validates that values match their declared types across all sections.
+#'
+#' @param template_data The parsed YAML template data
+#' @param package Package name for type normalization
+#' @return List with validation results
+#' @keywords internal
+.validate_template_types <- function(template_data, package = NULL) {
+  result <- list(
+    valid = TRUE,
+    errors = character(),
+    warnings = character(),
+    type_mismatches = list()
+  )
+  
+  if (!"types" %in% names(template_data)) {
+    return(result)
+  }
+  
+  types_map <- template_data$types
+  metadata_sections <- .get_metadata_sections()
+  data_sections <- setdiff(names(template_data), metadata_sections)
+  
+  # Check each typed variable across all sections
+  for (var_name in names(types_map)) {
+    # Get declared type from already-loaded template and normalize it
+    declared_type <- .normalize_type(types_map[[var_name]])
+    
+    # Skip if no type declared
+    if (is.null(declared_type)) next
+    
+    for (section in data_sections) {
+      if (!is.list(template_data[[section]]) || 
+          !var_name %in% names(template_data[[section]])) {
+        next
+      }
+      
+      value <- template_data[[section]][[var_name]]
+      
+      # Skip NULL values
+      if (is.null(value)) next
+      
+      # Check type match
+      actual_type <- .detect_variable_type(value)
+      
+      # Simple comparison - both types are already normalized
+      if (declared_type != actual_type) {
+        
+        if (!var_name %in% names(result$type_mismatches)) {
+          result$type_mismatches[[var_name]] <- list()
+        }
+        
+        result$type_mismatches[[var_name]][[section]] <- list(
+          declared = declared_type,
+          actual = actual_type,
+          value = as.character(value)
+        )
+        
+        result$warnings <- c(result$warnings,
+                           paste0("Variable '", var_name, "' in section '", section,
+                                 "' has type '", actual_type, "' but declared as '",
+                                 declared_type, "'"))
+      }
+      
+      # Check options if specified
+      if ("options" %in% names(template_data) && 
+          var_name %in% names(template_data$options)) {
+        allowed_options <- template_data$options[[var_name]]
+        
+        if (!is.null(value) && !value %in% allowed_options) {
+          result$warnings <- c(result$warnings,
+                             paste0("Variable '", var_name, "' in section '", section,
+                                   "' has value '", value, "' not in allowed options: ",
+                                   paste(allowed_options, collapse = ", ")))
+        }
+      }
     }
   }
   

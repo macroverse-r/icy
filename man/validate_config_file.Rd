@@ -5,26 +5,26 @@
 \title{Validate Configuration File}
 \usage{
 validate_config_file(
-  file_path,
+  fn_tmpl = NULL,
+  fn_local = NULL,
   type = c("template", "local"),
   package = NULL,
-  template_path = NULL,
-  verbose = FALSE,
-  quick = FALSE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{file_path}{Path to the configuration file to validate}
+\item{fn_tmpl}{Path to template configuration file. If NULL, will attempt to
+find using package name. Used for validation when type="template" or as
+reference when type="local".}
 
-\item{type}{Type of configuration file: "template" or "local"}
+\item{fn_local}{Path to local configuration file. If NULL, will attempt to
+find using package name. Used for validation when type="local".}
+
+\item{type}{Type of configuration file to validate: "template" or "local"}
 
 \item{package}{Package name for context. If NULL, attempts to detect.}
 
-\item{template_path}{Path to template file (required for local validation)}
-
 \item{verbose}{Logical. If TRUE, shows detailed validation messages}
-
-\item{quick}{Logical. If TRUE, performs minimal validation for performance}
 }
 \value{
 List with validation results containing:
@@ -32,6 +32,10 @@ List with validation results containing:
 \item{valid}{Logical indicating if validation passed}
 \item{errors}{Character vector of error messages}
 \item{warnings}{Character vector of warning messages}
+\item{info}{Character vector of informational messages (templates only)}
+\item{structure}{Template structure information (templates only)}
+\item{inheritance}{Inheritance validation results (templates only)}
+\item{consistency}{Variable consistency results (templates only)}
 }
 }
 \description{
@@ -43,9 +47,11 @@ different validation rules apply to each type.
 Template validation checks:
 \itemize{
 \item Must have inheritances section (can be empty)
-\item Validates inheritance relationships
-\item Checks metadata sections (types, descriptions, options, notes)
-\item Validates section structure
+\item Validates structure including section and variable naming
+\item Validates inheritance relationships and circular dependencies
+\item Checks consistency between data and metadata sections
+\item Validates types match declared values
+\item Checks for orphaned metadata
 }
 
 Local validation checks:
@@ -59,13 +65,20 @@ Local validation checks:
 }
 \examples{
 \dontrun{
-# Validate a template file
-result <- validate_config_file("inst/mypackage_config_template.yml", type = "template")
+# Validate a template file  
+result <- validate_config_file(type = "template")
 
 # Validate a local config file
-result <- validate_config_file("~/.config/R/mypackage/config.yml", 
-                               type = "local",
-                               template_path = "inst/mypackage_config_template.yml")
+result <- validate_config_file(type = "local")
+
+# Validate specific files
+result <- validate_config_file(fn_tmpl = "inst/mypackage_config_template.yml",
+                               type = "template")
+
+# Validate local with specific template for comparison
+result <- validate_config_file(fn_local = "~/.config/R/mypackage/config.yml",
+                               fn_tmpl = "inst/mypackage_config_template.yml", 
+                               type = "local")
 }
 
 }
