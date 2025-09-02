@@ -107,7 +107,7 @@ get_config <- function(package = get_package_name(),
     if (origin == "template" && !is.null(resolved_template_path)) {
       # Validate template file
       validation <- validate_config_file(
-        file_path = resolved_template_path,
+        fn_tmpl = resolved_template_path,
         type = "template",
         package = package,
         verbose = FALSE
@@ -123,10 +123,10 @@ get_config <- function(package = get_package_name(),
     } else if (origin == "local" && !is.null(resolved_local_path)) {
       # Validate local config file
       validation <- validate_config_file(
-        file_path = resolved_local_path,
+        fn_local = resolved_local_path,
+        fn_tmpl = resolved_template_path,
         type = "local",
         package = package,
-        template_path = resolved_template_path,
         verbose = FALSE
       )
       
