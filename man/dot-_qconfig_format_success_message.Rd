@@ -4,7 +4,7 @@
 \alias{._qconfig_format_success_message}
 \title{Format Success Message}
 \usage{
-._qconfig_format_success_message(var_name, value, write)
+._qconfig_format_success_message(var_name, value)
 }
 \description{
 Format Success Message

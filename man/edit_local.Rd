@@ -9,7 +9,6 @@ edit_local(
   fn_local = NULL,
   editor = "auto",
   validate = TRUE,
-  sync = FALSE,
   verbose = TRUE
 )
 }
@@ -31,9 +30,6 @@ Falls back to \code{file.edit()} if specified editor is unavailable.}
 \item{validate}{Logical. If TRUE (default), validates YAML syntax after editing
 and shows warnings for syntax errors. Does not prevent saving.}
 
-\item{sync}{Logical. If TRUE, automatically syncs changes to current R session
-using \code{sync()} after editing. Defaults to FALSE.}
-
 \item{verbose}{Logical. If TRUE (default), displays informative messages about
 the editing process.}
 }
@@ -42,32 +38,23 @@ Invisibly returns the path to the edited file.
 }
 \description{
 Opens the local YAML configuration file for editing in your preferred editor.
-This provides a better experience than just \code{file.edit(find_config_files())} by
-offering editor selection, validation, and session synchronization options.
-}
-\details{
-The function locates the local configuration file using the existing fuzzy
-matching system, opens it in the specified editor, and optionally validates
-YAML syntax and syncs changes to the current R session after editing.
+This provides a better experience than just manually opening the file by
+offering editor selection and YAML validation.
 }
 \examples{
 \dontrun{
 # Open local config in default editor
 edit_local("mypackage")
 
-# Open in VS Code and sync changes to session
-edit_local("mypackage", editor = "vscode", sync = TRUE)
+# Open in VS Code
+edit_local("mypackage", editor = "vscode")
 
 # Edit specific config file without validation
 edit_local("mypackage", fn_local = "custom_config.yml", validate = FALSE)
-
-# Quiet editing (no messages)
-edit_local("mypackage", verbose = FALSE)
 }
 
 }
 \seealso{
-\code{\link{find_config_files}} for locating config files,
 \code{\link{create_local}} for creating new config files,
-\code{\link{sync}} for syncing changes to R session
+\code{\link{get_config}} for reading config values
 }

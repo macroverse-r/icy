@@ -15,7 +15,6 @@
 Merged configuration with child values taking precedence
 }
 \description{
-Merges two configurations with the child config values overriding parent values.
-Properly handles NULL values.
+Apply configuration inheritance
 }
 \keyword{internal}

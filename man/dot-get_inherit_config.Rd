@@ -15,7 +15,7 @@
 \arguments{
 \item{package}{Package name}
 
-\item{origin}{Origin to determine which file to read ("template", "local", "priority")}
+\item{origin}{Origin to determine which file to read ("template" or "local")}
 
 \item{resolved_template_path}{Optional path to resolved template YAML file}
 
@@ -28,6 +28,5 @@ Named list mapping sections to their parent sections, or NULL if no inheritances
 }
 \description{
 Reads the inheritances section from either template or local config based on origin.
-For local origin, reads from local config. For template/priority, reads from template.
 }
 \keyword{internal}

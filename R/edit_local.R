@@ -1,12 +1,8 @@
 #' Edit Local Configuration File
 #'
 #' Opens the local YAML configuration file for editing in your preferred editor.
-#' This provides a better experience than just \code{file.edit(find_config_files())} by
-#' offering editor selection, validation, and session synchronization options.
-#'
-#' The function locates the local configuration file using the existing fuzzy
-#' matching system, opens it in the specified editor, and optionally validates
-#' YAML syntax and syncs changes to the current R session after editing.
+#' This provides a better experience than just manually opening the file by
+#' offering editor selection and YAML validation.
 #'
 #' @param package Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.
 #' @param fn_local Character string with custom filename for the local config.
@@ -21,8 +17,6 @@
 #'   Falls back to \code{file.edit()} if specified editor is unavailable.
 #' @param validate Logical. If TRUE (default), validates YAML syntax after editing
 #'   and shows warnings for syntax errors. Does not prevent saving.
-#' @param sync Logical. If TRUE, automatically syncs changes to current R session
-#'   using \code{sync()} after editing. Defaults to FALSE.
 #' @param verbose Logical. If TRUE (default), displays informative messages about
 #'   the editing process.
 #'
@@ -33,35 +27,30 @@
 #' # Open local config in default editor
 #' edit_local("mypackage")
 #'
-#' # Open in VS Code and sync changes to session
-#' edit_local("mypackage", editor = "vscode", sync = TRUE)
+#' # Open in VS Code
+#' edit_local("mypackage", editor = "vscode")
 #'
 #' # Edit specific config file without validation
 #' edit_local("mypackage", fn_local = "custom_config.yml", validate = FALSE)
-#'
-#' # Quiet editing (no messages)
-#' edit_local("mypackage", verbose = FALSE)
 #' }
 #'
-#' @seealso \code{\link{find_config_files}} for locating config files,
-#'   \code{\link{create_local}} for creating new config files,
-#'   \code{\link{sync}} for syncing changes to R session
+#' @seealso \code{\link{create_local}} for creating new config files,
+#'   \code{\link{get_config}} for reading config values
 #'
 #' @export
 edit_local <- function(package = get_package_name(),
                       fn_local = NULL,
                       editor = "auto",
                       validate = TRUE,
-                      sync = FALSE,
                       verbose = TRUE) {
-  
+
   # Find the local config file
-  local_path <- find_config_files(
+  local_path <- .find_config_files(
     package = package,
     fn_local = fn_local,
     verbose = FALSE
   )$fn_local
-  
+
   # Error if file not found
   if (is.null(local_path)) {
     .icy_stop(c(
@@ -69,27 +58,19 @@ edit_local <- function(package = get_package_name(),
       "i" = paste0("Run create_local(\"", package, "\") to create one first.")
     ))
   }
-  
+
   if (verbose) {
     .icy_text(paste0("Opening local config: ", local_path))
   }
-  
+
   # Open in specified editor
   .open_in_editor(local_path, editor, verbose)
-  
+
   # Validate YAML syntax after editing
   if (validate) {
     .validate_yaml_syntax(local_path, verbose)
   }
-  
-  # Sync changes to R session if requested
-  if (sync) {
-    if (verbose) {
-      .icy_text("Syncing changes to R session...")
-    }
-    sync(package = package, verbose = verbose)
-  }
-  
+
   return(invisible(local_path))
 }
 

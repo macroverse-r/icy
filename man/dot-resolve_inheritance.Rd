@@ -11,7 +11,7 @@
 
 \item{inherit_map}{Named list mapping sections to their parents}
 
-\item{max_depth}{Maximum depth for inheritance chain (prevents infinite loops)}
+\item{max_depth}{Maximum depth for inheritance chain}
 
 \item{verbose}{Show messages}
 }
@@ -19,7 +19,6 @@
 The section to inherit from, or NULL if no inheritance
 }
 \description{
-Resolves the inheritance chain for a given section, handling recursive
-inheritance and circular dependency detection.
+Resolve inheritance chain for a section
 }
 \keyword{internal}

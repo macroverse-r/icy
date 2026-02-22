@@ -4,6 +4,5 @@
 \alias{sync_write_utils}
 \title{Sync Utility Functions for Write Operations}
 \description{
-Shared helper functions for consistent sync behavior across write_local()
-and write_renviron() functions.
+Shared helper functions for consistent sync behavior in write_local().
 }

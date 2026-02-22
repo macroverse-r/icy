@@ -4,7 +4,7 @@
 \alias{file-finding-helpers}
 \title{File Finding Helper Functions}
 \description{
-Internal functions supporting find_config_files with a clean, simple structure.
+Internal functions supporting .find_config_files with a clean, simple structure.
 These functions handle the core logic of searching, matching, and pairing
 configuration files.
 }

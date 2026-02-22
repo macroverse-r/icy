@@ -77,7 +77,7 @@ validate_config_file <- function(fn_tmpl = NULL,
       package <- get_package_name(verbose = FALSE)
     }
     
-    files <- find_config_files(package = package, verbose = FALSE)
+    files <- .find_config_files(package = package, verbose = FALSE)
     
     if (is.null(fn_tmpl)) {
       fn_tmpl <- files$fn_tmpl
@@ -146,7 +146,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   # Both types MUST have inheritances section
   if (!"inheritances" %in% names(config_data)) {
     result$valid <- FALSE
-    result$errors <- c(result$errors, 
+    result$errors <- c(result$errors,
                       sprintf("%s config must include an 'inheritances' section (can be empty)",
                               tools::toTitleCase(type)))
     return(result)

@@ -10,7 +10,6 @@
   options,
   allow_skip,
   note,
-  write,
   package,
   section,
   verbose,

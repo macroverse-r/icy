@@ -1,6 +1,6 @@
 #' File Finding Helper Functions
 #'
-#' Internal functions supporting find_config_files with a clean, simple structure.
+#' Internal functions supporting .find_config_files with a clean, simple structure.
 #' These functions handle the core logic of searching, matching, and pairing
 #' configuration files.
 #'
@@ -145,7 +145,7 @@ NULL
   }
   
   # Get search directory
-  package_dir <- get_config_dir(package = package, type = type)
+  package_dir <- .get_config_dir(package = package, type = type)
   
   # Find all YAML files
   yaml_files <- list.files(

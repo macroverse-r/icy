@@ -7,7 +7,6 @@
 ._qconfig_write_config_value(
   var_name,
   value,
-  write,
   package,
   section,
   verbose,

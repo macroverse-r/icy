@@ -48,7 +48,7 @@ toggle_debug <- function(package = get_package_name(),
   
   # Read current config
   current_config <- tryCatch({
-    get_config(package = package, origin = "local", section = section)
+    get_config(package = package, section = section)
   }, error = function(e) {
     list()
   })
