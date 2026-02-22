@@ -55,8 +55,7 @@ get_config <- function(package = get_package_name(),
                        inherit = NULL,
                        verbose = FALSE,
                        validate = TRUE,
-                       confirm_fuzzy = TRUE,
-                       .check_conflicts = TRUE) {
+                       confirm_fuzzy = TRUE) {
 
   # Validate origin parameter
   valid_origins <- c("template", "local")
@@ -188,20 +187,25 @@ get_config <- function(package = get_package_name(),
       fn_local = recursive_fn_local,
       case_format = case_format,
       inherit = NULL,
-      verbose = FALSE,
-      .check_conflicts = FALSE
+      verbose = FALSE
     )
 
     config <- .apply_inheritance(config, base_config)
   }
 
-  # Check for conflicts between local config and session environment (once, after inheritance)
-  if (origin == "local" && .check_conflicts) {
-    check_conflicts(
-      package = package,
-      mode = "warn",
-      config = config
-    )
+  # Check for conflicts once (skip in recursive inheritance calls)
+  if (origin == "local") {
+    is_recursive <- sum(vapply(sys.calls(), function(cl) {
+      identical(cl[[1]], as.name("get_config"))
+    }, logical(1))) > 1
+
+    if (!is_recursive) {
+      check_conflicts(
+        package = package,
+        mode = "warn",
+        config = config
+      )
+    }
   }
 
   return(config)
@@ -242,37 +246,10 @@ get_config <- function(package = get_package_name(),
   tryCatch(
     {
       config_data <- yaml::read_yaml(config_file_path)
+      template_types <- if ("types" %in% names(config_data)) config_data$types else NULL
 
-      if (!section %in% names(config_data)) {
-        .icy_stop(c(
-          paste0("Section ", section, " not found in template"),
-          "i" = paste0("Available sections: ", paste(names(config_data), collapse = ", "))
-        ))
-      }
-
-      config <- config_data[[section]]
-
-      if (is.null(config) || length(config) == 0) {
-        return(list())
-      }
-
-      if (length(config) > 0) {
-        config <- .resolve_variable_references(config)
-
-        if ("types" %in% names(config_data)) {
-          template_types <- config_data$types
-
-          for (var_name in names(config)) {
-            if (!is.null(template_types[[var_name]]) && template_types[[var_name]] == "path") {
-              if (is.character(config[[var_name]])) {
-                config[[var_name]] <- .resolve_special_path(config[[var_name]], package, config)
-              }
-            }
-          }
-        }
-      }
-
-      return(config)
+      ._resolve_config_section(config_data, section, "template",
+                                template_types, package)
     },
     error = function(e) {
       .icy_stop(paste0("Error reading template YAML file: ", e$message))

@@ -111,11 +111,11 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     note, arg_only, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
   )
   
-  # Read template data using modular functions 
-  template_description <- .get_description(params$var_name, params$package, params$fn_tmpl)
-  template_type <- .get_type(params$var_name, params$package, params$fn_tmpl)  # Already normalized boolean->logical
-  template_options <- .get_option(params$var_name, params$package, params$fn_tmpl)
-  template_note <- .get_note(params$var_name, params$package, params$fn_tmpl)
+  # Read template metadata
+  template_description <- .get_template_value(params$var_name, params$package, "descriptions", fn_tmpl = params$fn_tmpl)
+  template_type <- .normalize_type(.get_template_value(params$var_name, params$package, "types", fn_tmpl = params$fn_tmpl))
+  template_options <- .get_template_value(params$var_name, params$package, "options", processor = as.character, fn_tmpl = params$fn_tmpl)
+  template_note <- .get_template_value(params$var_name, params$package, "notes", fn_tmpl = params$fn_tmpl)
   
   # Determine final values (argument > template > none)
   final_description <- if (!is.null(params$description)) params$description else template_description

@@ -29,8 +29,8 @@ Named list of configuration values from the local config file.
 Returns empty list if local config file does not exist.
 }
 \description{
-Low-level YAML reader for local configuration files. This is the shared
-workhorse used by both get_config() and check_conflicts() to avoid circular
-dependencies. It reads and parses the YAML file with no side effects.
+Low-level YAML reader for local configuration files. Used by get_config()
+as its local config reader and by check_conflicts() for standalone config
+reading. Reads and parses the YAML file with no side effects.
 }
 \keyword{internal}

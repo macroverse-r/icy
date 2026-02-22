@@ -14,8 +14,7 @@ get_config(
   inherit = NULL,
   verbose = FALSE,
   validate = TRUE,
-  confirm_fuzzy = TRUE,
-  .check_conflicts = TRUE
+  confirm_fuzzy = TRUE
 )
 }
 \arguments{
