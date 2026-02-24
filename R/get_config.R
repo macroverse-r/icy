@@ -189,7 +189,8 @@ get_config <- function(package = get_package_name(),
       fn_local = recursive_fn_local,
       case_format = case_format,
       inherit = NULL,
-      verbose = FALSE
+      verbose = FALSE,
+      confirm_fuzzy = FALSE
     )
 
     config <- .apply_inheritance(config, base_config)

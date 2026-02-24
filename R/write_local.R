@@ -99,6 +99,7 @@ write_local <- function(var_list,
       local_path <- create_local(
         package = package,
         fn_local = fn_local,
+        fn_tmpl = fn_tmpl,
         case_format = case_format
       )
       if (verbose) {
