@@ -98,7 +98,7 @@ edit_local <- function(package = get_package_name(),
   success <- FALSE
   
   if (editor %in% c("rstudio", "rs")) {
-    if (.is_rstudio_available()) {
+    if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
       if (verbose) {
         .icy_text("Opening in RStudio")
       }
@@ -146,14 +146,6 @@ edit_local <- function(package = get_package_name(),
     }
     file.edit(file_path)
   }
-}
-
-#' Check if RStudio API is Available
-#'
-#' @return Logical indicating if RStudio is available
-#' @keywords internal
-.is_rstudio_available <- function() {
-  requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()
 }
 
 #' Check if System Command is Available

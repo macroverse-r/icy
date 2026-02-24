@@ -111,7 +111,14 @@ create_local <- function(package = get_package_name(verbose = FALSE),
   # If fn_local is just a filename, place it in the user config directory
   if (!grepl("[/\\\\]", fn_local)) {
     local_dir <- .get_config_dir(package = package, type = "local")
-    .ensure_directory_exists(local_dir, verbose = verbose)
+    if (!dir.exists(local_dir)) {
+      success <- dir.create(local_dir, recursive = TRUE)
+      if (success && verbose) {
+        .icy_success(paste0("Created directory: ", local_dir))
+      } else if (!success) {
+        .icy_warn(paste0("Failed to create directory: ", local_dir))
+      }
+    }
     local_path <- file.path(local_dir, fn_local)
   } else {
     # If fn_local contains path separators, use it as-is (user is responsible)

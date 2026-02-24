@@ -563,45 +563,18 @@ validate_config_file <- function(fn_tmpl = NULL,
     }
   }
   
-  # Check types
-  if ("types" %in% names(template_data)) {
-    type_vars <- names(template_data$types)
-    
-    # Find orphaned types
-    orphaned <- setdiff(type_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Types defined for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
-    }
-  }
-  
-  # Check notes
-  if ("notes" %in% names(template_data)) {
-    note_vars <- names(template_data$notes)
-    
-    # Find orphaned notes
-    orphaned <- setdiff(note_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Notes exist for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
-    }
-  }
-  
-  # Check options
-  if ("options" %in% names(template_data)) {
-    option_vars <- names(template_data$options)
-    
-    # Find orphaned options
-    orphaned <- setdiff(option_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Options defined for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
+  # Check types, notes, and options for orphaned metadata
+  for (meta_section in c("types", "notes", "options")) {
+    if (meta_section %in% names(template_data)) {
+      meta_vars <- names(template_data[[meta_section]])
+      orphaned <- setdiff(meta_vars, all_data_vars)
+      if (length(orphaned) > 0) {
+        result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
+        label <- tools::toTitleCase(meta_section)
+        result$warnings <- c(result$warnings,
+                            paste0(label, " defined for non-existent variables: ",
+                                  paste(orphaned, collapse = ", ")))
+      }
     }
   }
   

@@ -33,31 +33,3 @@
 
   return(data)
 }
-
-
-#' Extract YAML Metadata Sections
-#'
-#' Separates data sections from metadata sections in a template structure.
-#'
-#' @param template_data Full template data structure
-#' @return List with 'data' and 'metadata' components
-#' @keywords internal
-.separate_yaml_sections <- function(template_data) {
-  metadata_sections <- .get_metadata_sections()
-
-  data_sections <- list()
-  metadata <- list()
-
-  for (section_name in names(template_data)) {
-    if (section_name %in% metadata_sections) {
-      metadata[[section_name]] <- template_data[[section_name]]
-    } else {
-      data_sections[[section_name]] <- template_data[[section_name]]
-    }
-  }
-
-  return(list(
-    data = data_sections,
-    metadata = metadata
-  ))
-}

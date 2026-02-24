@@ -50,9 +50,13 @@
   
   .icy_title("Template Overview", level_adjust = -3)
   
-  # Separate sections
-  sections <- .separate_yaml_sections(template_data)
-  
+  # Separate data sections from metadata sections
+  metadata_section_names <- .get_metadata_sections()
+  sections <- list(
+    data = template_data[!names(template_data) %in% metadata_section_names],
+    metadata = template_data[names(template_data) %in% metadata_section_names]
+  )
+
   # Count variables
   all_vars <- unique(unlist(lapply(sections$data, names)))
   n_vars <- length(all_vars)

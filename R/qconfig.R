@@ -576,12 +576,6 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   })
 }
 
-#' Format Success Message
-#' @keywords internal
-._qconfig_format_success_message <- function(var_name, value) {
-  paste0("Set ", var_name, " to ", value, " in local config")
-}
-
 #' Perform Interactive Configuration
 #' @keywords internal  
 ._qconfig_do_interactive_config <- function(var_name, description, options, allow_skip,
@@ -676,7 +670,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     }
     
     selected_value <- user_input
-    success_msg <- ._qconfig_format_success_message(var_name, user_input)
+    success_msg <- paste0("Set ", var_name, " to ", user_input, " in local config")
     
   } else {
     # Options selection case
@@ -790,7 +784,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
             path_result <- ._qconfig_process_path_input(resolved_custom_input, allow_create_dir = allow_create_dir)
             if (path_result$success) {
               selected_value <- path_result$path
-              success_msg <- ._qconfig_format_success_message(var_name, selected_value)
+              success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
               break
             } else {
               if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
@@ -814,7 +808,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
             break
           }
           selected_value <- custom_input
-          success_msg <- ._qconfig_format_success_message(var_name, selected_value)
+          success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
         }
         break
       }
@@ -856,7 +850,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
           selected_value <- path_result$path
         }
         
-        success_msg <- ._qconfig_format_success_message(var_name, selected_value)
+        success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
         break
       } else {
         if (allow_custom) {
@@ -881,7 +875,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
       .icy_stop(paste0("Manual path input is invalid: ", path_result$message))
     }
     selected_value <- path_result$path
-    success_msg <- ._qconfig_format_success_message(var_name, selected_value)
+    success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
   }
   
   # Write and return

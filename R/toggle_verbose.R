@@ -9,7 +9,7 @@
 #' @param section Character string. The section configuration to modify. Defaults to "default".
 #' @param initial Logical. The default value to use when initializing a
 #'   non-existent verbose variable. Defaults to TRUE.
-#' @param verbose Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.
+#' @param verbose Logical. If TRUE, displays informative messages about the operation. If NULL (default), defaults to TRUE.
 #'
 #' @return Invisibly returns the new value of the verbose variable.
 #'
@@ -19,10 +19,6 @@
 #' is the uppercase package name). It reads the configuration from the local YAML file,
 #' toggles or initializes the verbose variable, and writes the updated configuration
 #' back to the file.
-#'
-#' Unlike the debug toggle function, this function will display a message about the change
-#' only if the `verbose` parameter is TRUE, regardless of the current verbose setting
-#' in the configuration.
 #'
 #' @examples
 #' \dontrun{
@@ -45,57 +41,36 @@ toggle_verbose <- function(package = get_package_name(),
                            section = "default",
                            initial = TRUE,
                            verbose = NULL) {
-  # Create dynamic variable names based on package
   pkg_upper <- toupper(package)
   verbose_var <- paste0(pkg_upper, "_VERBOSE")
 
-  # Read current config
-  current_config <- tryCatch(
-    {
-      get_config(package = package, section = section)
-    },
-    error = function(e) {
-      list()
-    }
-  )
-  
-  # Set verbose default from config if not explicitly provided
+  current_config <- tryCatch({
+    get_config(package = package, section = section)
+  }, error = function(e) list())
+
   if (is.null(verbose)) verbose <- TRUE
 
-  # Check if verbose variable exists
   if (is.null(current_config[[verbose_var]])) {
     new_value <- initial
     msg <- " - initialized"
   } else {
-    # Toggle existing value
-    current_value <- as.logical(current_config[[verbose_var]])
-    new_value <- !current_value
+    new_value <- !as.logical(current_config[[verbose_var]])
     msg <- ""
   }
 
-  # Write updated value to local config
   write_local(
     var_list = structure(list(new_value), names = verbose_var),
     package = package,
     section = section
   )
 
-  # Show message if verbose parameter is TRUE
   if (verbose) {
-    # Prepare status message
-    verbose_status <- if (new_value) "enabled" else "disabled"
-
-    # Display success message
-    .icy_success(
-      paste0(
-        "Verbose mode for ", package, " ",
-        verbose_status,
-        " (", verbose_var, " = ", new_value, ")",
-        msg
-      )
-    )
+    status <- if (new_value) "enabled" else "disabled"
+    .icy_success(paste0(
+      "Verbose mode for ", package, " ", status,
+      " (", verbose_var, " = ", new_value, ")", msg
+    ))
   }
 
-  # Return invisibly for potential chaining
   return(invisible(new_value))
 }

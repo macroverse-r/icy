@@ -116,21 +116,23 @@ get_config <- function(package = get_package_name(),
     }
   }
 
-  # Route to appropriate internal function based on origin
+  # Route to internal reader based on origin
   if (origin == "template") {
-    config <- .get_config_template(
+    config <- .read_yaml_config(
       package = package,
+      type = "template",
       section = section,
-      resolved_template_path = resolved_template_path,
+      resolved_path = resolved_template_path,
       case_format = case_format,
       verbose = verbose
     )
   } else {
     # origin == "local" (single source of truth)
-    config <- .read_local_yaml(
+    config <- .read_yaml_config(
       package = package,
+      type = "local",
       section = section,
-      resolved_local_path = resolved_local_path,
+      resolved_path = resolved_local_path,
       case_format = case_format,
       verbose = verbose
     )
@@ -209,52 +211,6 @@ get_config <- function(package = get_package_name(),
   }
 
   return(config)
-}
-
-
-#' Get configuration from template file
-#'
-#' Reads configuration from the package's template YAML file, typically stored
-#' in the package's inst/ directory. This provides the default configuration
-#' blueprint that users can customize via local config files.
-#'
-#' @keywords internal
-.get_config_template <- function(package = get_package_name(),
-                                 section = "default",
-                                 resolved_template_path = NULL,
-                                 case_format = "snake_case",
-                                 verbose = FALSE) {
-  # Use resolved path if provided, otherwise find defaults
-  if (is.null(resolved_template_path)) {
-    config_files <- .find_config_files(
-      package = package,
-      case_format = case_format
-    )
-    config_file_path <- config_files$fn_tmpl
-
-    if (is.null(config_file_path)) {
-      .icy_stop(paste0("No template configuration file found for package ", package))
-    }
-  } else {
-    config_file_path <- resolved_template_path
-  }
-
-  if (verbose) {
-    .icy_text(paste0("Reading template config from: ", config_file_path))
-  }
-
-  tryCatch(
-    {
-      config_data <- yaml::read_yaml(config_file_path)
-      template_types <- if ("types" %in% names(config_data)) config_data$types else NULL
-
-      ._resolve_config_section(config_data, section, "template",
-                                template_types, package)
-    },
-    error = function(e) {
-      .icy_stop(paste0("Error reading template YAML file: ", e$message))
-    }
-  )
 }
 
 
