@@ -1,307 +1,286 @@
-#' Show Environment Variable Status
+#' Show Configuration Status
 #'
-#' Displays the current values and status of environment variables, including
-#' information about where each value comes from (e.g., .Renviron, local config,
-#' or not set). This function provides comprehensive visibility into the
-#' configuration state.
+#' Displays the current configuration values from the local config file
+#' (single source of truth). When `show_template = TRUE`, shows template default
+#' values alongside current values for comparison.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param var_names Optional character vector of specific variable names to show.
 #'   If NULL (default), shows all variables defined in the configuration.
+#' @param show_template Logical. If TRUE, shows template default values alongside
+#'   current values. For non-path variables, defaults appear inline with
+#'   match indicators. For path variables, defaults appear on an indented
+#'   second line showing both the raw template keyword and its resolved path.
+#'   Defaults to FALSE for clean output.
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param display Character string specifying display mode:
-#'   - "sources": Show variable names, values, and source information (default)
-#'   - "values": Show only variable names and values (no source info)
-#'   - "full": Show detailed information about all configuration sources
 #' @param fn_tmpl Character string with the name or path to a custom YAML template file.
 #'   If NULL (default), uses the standard template file for the package.
 #' @param fn_local Character string with the name or path to a custom local YAML config file.
 #'   If NULL (default), uses the standard local config file for the package.
 #' @param confirm_fuzzy Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.
 #'
-#' @return Invisibly returns a data frame with variable names, values, and sources.
+#' @return Invisibly returns a data frame with variable names and values.
+#'   When `show_template = TRUE`, also includes `template_raw`, `type`, and
+#'   `matches_template` columns.
 #'
 #' @examples
 #' \dontrun{
-#' # Show all environment variables with sources
+#' # Show all configuration values (clean output)
 #' show_config("mypackage")
 #'
-#' # Show specific variables only
-#' show_config("mypackage", var_names = c("API_KEY", "DB_HOST"))
+#' # Show with template comparison
+#' show_config("mypackage", show_template = TRUE)
 #'
-#' # Show only values without source information
-#' show_config("mypackage", display = "values")
-#'
-#' # Show full detailed information
-#' show_config("mypackage", display = "full")
+#' # Show specific variables with template comparison
+#' show_config("mypackage", var_names = c("API_KEY", "DB_HOST"), show_template = TRUE)
 #' }
 #'
 #' @export
 show_config <- function(package = get_package_name(),
                         var_names = NULL,
+                        show_template = FALSE,
                         section = "default",
-                        display = "sources",
                         fn_tmpl = NULL,
                         fn_local = NULL,
                         confirm_fuzzy = TRUE) {
 
-  # Resolve file paths once at the beginning to avoid multiple confirmations
-  resolved_local_path <- NULL
-  resolved_template_path <- NULL
-  
-  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    resolved_files <- find_config_files(
-      package = package,
-      fn_local = fn_local,
-      fn_tmpl = fn_tmpl,
-      fuzzy = TRUE,
-      confirm_fuzzy = confirm_fuzzy,
-      verbose = FALSE
-    )
-    resolved_local_path <- resolved_files$fn_local
-    resolved_template_path <- resolved_files$fn_tmpl
-  }
+  # Resolve file paths once
+  resolved_files <- .find_config_files(
+    package = package,
+    fn_local = fn_local,
+    fn_tmpl = fn_tmpl,
+    fuzzy = TRUE,
+    confirm_fuzzy = confirm_fuzzy,
+    verbose = FALSE
+  )
+  resolved_local_path <- resolved_files$fn_local
+  resolved_template_path <- resolved_files$fn_tmpl
 
-  # Get all possible variable names if not specified
-  if (is.null(var_names)) {
-    # Try to get from template to see all possible variables
-    template_vars <- tryCatch(
-      {
-        names(get_config(package = package,
-                         origin = "template",
-                         section = section,
-                         fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
-                         fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
-                         confirm_fuzzy = FALSE))
-      },
-      error = function(e) NULL
-    )
+  # Read local config (single source of truth)
+  local_config <- tryCatch(
+    {
+      get_config(package = package,
+                 section = section,
+                 fn_tmpl = if (!is.null(resolved_template_path)) basename(resolved_template_path) else fn_tmpl,
+                 fn_local = if (!is.null(resolved_local_path)) basename(resolved_local_path) else fn_local,
+                 confirm_fuzzy = FALSE)
+    },
+    error = function(e) list()
+  )
 
-    # Also get from local config
-    local_vars <- tryCatch(
-      {
-        names(get_config(package = package,
-                         origin = "local",
-                         section = section,
-                         fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
-                         fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
-                         confirm_fuzzy = FALSE))
-      },
-      error = function(e) NULL
-    )
+  # Read raw template data when defaults mode is requested
+  template_raw <- NULL
+  template_types <- NULL
 
-    var_names <- unique(c(template_vars, local_vars))
+  if (show_template) {
+    template_path <- resolved_template_path
+    if (is.null(template_path)) {
+      # Try finding the template directly
+      tmpl_files <- .find_config_files(
+        package = package,
+        fn_tmpl = fn_tmpl,
+        case_format = "snake_case",
+        confirm_fuzzy = FALSE,
+        verbose = FALSE
+      )
+      template_path <- tmpl_files$fn_tmpl
+    }
 
-    if (length(var_names) == 0) {
-      .icy_warn(paste0("No variables found in configuration for ", package))
-      return(invisible(NULL))
+    if (!is.null(template_path) && file.exists(template_path)) {
+      template_data <- tryCatch(yaml::read_yaml(template_path), error = function(e) NULL)
+
+      if (!is.null(template_data)) {
+        if (section %in% names(template_data)) {
+          template_raw <- template_data[[section]]
+        }
+        if ("types" %in% names(template_data)) {
+          template_types <- template_data$types
+        }
+      }
     }
   }
-  
 
-  # Build status information
+  # Determine variable names to display
+  if (is.null(var_names)) {
+    if (show_template && !is.null(template_raw)) {
+      var_names <- unique(c(names(template_raw), names(local_config)))
+    } else {
+      var_names <- names(local_config)
+    }
+  }
+
+  if (length(var_names) == 0) {
+    .icy_warn(paste0("No variables found in configuration for ", package))
+    return(invisible(NULL))
+  }
+
+  # Display results
+  for (var in var_names) {
+    local_val <- local_config[[var]]
+
+    colored_var <- .apply_color(var, "cyan")
+
+    if (!is.null(local_val)) {
+      colored_value <- .format_value_with_color(var, as.character(local_val))
+    } else {
+      colored_value <- .apply_color("(not set)", "grey")
+    }
+
+    if (!show_template || is.null(template_raw)) {
+      # --- Simple mode: just VAR = value ---
+      .icy_text(paste0(colored_var, " = ", colored_value))
+
+    } else {
+      # --- Defaults mode: show template comparison ---
+      raw_default <- template_raw[[var]]
+      var_type <- if (!is.null(template_types)) template_types[[var]] else NULL
+      var_type <- .normalize_type(var_type)
+      is_path <- (!is.null(var_type) && var_type == "path")
+
+      if (is.null(raw_default) && !var %in% names(template_raw)) {
+        # Variable not in template (user-added)
+        .icy_text(paste0(colored_var, " = ", colored_value,
+                          .apply_color(" [not in template]", "gray")))
+
+      } else if (is_path) {
+        # --- Path variable: two-line display ---
+        .icy_text(paste0(colored_var, " = ", colored_value))
+
+        raw_str <- .format_raw_default(raw_default)
+        resolved_default <- .resolve_template_path_for_display(
+          raw_default, local_config, package
+        )
+
+        if (is.null(resolved_default) || raw_str == resolved_default) {
+          default_display <- .apply_color(
+            paste0("[tmpl: ", raw_str, "]"), "gray"
+          )
+        } else {
+          default_display <- .apply_color(
+            paste0("[tmpl: ", raw_str, " \u2192 ", resolved_default, "]"), "gray"
+          )
+        }
+        # Use cat() directly to preserve leading indentation (strwrap strips it)
+        cat("  ", default_display, "\n", sep = "")
+
+      } else {
+        # --- Non-path variable: inline display ---
+        raw_str <- .format_raw_default(raw_default)
+
+        if (!is.null(local_val)) {
+          if (is.null(raw_default)) {
+            # Default is NULL/~, local has a value
+            match_symbol <- .apply_color(" \u2717", "red")
+          } else {
+            matches <- (as.character(local_val) == as.character(raw_default))
+            match_symbol <- if (matches) {
+              .apply_color(" \u2713", "green")
+            } else {
+              .apply_color(" \u2717", "red")
+            }
+          }
+          default_info <- paste0(
+            .apply_color(paste0(" [tmpl: ", raw_str, "]"), "gray"),
+            match_symbol
+          )
+        } else if (is.null(raw_default)) {
+          # Both null -- match
+          default_info <- paste0(
+            .apply_color(" [tmpl: ~]", "gray"),
+            .apply_color(" \u2713", "green")
+          )
+        } else {
+          # Local not set, template has value
+          default_info <- .apply_color(paste0(" [tmpl: ", raw_str, "]"), "gray")
+        }
+
+        .icy_text(paste0(colored_var, " = ", colored_value, default_info))
+      }
+    }
+  }
+
+  # Build return data frame
   status_df <- data.frame(
     variable = var_names,
-    value = character(length(var_names)),
-    source = character(length(var_names)),
+    value = vapply(var_names, function(v) {
+      val <- local_config[[v]]
+      if (is.null(val)) "(not set)" else as.character(val)
+    }, character(1)),
     stringsAsFactors = FALSE
   )
 
-  # Get values from different sources
-  renviron_config <- tryCatch(
-    {
-      get_config(package = package, 
-                 origin = "renviron", 
-                 section = section,
-                 fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
-                 fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
-                 confirm_fuzzy = FALSE)
-    },
-    error = function(e) list()
-  )
+  if (show_template && !is.null(template_raw)) {
+    status_df$template_raw <- vapply(var_names, function(v) {
+      val <- template_raw[[v]]
+      if (is.null(val)) "~" else as.character(val)
+    }, character(1))
 
-  local_config <- tryCatch(
-    {
-      get_config(package = package, 
-                 origin = "local", 
-                 section = section,
-                 fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
-                 fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path),
-                 confirm_fuzzy = FALSE)
-    },
-    error = function(e) list()
-  )
+    status_df$type <- vapply(var_names, function(v) {
+      tp <- if (!is.null(template_types)) template_types[[v]] else NA_character_
+      if (is.null(tp)) NA_character_ else as.character(tp)
+    }, character(1))
 
-  # Check each variable
-  for (i in seq_along(var_names)) {
-    var <- var_names[i]
-
-    # Check current session
-    session_value <- Sys.getenv(var, unset = NA)
-
-    # Determine value and source with priority: session > .Renviron > local config
-    if (!is.na(session_value)) {
-      status_df$value[i] <- session_value
-      # Determine if session value matches a config source
-      if (var %in% names(renviron_config) && !is.null(renviron_config[[var]]) && !is.na(renviron_config[[var]]) && renviron_config[[var]] == session_value) {
-        status_df$source[i] <- "session = .Renviron"
-      } else if (var %in% names(local_config) && !is.null(local_config[[var]]) && !is.na(local_config[[var]]) && local_config[[var]] == session_value) {
-        status_df$source[i] <- "session = local"
-      } else {
-        status_df$source[i] <- "session"
-      }
-    } else if (var %in% names(renviron_config) && !is.null(renviron_config[[var]])) {
-      status_df$value[i] <- as.character(renviron_config[[var]])
-      status_df$source[i] <- ".Renviron"
-    } else if (var %in% names(local_config) && !is.null(local_config[[var]])) {
-      status_df$value[i] <- as.character(local_config[[var]])
-      status_df$source[i] <- "local config"
-    } else {
-      status_df$value[i] <- "(not set)"
-      status_df$source[i] <- "not set"
-    }
-  }
-
-  # Validate display mode
-  valid_modes <- c("sources", "values", "full")
-  if (!display %in% valid_modes) {
-    .icy_stop(c(
-      paste0("Invalid display mode: ", display),
-      "i" = paste0("Valid modes are: ", paste(valid_modes, collapse = ", "))
-    ))
-  }
-
-  # Display results based on mode
-  if (display == "full") {
-    .show_config_full(package, status_df, renviron_config, local_config, section, 
-                     fn_tmpl = if (is.null(resolved_template_path)) fn_tmpl else basename(resolved_template_path),
-                     fn_local = if (is.null(resolved_local_path)) fn_local else basename(resolved_local_path))
-  } else {
-    .show_config_standard(package, status_df, display)
+    status_df$matches_template <- vapply(var_names, function(v) {
+      local_val <- local_config[[v]]
+      raw_val <- template_raw[[v]]
+      if (is.null(local_val) && is.null(raw_val)) return(TRUE)
+      if (is.null(local_val) || is.null(raw_val)) return(FALSE)
+      as.character(local_val) == as.character(raw_val)
+    }, logical(1))
   }
 
   return(invisible(status_df))
 }
 
 
-#' Standard display mode for show_config
+#' Format raw template default value for display
 #' @keywords internal
-.show_config_standard <- function(package, status_df, display) {
-  for (i in seq_len(nrow(status_df))) {
-    var <- status_df$variable[i]
-    value <- status_df$value[i]
-    source <- status_df$source[i]
-
-    # Color-code the variable name
-    colored_var <- .apply_color(var, "cyan")
-    
-    # Color-code the value using consistent helper function
-    colored_value <- .format_value_with_color(var, value)
-
-    # Format source information
-    if (display == "sources" && !is.na(value) && value != "(not set)") {
-      source_color <- switch(source,
-        ".Renviron" = "magenta",
-        "local config" = "blue", 
-        "session" = "yellow",
-        "session = .Renviron" = "yellow",
-        "session = local" = "yellow",
-        "not set" = "gray",
-        "cyan"  # default
-      )
-      colored_source <- paste0(" [", .apply_color(source, source_color), "]")
-      .icy_text(paste0(colored_var, " = ", colored_value, colored_source))
-    } else {
-      .icy_text(paste0(colored_var, " = ", colored_value))
-    }
-  }
+.format_raw_default <- function(value) {
+  if (is.null(value)) return("~")
+  if (is.logical(value)) return(toupper(as.character(value)))
+  return(as.character(value))
 }
 
 
-#' Full display mode for show_config
+#' Resolve template path for display illustration
+#'
+#' Substitutes variable references using LOCAL config values,
+#' then resolves keywords for the display arrow.
+#'
 #' @keywords internal
-.show_config_full <- function(package, status_df, renviron_config, local_config, section, fn_tmpl = NULL, fn_local = NULL) {
-  # Show template configuration
-  template_config <- tryCatch({
-    get_config(package = package, origin = "template", section = section, fn_tmpl = fn_tmpl, fn_local = fn_local, confirm_fuzzy = FALSE)
-  }, error = function(e) list())
-  
-  if (length(template_config) > 0) {
-    .icy_text(.apply_color("Template Configuration:", "green", "bold"))
-    for (var in names(template_config)) {
-      value <- template_config[[var]]
-      colored_value <- .format_value_with_color(var, value, "(null)")
-      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
-    }
-    .icy_text("")
-  }
-  
-  # Show local configuration
-  if (length(local_config) > 0) {
-    .icy_text(.apply_color("Local Configuration:", "magenta", "bold"))
-    for (var in names(local_config)) {
-      value <- local_config[[var]]
-      colored_value <- .format_value_with_color(var, value, "(null)")
-      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
-    }
-    .icy_text("")
-  }
-  
-  # Show .Renviron configuration
-  if (length(renviron_config) > 0) {
-    .icy_text(.apply_color(".Renviron Configuration:", "red", "bold"))
-    for (var in names(renviron_config)) {
-      value <- renviron_config[[var]]
-      colored_value <- .format_value_with_color(var, value)
-      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
-    }
-    .icy_text("")
-  }
-  
-  # Show session environment variables
-  session_vars <- list()
-  if (length(template_config) > 0) {
-    for (var in names(template_config)) {
-      session_value <- Sys.getenv(var, unset = NA)
-      if (!is.na(session_value)) {
-        session_vars[[var]] <- session_value
+.resolve_template_path_for_display <- function(raw_value, local_config, package) {
+  if (is.null(raw_value) || !is.character(raw_value)) return(NULL)
+
+  resolved <- raw_value
+
+  # Substitute ${VAR_NAME} references using LOCAL config values
+  pattern <- "\\$\\{([A-Z_][A-Z0-9_]*)\\}"
+  matches <- gregexpr(pattern, resolved, perl = TRUE)
+
+  if (matches[[1]][1] != -1) {
+    match_starts <- matches[[1]]
+    match_lengths <- attr(matches[[1]], "match.length")
+    capture_starts <- attr(matches[[1]], "capture.start")
+    capture_lengths <- attr(matches[[1]], "capture.length")
+
+    # Replace from right to left to preserve positions
+    for (i in length(match_starts):1) {
+      full_match <- substr(resolved, match_starts[i],
+                          match_starts[i] + match_lengths[i] - 1)
+      ref_var <- substr(resolved, capture_starts[i],
+                       capture_starts[i] + capture_lengths[i] - 1)
+
+      if (ref_var %in% names(local_config)) {
+        resolved <- sub(full_match, as.character(local_config[[ref_var]]),
+                       resolved, fixed = TRUE)
       }
     }
   }
-  
-  if (length(session_vars) > 0) {
-    .icy_text(.apply_color("Session Environment:", "yellow", "bold"))
-    for (var in names(session_vars)) {
-      value <- session_vars[[var]]
-      colored_value <- .format_value_with_color(var, value)
-      .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value))
-    }
-    .icy_text("")
-  }
-  
-  # Show final resolved values
-  .icy_text(.apply_color("ICY Final Values (Priority: Session > .Renviron > Local > Template):", "blue", "bold"))
-  for (i in seq_len(nrow(status_df))) {
-    var <- status_df$variable[i]
-    value <- status_df$value[i] 
-    source <- status_df$source[i]
-    
-    # Use consistent value coloring
-    colored_value <- .format_value_with_color(var, value)
-    
-    source_color <- switch(source,
-      ".Renviron" = "magenta",
-      "local config" = "blue",
-      "session" = "yellow",
-      "session = .Renviron" = "yellow",
-      "session = local" = "yellow",
-      "not set" = "gray",
-      "cyan"
-    )
-    
-    .icy_text(paste0("  ", .apply_color(var, "cyan"), " = ", colored_value, 
-                    " [", .apply_color(source, source_color), "]"))
-  }
+
+  # Resolve keywords (getwd, tempdir, home, etc.)
+  resolved <- .resolve_special_path(resolved, package, local_config)
+
+  return(resolved)
 }
 
 
@@ -311,22 +290,18 @@ show_config <- function(package = get_package_name(),
   if (is.null(value)) {
     return(.apply_color(null_replacement, "grey"))
   }
-  
+
   value_str <- as.character(value)
-  
+
   if (is.na(value_str) || value_str == null_replacement) {
     return(.apply_color(if(is.na(value_str)) null_replacement else value_str, "grey"))
   } else if (grepl("_DIR$|_PATH$", var)) {
-    # File paths in green
     return(.apply_color(value_str, "green"))
   } else if (value_str %in% c("TRUE", "FALSE", "true", "false", "yes", "no")) {
-    # Boolean values in orange (256-color)
     return(.apply_color(value_str, "orange"))
   } else if (grepl("^[0-9]+$", value_str)) {
-    # Numeric values in magenta
     return(.apply_color(value_str, "magenta"))
   } else {
-    # Regular text values with quotes in brown
     return(.apply_color(paste0("'", value_str, "'"), "brown"))
   }
 }

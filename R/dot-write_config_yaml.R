@@ -63,7 +63,11 @@
   if (!is.null(package) && length(var_list) > 0) {
     # Use icy's validation system
     if (!is.null(template_file)) {
-      # Specific template file provided
+      # Specific template file provided - resolve bare filenames
+      if (!file.exists(template_file)) {
+        resolved <- .find_config_files(package = package, fn_tmpl = template_file, verbose = FALSE)
+        if (!is.null(resolved$fn_tmpl)) template_file <- resolved$fn_tmpl
+      }
       valid_vars <- tryCatch({
         template_config <- yaml::read_yaml(template_file)
         if (!is.null(section) && section != "" && section %in% names(template_config)) {
@@ -77,7 +81,7 @@
     } else {
       # Use package's default template via get_config
       valid_vars <- tryCatch({
-        template_config <- get_config(package = package, origin = "template", section = section)
+        template_config <- get_template(package = package, section = section)
         names(template_config)
       }, error = function(e) {
         # No template found is OK for some operations

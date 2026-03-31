@@ -8,7 +8,7 @@
 }
 \arguments{
 \item{package}{Character string with the package name. If NULL (default),
-reads package name from DESCRIPTION file if it exists.}
+returns TRUE for any valid package directory.}
 
 \item{debug}{Logical. If TRUE, displays debugging information about directory validation. Defaults to FALSE.}
 }
@@ -18,9 +18,7 @@ the specified package name, FALSE otherwise.
 }
 \description{
 Validates whether the current working directory is a valid R package directory
-by checking for required package files and directory structure. This function
-verifies the presence of essential package components and optionally validates
-that the directory name matches the package name.
+by checking for required package files and matching the DESCRIPTION Package field.
 }
 \details{
 The function performs several checks:
@@ -28,7 +26,7 @@ The function performs several checks:
 \item Presence of R/ directory (contains source code)
 \item Presence of DESCRIPTION file (package metadata)
 \item Presence of NAMESPACE file (export/import declarations)
-\item Directory name matches the specified package name
+\item DESCRIPTION Package field matches the specified package name
 }
 }
 \keyword{internal}

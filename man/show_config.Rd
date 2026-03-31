@@ -2,13 +2,13 @@
 % Please edit documentation in R/show_config.R
 \name{show_config}
 \alias{show_config}
-\title{Show Environment Variable Status}
+\title{Show Configuration Status}
 \usage{
 show_config(
   package = get_package_name(),
   var_names = NULL,
+  show_template = FALSE,
   section = "default",
-  display = "sources",
   fn_tmpl = NULL,
   fn_local = NULL,
   confirm_fuzzy = TRUE
@@ -20,14 +20,13 @@ show_config(
 \item{var_names}{Optional character vector of specific variable names to show.
 If NULL (default), shows all variables defined in the configuration.}
 
-\item{section}{Character string for the section in the YAML file (default: "default").}
+\item{show_template}{Logical. If TRUE, shows template default values alongside
+current values. For non-path variables, defaults appear inline with
+match indicators. For path variables, defaults appear on an indented
+second line showing both the raw template keyword and its resolved path.
+Defaults to FALSE for clean output.}
 
-\item{display}{Character string specifying display mode:
-\itemize{
-\item "sources": Show variable names, values, and source information (default)
-\item "values": Show only variable names and values (no source info)
-\item "full": Show detailed information about all configuration sources
-}}
+\item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
 If NULL (default), uses the standard template file for the package.}
@@ -38,27 +37,25 @@ If NULL (default), uses the standard local config file for the package.}
 \item{confirm_fuzzy}{Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.}
 }
 \value{
-Invisibly returns a data frame with variable names, values, and sources.
+Invisibly returns a data frame with variable names and values.
+When \code{show_template = TRUE}, also includes \code{template_raw}, \code{type}, and
+\code{matches_template} columns.
 }
 \description{
-Displays the current values and status of environment variables, including
-information about where each value comes from (e.g., .Renviron, local config,
-or not set). This function provides comprehensive visibility into the
-configuration state.
+Displays the current configuration values from the local config file
+(single source of truth). When \code{show_template = TRUE}, shows template default
+values alongside current values for comparison.
 }
 \examples{
 \dontrun{
-# Show all environment variables with sources
+# Show all configuration values (clean output)
 show_config("mypackage")
 
-# Show specific variables only
-show_config("mypackage", var_names = c("API_KEY", "DB_HOST"))
+# Show with template comparison
+show_config("mypackage", show_template = TRUE)
 
-# Show only values without source information
-show_config("mypackage", display = "values")
-
-# Show full detailed information
-show_config("mypackage", display = "full")
+# Show specific variables with template comparison
+show_config("mypackage", var_names = c("API_KEY", "DB_HOST"), show_template = TRUE)
 }
 
 }

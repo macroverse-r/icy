@@ -19,7 +19,7 @@
   
   .icy_text("")
   .icy_text("2. Access configuration in your functions:")
-  .icy_text(paste0("   config <- ", .apply_color("icy::get_config", "cyan"), "(origin = \"priority\")"))
+  .icy_text(paste0("   config <- ", .apply_color("icy::get_config", "cyan"), "()"))
   .icy_text(paste0("   api_key <- ", .apply_color(paste0("config$", toupper(package), "_API_KEY"), "yellow")))
   
   .icy_text("")
@@ -50,9 +50,13 @@
   
   .icy_title("Template Overview", level_adjust = -3)
   
-  # Separate sections
-  sections <- .separate_yaml_sections(template_data)
-  
+  # Separate data sections from metadata sections
+  metadata_section_names <- .get_metadata_sections()
+  sections <- list(
+    data = template_data[!names(template_data) %in% metadata_section_names],
+    metadata = template_data[names(template_data) %in% metadata_section_names]
+  )
+
   # Count variables
   all_vars <- unique(unlist(lapply(sections$data, names)))
   n_vars <- length(all_vars)

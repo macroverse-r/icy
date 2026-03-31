@@ -13,7 +13,6 @@ qconfig(
   allow_skip = TRUE,
   note = NULL,
   arg_only = FALSE,
-  write = "local",
   type = NULL,
   allow_custom = NULL,
   allow_create_dir = TRUE,
@@ -44,10 +43,6 @@ without selecting an option. Returns NULL when skipped. Defaults to TRUE.}
 
 \item{arg_only}{Logical. If TRUE, only uses options from the argument and ignores template
 options. If FALSE (default), merges argument and template options.}
-
-\item{write}{Character string specifying where to write the configuration.
-Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),
-"session" (sets in current R session only using Sys.setenv).}
 
 \item{type}{Character string specifying the expected type for the variable.
 If NULL (default), uses type from template file. If not found in template, keeps value as-is.
@@ -107,14 +102,6 @@ Priority for options: argument options + template options (argument first), or a
 # Basic usage with template integration (writes to local config)
 api_key <- qconfig("DUMMY_API_KEY", package = "dummy")
 # Uses template description and options, writes to local YAML config
-
-# Write to ~/.Renviron instead
-port <- qconfig("DUMMY_DB_PORT", write = "renviron")
-# Writes selected value to ~/.Renviron file
-
-# Set only in current session
-log_level <- qconfig("DUMMY_LOG_LEVEL", write = "session")
-# Sets value using Sys.setenv() for current session only
 
 # Add custom options to template options
 timeout <- qconfig("DUMMY_TIMEOUT", options = c("30", "60", "120"))

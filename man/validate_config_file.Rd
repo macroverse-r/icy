@@ -9,7 +9,9 @@ validate_config_file(
   fn_local = NULL,
   type = c("template", "local"),
   package = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  .config_data = NULL,
+  .template_data = NULL
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ find using package name. Used for validation when type="local".}
 \item{package}{Package name for context. If NULL, attempts to detect.}
 
 \item{verbose}{Logical. If TRUE, shows detailed validation messages}
+
+\item{.config_data}{Pre-parsed YAML data. Skips reading from disk when provided.}
+
+\item{.template_data}{Pre-parsed template YAML data. Skips reading template when provided.}
 }
 \value{
 List with validation results containing:

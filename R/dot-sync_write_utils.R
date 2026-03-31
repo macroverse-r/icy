@@ -1,35 +1,10 @@
 #' Sync Utility Functions for Write Operations
 #'
 #' @description
-#' Shared helper functions for consistent sync behavior across write_local() 
-#' and write_renviron() functions.
+#' Shared helper functions for consistent sync behavior in write_local().
 #'
 #' @name sync_write_utils
 NULL
-
-#' Determine which variables to sync based on sync parameter
-#'
-#' @param var_names Character vector of variable names that were written
-#' @param sync Sync parameter: "conservative", "all", "none", TRUE, FALSE, or character vector
-#' @param original_session_vars Character vector of variables that were in session before writing
-#'
-#' @return Character vector of variable names to sync to session environment
-#' @keywords internal
-.determine_sync_vars <- function(var_names, sync, original_session_vars) {
-  if (identical(sync, "none") || identical(sync, FALSE)) {
-    return(character(0))
-  } else if (identical(sync, "all") || identical(sync, TRUE)) {
-    return(var_names)
-  } else if (identical(sync, "conservative")) {
-    # Only sync variables that were already in session
-    return(intersect(var_names, original_session_vars))
-  } else if (is.character(sync)) {
-    # Explicit list of variables to sync
-    return(intersect(var_names, sync))
-  } else {
-    .icy_stop("sync must be 'conservative', 'all', 'none', TRUE, FALSE, or character vector")
-  }
-}
 
 #' Apply sync logic to session environment variables
 #'
@@ -42,7 +17,18 @@ NULL
 #' @keywords internal
 .apply_sync <- function(var_list, sync, original_session_vars, verbose = FALSE) {
   # Determine which variables to sync
-  vars_to_sync <- .determine_sync_vars(names(var_list), sync, original_session_vars)
+  var_names <- names(var_list)
+  if (identical(sync, "none") || identical(sync, FALSE)) {
+    vars_to_sync <- character(0)
+  } else if (identical(sync, "all") || identical(sync, TRUE)) {
+    vars_to_sync <- var_names
+  } else if (identical(sync, "conservative")) {
+    vars_to_sync <- intersect(var_names, original_session_vars)
+  } else if (is.character(sync)) {
+    vars_to_sync <- intersect(var_names, sync)
+  } else {
+    .icy_stop("sync must be 'conservative', 'all', 'none', TRUE, FALSE, or character vector")
+  }
   
   if (length(vars_to_sync) > 0) {
     # Set session environment variables to new values
@@ -79,7 +65,7 @@ NULL
 .get_current_session_vars <- function(package, section = "default") {
   # Get all possible variables from template
   template_vars <- tryCatch({
-    names(get_config(package = package, origin = "template", section = section))
+    names(get_template(package = package, section = section))
   }, error = function(e) {
     character(0)
   })

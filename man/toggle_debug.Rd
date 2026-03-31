@@ -19,7 +19,7 @@ toggle_debug(
 \item{initial}{Logical. The initial value to use when initializing a
 non-existent debug variable. Defaults to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. If NULL (default), defaults to TRUE.}
 }
 \value{
 Invisibly returns the new value of the debug variable.
@@ -35,9 +35,6 @@ and creates the appropriate debug variable name (\code{PKGNAME_DEBUG} where PKGN
 is the uppercase package name). It reads the configuration from the local YAML file,
 toggles or initializes the debug variable, and writes the updated configuration
 back to the file.
-
-The function will display a success message unless the \code{PKGNAME_VERBOSE} variable
-exists and is set to FALSE.
 }
 \examples{
 \dontrun{
@@ -50,5 +47,6 @@ toggle_debug(package = "otherpackage", initial = FALSE)
 
 }
 \seealso{
+\code{\link{toggle_verbose}} for toggling verbose mode.
 \code{\link{get_config}} for retrieving the config data.
 }

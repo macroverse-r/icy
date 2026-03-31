@@ -2,11 +2,10 @@
 % Please edit documentation in R/get_config.R
 \name{get_config}
 \alias{get_config}
-\title{Get Environment Variable Configuration}
+\title{Get Configuration}
 \usage{
 get_config(
   package = get_package_name(),
-  origin = "priority",
   section = "default",
   fn_tmpl = NULL,
   fn_local = NULL,
@@ -20,19 +19,10 @@ get_config(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{origin}{Character string specifying where to read the configuration from:
-\itemize{
-\item "template": Read from the package's template YAML file (read-only blueprint)
-\item "local": Read from the user's local configuration file (default)
-\item "renviron": Read from .Renviron file (filtered by package prefix)
-\item "priority": Merge all sources with priority order: Session > .Renviron > Local > Template.
-Template values serve as defaults that are overridden by higher priority sources.
-}}
-
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{fn_tmpl}{Character string with the name or path to the template YAML file.
-If NULL, uses default template for the package.}
+If NULL, uses default template for the package. Used for validation and type resolution.}
 
 \item{fn_local}{Character string with the name or path to the local YAML file.
 If NULL, uses default local config for the package.}
@@ -43,52 +33,40 @@ searching YAML files if no specific files are provided. Options are:
 
 \item{inherit}{Character string specifying a section to inherit values from, or
 0 to explicitly disable inheritance. If NULL (default), the function checks
-for an "inheritances" section in the template that defines automatic inheritance
+for an "inheritances" section in the config that defines automatic inheritance
 relationships. When explicitly specified, this parameter overrides any
-template-defined inheritance. Use 0 to disable inheritance even if defined
-in template. Values from the inherit section are used as defaults, which can
+defined inheritance. Use 0 to disable inheritance even if defined.
+Values from the inherit section are used as defaults, which can
 be overridden by the main section. Inheritance is recursive - if A inherits
-from B and B inherits from C, A will receive values from both B and C.
-Only works with "template" and "local" origins.}
+from B and B inherits from C, A will receive values from both B and C.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages about the operation. Defaults to FALSE.}
 
-\item{validate}{Logical. If TRUE (default), validates the template structure
-and checks for issues like circular inheritance. Set to FALSE to skip
-validation for performance or to work with templates that have known issues.}
+\item{validate}{Logical. If TRUE (default), validates the configuration file
+structure. Set to FALSE to skip validation for performance.}
 
 \item{confirm_fuzzy}{Logical. If TRUE (default), prompts for confirmation when fuzzy
 matches are used in file searching. Set to FALSE for non-interactive use.}
 }
 \value{
-Named list of environment variable configurations.
+Named list of configuration values.
 }
 \description{
-Reads environment variable configuration from different origins (template, local, .Renviron,
-or merged with priority resolution). This function is typically used within an R package to
-retrieve environment variable configurations based on the specified origin.
+Reads configuration from the local YAML file (single source of truth).
+The local config file is the authoritative source for all configuration values.
+Use \code{\link{get_template}} to read the template file (blueprint).
 }
 \examples{
 \dontrun{
-# Get configuration from template (package defaults)
-template_config <- get_config(package = "mypackage", origin = "template")
-
-# Get configuration from local file (user customizations)
-local_config <- get_config(package = "mypackage", origin = "local")
-
-# Get merged configuration with priority resolution
-# Template values are used as base, overridden by local/.Renviron/session
-# If no local config exists, template values are still returned
-config <- get_config(package = "mypackage", origin = "priority")
+# Get configuration from local file (single source of truth)
+config <- get_config(package = "mypackage")
 
 # Get production config with defaults inherited from default section
-prod_config <- get_config(package = "mypackage", section = "production", 
-                         inherit = "default", origin = "template")
-
-# Use specific template and local files
-config <- get_config(package = "mypackage", 
-                    fn_tmpl = "custom_template.yml",
-                    fn_local = "custom_local.yml")
+prod_config <- get_config(package = "mypackage", section = "production",
+                         inherit = "default")
 }
 
+}
+\seealso{
+\code{\link{get_template}} for reading template configuration.
 }

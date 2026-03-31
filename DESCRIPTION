@@ -1,11 +1,10 @@
 Package: icy
 Title: Interface for Configuration using YAML
 Version: 0.1.20
-Authors@R: 
-    person("Benjamin", "Peeters", 
-           email = "benjamin.peeters@pik-potsdam.de", 
-           role = c("aut", "cre"),
-           comment = c(ORCID = ""))
+Authors@R:
+    person("Benjamin", "Peeters",
+           email = "benjamin.peeters@pik-potsdam.de",
+           role = c("aut", "cre"))
 Description: Provides an interface for managing configuration in R packages using 
     YAML files. This package enables R packages to easily configure and manage 
     environment variables, settings, and preferences through YAML configuration files,
@@ -15,7 +14,7 @@ License_is_FOSS: yes
 Depends: R (>= 4.0.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: 
     tools,
     yaml

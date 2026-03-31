@@ -57,8 +57,8 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     tmpl_section <- "default"
   }
 
-  # Use find_config_files for intelligent filename derivation and pairing
-  files <- find_config_files(
+  # Use .find_config_files for intelligent filename derivation and pairing
+  files <- .find_config_files(
     package = package,
     fn_tmpl = fn_tmpl,
     fn_local = fn_local,
@@ -108,20 +108,17 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     )
   }
   
-  # If fn_local is just a filename, place it in the appropriate directory  
+  # If fn_local is just a filename, place it in the user config directory
   if (!grepl("[/\\\\]", fn_local)) {
-    # Get the local config directory
-    local_dir <- get_config_dir(package = package, type = "local")
-    
-    # If in package directory, ensure directory structure exists
-    if (.is_pkg_dir(package = package)) {
-      # Ensure inst/local_config/ directory exists
-      .ensure_directory_exists(local_dir, verbose = verbose)
-      
-      # Ensure .Rbuildignore excludes this directory
-      .ensure_rbuildignore_excludes_local_config(verbose = verbose)
+    local_dir <- .get_config_dir(package = package, type = "local")
+    if (!dir.exists(local_dir)) {
+      success <- dir.create(local_dir, recursive = TRUE)
+      if (success && verbose) {
+        .icy_success(paste0("Created directory: ", local_dir))
+      } else if (!success) {
+        .icy_warn(paste0("Failed to create directory: ", local_dir))
+      }
     }
-    
     local_path <- file.path(local_dir, fn_local)
   } else {
     # If fn_local contains path separators, use it as-is (user is responsible)
@@ -132,37 +129,27 @@ create_local <- function(package = get_package_name(verbose = FALSE),
     fun <- as.character(sys.call())
     .icy_text(paste0("From ", fun, ":"))
     .icy_text(paste0(" - fn_local = ", fn_local))
-    .icy_text(paste0(" - local_config_dir = ", get_config_dir(package = package, type = "local")))
+    .icy_text(paste0(" - local_config_dir = ", .get_config_dir(package = package, type = "local")))
     .icy_text(paste0(" - local_path = ", local_path))
   }
 
   # Generate header using unified function with template source
   custom_header <- .generate_header(package, type = header, template_source = tmpl_path)
   
-  # Extract all data sections from template (exclude metadata sections except inheritances)
+  # Extract data sections and inheritances from template (exclude other metadata)
   metadata_sections <- .get_metadata_sections()
-  data_sections <- setdiff(names(tmpl_config), metadata_sections)
-  
-  # Build complete local config with all data sections
+  # Keep inheritances alongside data sections -- local configs need it for section inheritance
+  kept_sections <- setdiff(names(tmpl_config), setdiff(metadata_sections, "inheritances"))
+
+  # Build local config from template blueprint
   local_config_data <- list()
-  for (section_name in data_sections) {
-    if (section_name %in% names(tmpl_config)) {
-      local_config_data[[section_name]] <- tmpl_config[[section_name]]
+  for (section_name in kept_sections) {
+    value <- tmpl_config[[section_name]]
+    # Convert NULL inheritances to empty list so it gets written
+    if (section_name == "inheritances" && is.null(value)) {
+      value <- list()
     }
-  }
-  
-  # Always include inheritances section (required for local configs)
-  # Use template's inheritances if available, otherwise empty list
-  if ("inheritances" %in% names(tmpl_config)) {
-    # Convert NULL to empty list to ensure it gets written
-    inheritances_value <- tmpl_config[["inheritances"]]
-    if (is.null(inheritances_value)) {
-      inheritances_value <- list()
-    }
-    local_config_data[["inheritances"]] <- inheritances_value
-  } else {
-    # Ensure inheritances section exists even if template doesn't have it
-    local_config_data[["inheritances"]] <- list()
+    local_config_data[[section_name]] <- value
   }
   
   # Write the local config file using unified icy YAML writer

@@ -19,7 +19,7 @@ toggle_verbose(
 \item{initial}{Logical. The default value to use when initializing a
 non-existent verbose variable. Defaults to TRUE.}
 
-\item{verbose}{Logical. If TRUE, displays informative messages about the operation. If NULL (default), uses the package's VERBOSE configuration value, or FALSE if not set.}
+\item{verbose}{Logical. If TRUE, displays informative messages about the operation. If NULL (default), defaults to TRUE.}
 }
 \value{
 Invisibly returns the new value of the verbose variable.
@@ -35,10 +35,6 @@ and creates the appropriate verbose variable name (\code{PKGNAME_VERBOSE} where 
 is the uppercase package name). It reads the configuration from the local YAML file,
 toggles or initializes the verbose variable, and writes the updated configuration
 back to the file.
-
-Unlike the debug toggle function, this function will display a message about the change
-only if the \code{verbose} parameter is TRUE, regardless of the current verbose setting
-in the configuration.
 }
 \examples{
 \dontrun{

@@ -13,7 +13,6 @@
   allow_skip,
   note,
   arg_only,
-  write,
   type,
   allow_custom,
   allow_create_dir,

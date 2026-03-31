@@ -12,6 +12,8 @@
 #' @param type Type of configuration file to validate: "template" or "local"
 #' @param package Package name for context. If NULL, attempts to detect.
 #' @param verbose Logical. If TRUE, shows detailed validation messages
+#' @param .config_data Pre-parsed YAML data. Skips reading from disk when provided.
+#' @param .template_data Pre-parsed template YAML data. Skips reading template when provided.
 #'
 #' @return List with validation results containing:
 #'   \describe{
@@ -67,7 +69,9 @@ validate_config_file <- function(fn_tmpl = NULL,
                                 fn_local = NULL,
                                 type = c("template", "local"),
                                 package = NULL,
-                                verbose = FALSE) {
+                                verbose = FALSE,
+                                .config_data = NULL,
+                                .template_data = NULL) {
   
   type <- match.arg(type)
   
@@ -77,7 +81,7 @@ validate_config_file <- function(fn_tmpl = NULL,
       package <- get_package_name(verbose = FALSE)
     }
     
-    files <- find_config_files(package = package, verbose = FALSE)
+    files <- .find_config_files(package = package, verbose = FALSE)
     
     if (is.null(fn_tmpl)) {
       fn_tmpl <- files$fn_tmpl
@@ -130,23 +134,30 @@ validate_config_file <- function(fn_tmpl = NULL,
     result$info <- c(result$info, paste0("Validating template: ", file_to_validate))
   }
   
-  # Read the configuration file
-  config_data <- tryCatch({
-    yaml::read_yaml(file_to_validate)
-  }, error = function(e) {
-    result$valid <- FALSE
-    result$errors <- c(result$errors, paste0("Invalid YAML syntax: ", e$message))
-    return(NULL)
-  })
-  
-  if (is.null(config_data)) {
-    return(result)
+  # Read the configuration file (use pre-parsed data if available)
+  if (!is.null(.config_data)) {
+    config_data <- .config_data
+  } else {
+    yaml_error <- NULL
+    config_data <- tryCatch({
+      yaml::read_yaml(file_to_validate)
+    }, error = function(e) {
+      yaml_error <<- e$message
+      return(NULL)
+    })
+
+    if (is.null(config_data)) {
+      result$valid <- FALSE
+      result$errors <- c(result$errors,
+        paste0("Invalid YAML syntax in ", file_to_validate, ": ", yaml_error))
+      return(result)
+    }
   }
   
   # Both types MUST have inheritances section
   if (!"inheritances" %in% names(config_data)) {
     result$valid <- FALSE
-    result$errors <- c(result$errors, 
+    result$errors <- c(result$errors,
                       sprintf("%s config must include an 'inheritances' section (can be empty)",
                               tools::toTitleCase(type)))
     return(result)
@@ -213,14 +224,16 @@ validate_config_file <- function(fn_tmpl = NULL,
       return(result)
     }
     
-    # Read template for validation
-    template_data <- tryCatch({
-      yaml::read_yaml(fn_tmpl)
-    }, error = function(e) {
-      result$warnings <- c(result$warnings,
-                         paste0("Cannot read template for validation: ", e$message))
-      return(NULL)
-    })
+    # Read template for validation (use pre-parsed data if available)
+    template_data <- if (!is.null(.template_data)) {
+      .template_data
+    } else {
+      tryCatch({
+        yaml::read_yaml(fn_tmpl)
+      }, error = function(e) {
+        NULL
+      })
+    }
     
     if (!is.null(template_data)) {
       local_result <- .validate_local_specific(config_data, template_data, verbose)
@@ -563,45 +576,18 @@ validate_config_file <- function(fn_tmpl = NULL,
     }
   }
   
-  # Check types
-  if ("types" %in% names(template_data)) {
-    type_vars <- names(template_data$types)
-    
-    # Find orphaned types
-    orphaned <- setdiff(type_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Types defined for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
-    }
-  }
-  
-  # Check notes
-  if ("notes" %in% names(template_data)) {
-    note_vars <- names(template_data$notes)
-    
-    # Find orphaned notes
-    orphaned <- setdiff(note_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Notes exist for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
-    }
-  }
-  
-  # Check options
-  if ("options" %in% names(template_data)) {
-    option_vars <- names(template_data$options)
-    
-    # Find orphaned options
-    orphaned <- setdiff(option_vars, all_data_vars)
-    if (length(orphaned) > 0) {
-      result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
-      result$warnings <- c(result$warnings,
-                          paste0("Options defined for non-existent variables: ",
-                                paste(orphaned, collapse = ", ")))
+  # Check types, notes, and options for orphaned metadata
+  for (meta_section in c("types", "notes", "options")) {
+    if (meta_section %in% names(template_data)) {
+      meta_vars <- names(template_data[[meta_section]])
+      orphaned <- setdiff(meta_vars, all_data_vars)
+      if (length(orphaned) > 0) {
+        result$orphaned_metadata <- unique(c(result$orphaned_metadata, orphaned))
+        label <- tools::toTitleCase(meta_section)
+        result$warnings <- c(result$warnings,
+                            paste0(label, " defined for non-existent variables: ",
+                                  paste(orphaned, collapse = ", ")))
+      }
     }
   }
   

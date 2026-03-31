@@ -19,9 +19,6 @@
 #' @param note Character string with additional informational note to display before options.
 #' @param arg_only Logical. If TRUE, only uses options from the argument and ignores template
 #'   options. If FALSE (default), merges argument and template options.
-#' @param write Character string specifying where to write the configuration.
-#'   Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),
-#'   "session" (sets in current R session only using Sys.setenv).
 #' @param type Character string specifying the expected type for the variable.
 #'   If NULL (default), uses type from template file. If not found in template, keeps value as-is.
 #'   Possible values: "character", "integer", "numeric", "logical", "path", "dir".
@@ -67,14 +64,6 @@
 #' api_key <- qconfig("DUMMY_API_KEY", package = "dummy")
 #' # Uses template description and options, writes to local YAML config
 #'
-#' # Write to ~/.Renviron instead
-#' port <- qconfig("DUMMY_DB_PORT", write = "renviron")
-#' # Writes selected value to ~/.Renviron file
-#'
-#' # Set only in current session
-#' log_level <- qconfig("DUMMY_LOG_LEVEL", write = "session")
-#' # Sets value using Sys.setenv() for current session only
-#'
 #' # Add custom options to template options
 #' timeout <- qconfig("DUMMY_TIMEOUT", options = c("30", "60", "120"))
 #' # Shows custom options first, then template options, writes to local config
@@ -112,21 +101,26 @@
 #' @export
 qconfig <- function(var_name, package = get_package_name(), section = "default",
                     description = NULL, options = NULL, allow_skip = TRUE, 
-                    note = NULL, arg_only = FALSE, write = "local", type = NULL, 
+                    note = NULL, arg_only = FALSE, type = NULL,
                     allow_custom = NULL, allow_create_dir = TRUE, resolve_paths = "ask", 
                     fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
   # Validate and normalize parameters
   params <- ._qconfig_validate_and_normalize_params(
-    var_name, package, section, description, options, allow_skip, 
-    note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
+    var_name, package, section, description, options, allow_skip,
+    note, arg_only, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
   )
   
-  # Read template data using modular functions 
-  template_description <- .get_description(params$var_name, params$package, params$fn_tmpl)
-  template_type <- .get_type(params$var_name, params$package, params$fn_tmpl)  # Already normalized boolean->logical
-  template_options <- .get_option(params$var_name, params$package, params$fn_tmpl)
-  template_note <- .get_note(params$var_name, params$package, params$fn_tmpl)
+  # Read template metadata (single read for all metadata sections)
+  tmpl_data <- tryCatch(
+    get_template(package = params$package, section = NULL,
+                 fn_tmpl = params$fn_tmpl, validate = FALSE, confirm_fuzzy = FALSE),
+    error = function(e) list()
+  )
+  template_description <- tmpl_data$descriptions[[params$var_name]]
+  template_type <- .normalize_type(tmpl_data$types[[params$var_name]])
+  template_options <- if (!is.null(tmpl_data$options[[params$var_name]])) as.character(tmpl_data$options[[params$var_name]])
+  template_note <- tmpl_data$notes[[params$var_name]]
   
   # Determine final values (argument > template > none)
   final_description <- if (!is.null(params$description)) params$description else template_description
@@ -162,7 +156,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     
     # Get template types for better variable identification
     template_types <- tryCatch({
-      template_files <- find_config_files(
+      template_files <- .find_config_files(
         package = params$package,
         fn_tmpl = params$fn_tmpl,
         fn_local = params$fn_local,
@@ -218,9 +212,9 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   final_allow_custom <- ._qconfig_determine_allow_custom(final_type, params$allow_custom)
   
   # Perform interactive configuration (pass final_type for display)
-  raw_result <- ._qconfig_do_interactive_config(params$var_name, final_description, final_options, 
-                                       params$allow_skip, final_note, params$write, 
-                                       params$package, params$section, params$verbose, final_type, 
+  raw_result <- ._qconfig_do_interactive_config(params$var_name, final_description, final_options,
+                                       params$allow_skip, final_note,
+                                       params$package, params$section, params$verbose, final_type,
                                        final_allow_custom, params$allow_create_dir, params$resolve_paths, params$fn_tmpl, params$fn_local)
   
   # Convert to proper type and return
@@ -232,7 +226,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
 
 #' Validate and Normalize qconfig Parameters
 #' @keywords internal
-._qconfig_validate_and_normalize_params <- function(var_name, package, section, description, options, allow_skip, note, arg_only, write, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose) {
+._qconfig_validate_and_normalize_params <- function(var_name, package, section, description, options, allow_skip, note, arg_only, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose) {
   # Input validation
   if (!is.character(var_name) || length(var_name) != 1 || nchar(var_name) == 0) {
     .icy_stop("var_name must be a non-empty character string")
@@ -266,10 +260,6 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     .icy_stop("arg_only must be TRUE or FALSE")
   }
   
-  if (!is.character(write) || length(write) != 1 || !write %in% c("local", "renviron", "session")) {
-    .icy_stop("write must be one of: 'local', 'renviron', 'session'")
-  }
-  
   if (!is.null(type) && (!is.character(type) || length(type) != 1 || !type %in% c("character", "integer", "numeric", "logical", "boolean", "dir", "path"))) {
     .icy_stop("type must be NULL or one of: 'character', 'integer', 'numeric', 'logical', 'boolean', 'dir', 'path'")
   }
@@ -291,7 +281,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
   }
   
   # Unified file validation and pairing
-  paired_files <- find_config_files(
+  paired_files <- .find_config_files(
     package = package,
     fn_tmpl = fn_tmpl,
     fn_local = fn_local,
@@ -334,7 +324,6 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     allow_skip = allow_skip,
     note = note,
     arg_only = arg_only,
-    write = write,
     type = type,
     allow_custom = allow_custom,
     allow_create_dir = allow_create_dir,
@@ -576,59 +565,26 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
 
 #' Write Configuration Value
 #' @keywords internal
-._qconfig_write_config_value <- function(var_name, value, write, package, section, verbose, type = NULL, fn_tmpl = NULL, fn_local = NULL) {
+._qconfig_write_config_value <- function(var_name, value, package, section, verbose, type = NULL, fn_tmpl = NULL, fn_local = NULL) {
   tryCatch({
-    switch(write,
-      "local" = {
-        config_list <- list()
-        converted_value <- .convert_by_type(value, type)
-        config_list[[var_name]] <- converted_value
-        write_local(var_list = config_list, package = package, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
-        if (verbose) {
-          .icy_success(paste0("Written ", var_name, " to local config"))
-        }
-        TRUE
-      },
-      "renviron" = {
-        config_list <- list()
-        config_list[[var_name]] <- as.character(value)
-        write_renviron(var_list = config_list)
-        if (verbose) {
-          .icy_success(paste0("Written ", var_name, " to ~/.Renviron"))
-        }
-        TRUE
-      },
-      "session" = {
-        do.call(Sys.setenv, stats::setNames(list(as.character(value)), var_name))
-        if (verbose) {
-          .icy_success(paste0("Set ", var_name, " in current session"))
-        }
-        TRUE
-      }
-    )
+    config_list <- list()
+    converted_value <- .convert_by_type(value, type)
+    config_list[[var_name]] <- converted_value
+    write_local(var_list = config_list, package = package, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
+    if (verbose) {
+      .icy_success(paste0("Written ", var_name, " to local config"))
+    }
+    TRUE
   }, error = function(e) {
     .icy_warn(paste0("Failed to write ", var_name, ": ", e$message))
     FALSE
   })
 }
 
-#' Format Success Message
-#' @keywords internal
-._qconfig_format_success_message <- function(var_name, value, write) {
-  location_display <- switch(write,
-    "local" = "local config",
-    "renviron" = ".Renviron", 
-    "session" = "session",
-    write
-  )
-  
-  paste0("Set ", var_name, " to ", value, " in ", location_display)
-}
-
 #' Perform Interactive Configuration
 #' @keywords internal  
 ._qconfig_do_interactive_config <- function(var_name, description, options, allow_skip,
-                                   note, write, package, section, verbose,
+                                   note, package, section, verbose,
                                    type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl = NULL, fn_local = NULL) {
   
   # Display description if available
@@ -719,7 +675,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     }
     
     selected_value <- user_input
-    success_msg <- ._qconfig_format_success_message(var_name, user_input, write)
+    success_msg <- paste0("Set ", var_name, " to ", user_input, " in local config")
     
   } else {
     # Options selection case
@@ -833,7 +789,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
             path_result <- ._qconfig_process_path_input(resolved_custom_input, allow_create_dir = allow_create_dir)
             if (path_result$success) {
               selected_value <- path_result$path
-              success_msg <- ._qconfig_format_success_message(var_name, selected_value, write)
+              success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
               break
             } else {
               if (!is.null(path_result$message) && nchar(path_result$message) > 0) {
@@ -857,7 +813,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
             break
           }
           selected_value <- custom_input
-          success_msg <- ._qconfig_format_success_message(var_name, selected_value, write)
+          success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
         }
         break
       }
@@ -899,7 +855,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
           selected_value <- path_result$path
         }
         
-        success_msg <- ._qconfig_format_success_message(var_name, selected_value, write)
+        success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
         break
       } else {
         if (allow_custom) {
@@ -924,11 +880,11 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
       .icy_stop(paste0("Manual path input is invalid: ", path_result$message))
     }
     selected_value <- path_result$path
-    success_msg <- ._qconfig_format_success_message(var_name, selected_value, write)
+    success_msg <- paste0("Set ", var_name, " to ", selected_value, " in local config")
   }
   
   # Write and return
-  success <- ._qconfig_write_config_value(var_name, selected_value, write, package, section, verbose, type, fn_tmpl, fn_local)
+  success <- ._qconfig_write_config_value(var_name, selected_value, package, section, verbose, type, fn_tmpl, fn_local)
   if (!success) {
     .icy_stop("Failed to write configuration")
   }

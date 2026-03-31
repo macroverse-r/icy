@@ -7,7 +7,6 @@
 setup(
   package = get_package_name(),
   section = "default",
-  write = "local",
   skip_configured = FALSE,
   vars = NULL,
   allow_skip = TRUE,
@@ -23,10 +22,6 @@ setup(
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
-
-\item{write}{Character string specifying where to write the configuration.
-Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),
-"session" (sets in current R session only using Sys.setenv).}
 
 \item{skip_configured}{Logical. If TRUE (default), skips variables that already have
 non-default values configured. Set to FALSE to reconfigure all variables.}
@@ -71,7 +66,7 @@ for interactive configuration using qconfig(). It provides:
 \item Progress tracking through the configuration process
 \item Integration with template descriptions, options, and type detection
 \item Option to skip already-configured variables
-\item Flexible output destinations (local config, .Renviron, or session)
+\item Writes configuration to local YAML config file
 }
 }
 \examples{
@@ -84,9 +79,6 @@ setup(vars = c("DUMMY_API_KEY", "DUMMY_VERBOSE", "DUMMY_TIMEOUT"))
 
 # Reconfigure all variables including those already set
 setup(skip_configured = FALSE)
-
-# Write to .Renviron instead of local config
-setup(write = "renviron")
 
 # Don't allow skipping for critical variables
 setup(vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST", "DUMMY_VERBOSE"),

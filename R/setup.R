@@ -5,9 +5,6 @@
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param write Character string specifying where to write the configuration.
-#'   Options: "local" (default, writes to local YAML config), "renviron" (writes to ~/.Renviron),
-#'   "session" (sets in current R session only using Sys.setenv).
 #' @param skip_configured Logical. If TRUE (default), skips variables that already have
 #'   non-default values configured. Set to FALSE to reconfigure all variables.
 #' @param vars Character vector of variable names to configure. If NULL (default), 
@@ -38,7 +35,7 @@
 #'   \item Progress tracking through the configuration process
 #'   \item Integration with template descriptions, options, and type detection
 #'   \item Option to skip already-configured variables
-#'   \item Flexible output destinations (local config, .Renviron, or session)
+#'   \item Writes configuration to local YAML config file
 #' }
 #'
 #' @examples
@@ -51,9 +48,6 @@
 #'
 #' # Reconfigure all variables including those already set
 #' setup(skip_configured = FALSE)
-#'
-#' # Write to .Renviron instead of local config
-#' setup(write = "renviron")
 #'
 #' # Don't allow skipping for critical variables
 #' setup(vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST", "DUMMY_VERBOSE"),
@@ -69,13 +63,13 @@
 #' }
 #'
 #' @export
-setup <- function(package = get_package_name(), section = "default", write = "local",
+setup <- function(package = get_package_name(), section = "default",
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
                   type = NULL, note = NULL, arg_only = FALSE, fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
   
   # Early detection and handling of file pairing issues
   if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    paired_files <- find_config_files(
+    paired_files <- .find_config_files(
       package = package,
       fn_tmpl = fn_tmpl,
       fn_local = fn_local,
@@ -95,12 +89,14 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
   }
 
   # Get template variables
-  template_config <- if (is.null(fn_tmpl)) {
-    get_config(package = package, section = section, origin = "template")
-  } else {
-    .get_config_template(package = package, section = section, resolved_template_path = fn_tmpl)
-  }
-  if (is.null(template_config) || length(template_config) == 0) {
+  template_config <- get_template(
+    package = package,
+    section = section,
+    fn_tmpl = fn_tmpl,
+    validate = FALSE,
+    confirm_fuzzy = FALSE
+  )
+  if (length(template_config) == 0) {
     .icy_stop(paste0("No template configuration found for package '", package, "'"))
   }
   
@@ -113,7 +109,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
   
   # Skip already configured variables if requested
   if (skip_configured) {
-    current_config <- tryCatch(get_config(package = package, section = section, origin = "priority"), 
+    current_config <- tryCatch(get_config(package = package, section = section),
                               error = function(e) NULL)
     if (!is.null(current_config)) {
       configured <- character(0)
@@ -190,7 +186,6 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
         var_name = var_name,
         package = package,
         section = section,
-        write = write,
         allow_skip = allow_skip_vec[i],
         verbose = verbose,
         arg_only = arg_only_vec[i],
@@ -230,15 +225,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
   # Show current configuration status
   if (configured_count > 0) {
     .icy_text("")
-    write_location <- switch(write,
-      "local" = {
-        # Get the actual path of the local config file that was written to
-        find_config_files(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)$fn_local
-      },
-      "renviron" = "~/.Renviron file", 
-      "session" = "current R session",
-      write
-    )
+    write_location <- .find_config_files(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)$fn_local
     
     .icy_text(paste0("Settings written to: ", .apply_color(write_location, "cyan")))
     .icy_text("")
@@ -247,7 +234,7 @@ setup <- function(package = get_package_name(), section = "default", write = "lo
     in_show_config <- function() {
       .icy_title("Current Configuration", auto_number = FALSE)
       # Show only the variables that were part of this setup
-      show_config(package = package, var_names = var_names, section = section, display = "sources", fn_tmpl = fn_tmpl, fn_local = fn_local)
+      show_config(package = package, var_names = var_names, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
     }
     in_show_config()
     
