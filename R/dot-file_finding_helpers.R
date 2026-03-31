@@ -119,23 +119,23 @@ NULL
 #'   - fuzzy: TRUE if found via fuzzy matching, FALSE otherwise
 #' @keywords internal
 ._search_file <- function(filename, package, type = "template", fuzzy = TRUE, verbose = FALSE) {
-  
+
   # First, check if it's a full path that exists
   if (grepl("[/\\\\]", filename)) {
-    if (file.exists(filename) && !dir.exists(filename) && 
+    if (file.exists(filename) && !dir.exists(filename) &&
         grepl("\\.ya?ml$", filename, ignore.case = TRUE)) {
       return(list(path = normalizePath(filename, winslash = "/"), fuzzy = FALSE))
     }
   }
-  
-  # For templates in package dev mode, check inst/ directory
-  if (type == "template" && .is_pkg_dir(package)) {
-    # Try with and without yaml extensions
+
+  # For templates in package dev mode, check inst/ directory directly
+  is_dev_pkg <- type == "template" && .is_pkg_dir(package)
+  if (is_dev_pkg) {
     files_to_check <- filename
     if (!grepl("\\.(ya?ml)$", filename, ignore.case = TRUE)) {
       files_to_check <- c(filename, paste0(filename, ".yml"), paste0(filename, ".yaml"))
     }
-    
+
     for (file_variant in files_to_check) {
       inst_path <- file.path("inst", file_variant)
       if (file.exists(inst_path) && !dir.exists(inst_path)) {
@@ -143,22 +143,25 @@ NULL
       }
     }
   }
-  
-  # Get search directory
-  package_dir <- .get_config_dir(package = package, type = type)
+
+  # Get search directory (skip .is_pkg_dir() re-check for dev packages)
+  package_dir <- if (is_dev_pkg) file.path(getwd(), "inst") else .get_config_dir(package = package, type = type)
 
   # Fast path: direct file.exists() before list.files()
-  direct_path <- file.path(package_dir, filename)
-  if (file.exists(direct_path) && !dir.exists(direct_path)) {
-    return(list(path = normalizePath(direct_path, winslash = "/"), fuzzy = FALSE))
-  }
+  # Skip for dev packages — already checked in the inst/ loop above
+  if (!is_dev_pkg) {
+    direct_path <- file.path(package_dir, filename)
+    if (file.exists(direct_path) && !dir.exists(direct_path)) {
+      return(list(path = normalizePath(direct_path, winslash = "/"), fuzzy = FALSE))
+    }
 
-  # Try adding .yml/.yaml extensions if not already present
-  if (!grepl("\\.(ya?ml)$", filename, ignore.case = TRUE)) {
-    for (ext in c(".yml", ".yaml")) {
-      candidate <- file.path(package_dir, paste0(filename, ext))
-      if (file.exists(candidate) && !dir.exists(candidate)) {
-        return(list(path = normalizePath(candidate, winslash = "/"), fuzzy = FALSE))
+    # Try adding .yml/.yaml extensions if not already present
+    if (!grepl("\\.(ya?ml)$", filename, ignore.case = TRUE)) {
+      for (ext in c(".yml", ".yaml")) {
+        candidate <- file.path(package_dir, paste0(filename, ext))
+        if (file.exists(candidate) && !dir.exists(candidate)) {
+          return(list(path = normalizePath(candidate, winslash = "/"), fuzzy = FALSE))
+        }
       }
     }
   }

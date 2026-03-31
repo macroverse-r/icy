@@ -22,13 +22,10 @@
     return(file.path(getwd(), "inst"))
   }
 
-  # Installed package scenario
+  # Installed package: system.file() returns the package root where templates live
   path <- suppressWarnings(system.file(package = package))
   if (path != "") {
     path <- clean_dir_path(path, check_exists = FALSE)
-    if (endsWith(path, "/inst")) {
-      path <- sub("/inst$", "", path)
-    }
   }
 
   return(path)

@@ -1,18 +1,16 @@
 #' Check if Current Directory is a Package Directory
 #'
 #' Validates whether the current working directory is a valid R package directory
-#' by checking for required package files and directory structure. This function
-#' verifies the presence of essential package components and optionally validates
-#' that the directory name matches the package name.
+#' by checking for required package files and matching the DESCRIPTION Package field.
 #'
 #' The function performs several checks:
 #' 1. Presence of R/ directory (contains source code)
 #' 2. Presence of DESCRIPTION file (package metadata)
 #' 3. Presence of NAMESPACE file (export/import declarations)
-#' 4. Directory name matches the specified package name
+#' 4. DESCRIPTION Package field matches the specified package name
 #'
 #' @param package Character string with the package name. If NULL (default),
-#'   reads package name from DESCRIPTION file if it exists.
+#'   returns TRUE for any valid package directory.
 #' @param debug Logical. If TRUE, displays debugging information about directory validation. Defaults to FALSE.
 #'
 #' @return Logical. TRUE if current directory is a valid package directory matching
@@ -21,26 +19,26 @@
 #' @keywords internal
 .is_pkg_dir <- function(package = NULL,
                         debug = FALSE) {
-  current_dir <- getwd()
-
   has_r_dir <- dir.exists("R")
   has_description <- file.exists("DESCRIPTION")
   has_namespace <- file.exists("NAMESPACE")
 
+  if (!has_r_dir || !has_description || !has_namespace) {
+    return(FALSE)
+  }
+
+  # Match by DESCRIPTION Package field, not directory name
+  desc_pkg <- .get_package_name_from_description()
+
   if (debug) {
-    .icy_text(paste0("basename(current_dir) = ", basename(current_dir)))
+    .icy_text(paste0("DESCRIPTION Package: ", desc_pkg, " | target: ", package))
   }
 
-  if (is.null(package) && has_r_dir && has_description) {
-    package <- .get_package_name_from_description()
+  if (is.null(package)) {
+    return(!is.null(desc_pkg))
   }
-  
-  has_pkg_dir_name <- basename(current_dir) == package
 
-  is_in_pkg_dir <- has_pkg_dir_name && has_description && has_namespace && has_r_dir
-
-  return(is_in_pkg_dir)
-  
+  return(!is.null(desc_pkg) && desc_pkg == package)
 }
 
 

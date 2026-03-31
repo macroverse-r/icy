@@ -20,7 +20,6 @@
                                confirm_fuzzy = FALSE,
                                case_format = "snake_case",
                                verbose = FALSE) {
-
   # Step 1: Core file searching (non-interactive)
   results <- ._find_files_core(
     fn_tmpl = fn_tmpl,
