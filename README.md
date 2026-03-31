@@ -236,7 +236,7 @@ config <- get_config(package = "dummy")
 print(config$DUMMY_API_KEY)
 
 # Inspect template defaults for comparison
-template_defaults <- get_config(package = "dummy", origin = "template")
+template_defaults <- get_template(package = "dummy")
 ```
 
 </details>
@@ -286,10 +286,9 @@ Working with development, testing, and production:
 
 ```r
 # Development settings (from template section)
-dev_defaults <- get_config(
+dev_defaults <- get_template(
   package = "dummy",
-  section = "development",
-  origin = "template"
+  section = "development"
 )
 
 # User overrides in local config
@@ -314,7 +313,7 @@ When you need to start over:
 
 ```r
 # Get template defaults
-template_defaults <- get_config(package = "dummy", origin = "template")
+template_defaults <- get_template(package = "dummy")
 
 # Overwrite local config with template values
 write_local(var_list = template_defaults, package = "dummy")

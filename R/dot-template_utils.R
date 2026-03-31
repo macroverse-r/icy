@@ -19,7 +19,7 @@
   
   .icy_text("")
   .icy_text("2. Access configuration in your functions:")
-  .icy_text(paste0("   config <- ", .apply_color("icy::get_config", "cyan"), "(origin = \"priority\")"))
+  .icy_text(paste0("   config <- ", .apply_color("icy::get_config", "cyan"), "()"))
   .icy_text(paste0("   api_key <- ", .apply_color(paste0("config$", toupper(package), "_API_KEY"), "yellow")))
   
   .icy_text("")

@@ -146,24 +146,40 @@ NULL
   
   # Get search directory
   package_dir <- .get_config_dir(package = package, type = type)
-  
-  # Find all YAML files
+
+  # Fast path: direct file.exists() before list.files()
+  direct_path <- file.path(package_dir, filename)
+  if (file.exists(direct_path) && !dir.exists(direct_path)) {
+    return(list(path = normalizePath(direct_path, winslash = "/"), fuzzy = FALSE))
+  }
+
+  # Try adding .yml/.yaml extensions if not already present
+  if (!grepl("\\.(ya?ml)$", filename, ignore.case = TRUE)) {
+    for (ext in c(".yml", ".yaml")) {
+      candidate <- file.path(package_dir, paste0(filename, ext))
+      if (file.exists(candidate) && !dir.exists(candidate)) {
+        return(list(path = normalizePath(candidate, winslash = "/"), fuzzy = FALSE))
+      }
+    }
+  }
+
+  # Search subdirectories for exact basename match
   yaml_files <- list.files(
     path = package_dir,
     pattern = "\\.ya?ml$",
     recursive = TRUE,
     full.names = TRUE
   )
-  
+
   # Filter out directories
   yaml_files <- yaml_files[!dir.exists(yaml_files)]
-  
+
   # For template searches, exclude local_config subdirectories
   if (type == "template") {
     yaml_files <- yaml_files[!grepl("/local_config/", yaml_files)]
   }
-  
-  # Check for exact basename match first
+
+  # Check for exact basename match (file may be in a subdirectory)
   exact_matches <- yaml_files[basename(yaml_files) == basename(filename)]
   if (length(exact_matches) > 0) {
     if (verbose && !grepl("[/\\\\]", filename)) {
@@ -171,42 +187,42 @@ NULL
     }
     return(list(path = exact_matches[1], fuzzy = FALSE))
   }
-  
-  # If fuzzy matching is disabled, stop here
-  if (!fuzzy) {
+
+  # Fuzzy matching is only available in interactive sessions
+  if (!fuzzy || !interactive()) {
     if (verbose) {
       .icy_warn(paste0("No exact match for '", filename, "' in ", package_dir))
     }
     return(list(path = NULL, fuzzy = FALSE))
   }
-  
+
   # Try fuzzy matching
   similarities <- sapply(yaml_files, function(f) {
     ._calculate_filename_similarity(filename, f, package = package)
   })
-  
+
   # Apply discrimination boost for better fuzzy matching
   boosted_similarities <- ._boost_similarities(similarities, yaml_files)
-  
+
   # Find matches above threshold
   good_matches <- yaml_files[boosted_similarities >= 0.4]
-  
+
   if (length(good_matches) > 0) {
     # Sort by similarity score
     good_matches <- good_matches[order(boosted_similarities[boosted_similarities >= 0.4], decreasing = TRUE)]
-    
+
     if (verbose) {
       .icy_alert(paste0("No exact match for '", filename, "'. Found fuzzy match: ", basename(good_matches[1])))
     }
-    
+
     return(list(path = good_matches[1], fuzzy = TRUE))
   }
-  
+
   # No matches found
   if (verbose) {
     .icy_warn(paste0("No file matching '", filename, "' in ", package_dir))
   }
-  
+
   return(list(path = NULL, fuzzy = FALSE))
 }
 

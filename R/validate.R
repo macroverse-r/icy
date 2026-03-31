@@ -48,7 +48,7 @@ validate <- function(package = get_package_name(),
     # Get allowed variables from template if not provided
     if (is.null(allowed_vars)) {
         allowed_vars <- tryCatch({
-            names(get_config(package = package, origin = "template", section = section))
+            names(get_template(package = package, section = section))
         }, error = function(e) {
             msg <- paste0("Could not retrieve allowed variables from template: ", e$message)
             if (warn) {

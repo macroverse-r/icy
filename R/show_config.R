@@ -60,7 +60,6 @@ show_config <- function(package = get_package_name(),
   local_config <- tryCatch(
     {
       get_config(package = package,
-                 origin = "local",
                  section = section,
                  fn_tmpl = if (!is.null(resolved_template_path)) basename(resolved_template_path) else fn_tmpl,
                  fn_local = if (!is.null(resolved_local_path)) basename(resolved_local_path) else fn_local,

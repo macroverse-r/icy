@@ -65,7 +65,7 @@ NULL
 .get_current_session_vars <- function(package, section = "default") {
   # Get all possible variables from template
   template_vars <- tryCatch({
-    names(get_config(package = package, origin = "template", section = section))
+    names(get_template(package = package, section = section))
   }, error = function(e) {
     character(0)
   })

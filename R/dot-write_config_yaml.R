@@ -81,7 +81,7 @@
     } else {
       # Use package's default template via get_config
       valid_vars <- tryCatch({
-        template_config <- get_config(package = package, origin = "template", section = section)
+        template_config <- get_template(package = package, section = section)
         names(template_config)
       }, error = function(e) {
         # No template found is OK for some operations

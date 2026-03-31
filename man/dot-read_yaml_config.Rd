@@ -10,7 +10,10 @@
   section = "default",
   resolved_path = NULL,
   case_format = "snake_case",
-  verbose = FALSE
+  verbose = FALSE,
+  resolved_template_path = NULL,
+  config_data = NULL,
+  template_types = NULL
 )
 }
 \arguments{
@@ -26,6 +29,14 @@ the function will search for it using .find_config_files().}
 \item{case_format}{Character string for filename generation.}
 
 \item{verbose}{Logical. If TRUE, shows messages.}
+
+\item{resolved_template_path}{Pre-resolved path to the template file.
+Used for template type lookup when reading local configs.}
+
+\item{config_data}{Pre-parsed YAML data. When provided, skips reading from disk.}
+
+\item{template_types}{Pre-extracted template types list. When provided,
+skips template file lookup for type resolution.}
 }
 \value{
 Named list of configuration values.

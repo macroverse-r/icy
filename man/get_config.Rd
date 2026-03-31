@@ -6,7 +6,6 @@
 \usage{
 get_config(
   package = get_package_name(),
-  origin = "local",
   section = "default",
   fn_tmpl = NULL,
   fn_local = NULL,
@@ -20,16 +19,10 @@ get_config(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.}
 
-\item{origin}{Character string specifying where to read the configuration from:
-\itemize{
-\item "local": Read from the user's local configuration file (default, single source of truth)
-\item "template": Read from the package's template YAML file (read-only blueprint)
-}}
-
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
 \item{fn_tmpl}{Character string with the name or path to the template YAML file.
-If NULL, uses default template for the package.}
+If NULL, uses default template for the package. Used for validation and type resolution.}
 
 \item{fn_local}{Character string with the name or path to the local YAML file.
 If NULL, uses default local config for the package.}
@@ -59,21 +52,21 @@ matches are used in file searching. Set to FALSE for non-interactive use.}
 Named list of configuration values.
 }
 \description{
-Reads configuration from the local YAML file (single source of truth) or
-from the template file (blueprint inspection). The local config file is
-the authoritative source for all configuration values.
+Reads configuration from the local YAML file (single source of truth).
+The local config file is the authoritative source for all configuration values.
+Use \code{\link{get_template}} to read the template file (blueprint).
 }
 \examples{
 \dontrun{
-# Get configuration from local file (default, single source of truth)
+# Get configuration from local file (single source of truth)
 config <- get_config(package = "mypackage")
-
-# Get configuration from template (package defaults/blueprint)
-template_config <- get_config(package = "mypackage", origin = "template")
 
 # Get production config with defaults inherited from default section
 prod_config <- get_config(package = "mypackage", section = "production",
                          inherit = "default")
 }
 
+}
+\seealso{
+\code{\link{get_template}} for reading template configuration.
 }

@@ -15,6 +15,11 @@
 #'   the function will search for it using .find_config_files().
 #' @param case_format Character string for filename generation.
 #' @param verbose Logical. If TRUE, shows messages.
+#' @param resolved_template_path Pre-resolved path to the template file.
+#'   Used for template type lookup when reading local configs.
+#' @param config_data Pre-parsed YAML data. When provided, skips reading from disk.
+#' @param template_types Pre-extracted template types list. When provided,
+#'   skips template file lookup for type resolution.
 #'
 #' @return Named list of configuration values.
 #'   For type "local", returns empty list if file does not exist.
@@ -25,11 +30,14 @@
                               section = "default",
                               resolved_path = NULL,
                               case_format = "snake_case",
-                              verbose = FALSE) {
+                              verbose = FALSE,
+                              resolved_template_path = NULL,
+                              config_data = NULL,
+                              template_types = NULL) {
   type <- match.arg(type)
 
-  # Find file if not provided
-  if (is.null(resolved_path)) {
+  # Find file if not provided (only needed when config_data is NULL)
+  if (is.null(config_data) && is.null(resolved_path)) {
     config_files <- .find_config_files(
       package = package,
       case_format = case_format,
@@ -47,7 +55,7 @@
     config_file_path <- resolved_path
   }
 
-  if (verbose) {
+  if (verbose && is.null(config_data)) {
     label <- if (type == "template") "template" else "local"
     .icy_text(paste0("Reading ", label, " config from: ", config_file_path))
   }
@@ -56,26 +64,36 @@
 
   tryCatch(
     {
-      config_data <- yaml::read_yaml(config_file_path)
+      # Use pre-parsed data or read from file
+      if (is.null(config_data)) {
+        config_data <- yaml::read_yaml(config_file_path)
+      }
 
-      # Get template types for path resolution
-      template_types <- if (type == "template") {
-        if ("types" %in% names(config_data)) config_data$types else NULL
-      } else {
-        tryCatch({
-          template_files <- .find_config_files(
-            package = package,
-            case_format = case_format,
-            verbose = FALSE,
-            confirm_fuzzy = FALSE
-          )
-          if (!is.null(template_files$fn_tmpl) && file.exists(template_files$fn_tmpl)) {
-            tmpl_data <- yaml::read_yaml(template_files$fn_tmpl)
-            if ("types" %in% names(tmpl_data)) tmpl_data$types else NULL
-          } else {
-            NULL
-          }
-        }, error = function(e) NULL)
+      # Get template types for path resolution (skip if pre-provided)
+      if (is.null(template_types)) {
+        template_types <- if (type == "template") {
+          if ("types" %in% names(config_data)) config_data$types else NULL
+        } else {
+          # Use pre-resolved template path if provided, otherwise search
+          tryCatch({
+            tmpl_path <- resolved_template_path
+            if (is.null(tmpl_path)) {
+              template_files <- .find_config_files(
+                package = package,
+                case_format = case_format,
+                verbose = FALSE,
+                confirm_fuzzy = FALSE
+              )
+              tmpl_path <- template_files$fn_tmpl
+            }
+            if (!is.null(tmpl_path) && file.exists(tmpl_path)) {
+              tmpl_data <- yaml::read_yaml(tmpl_path)
+              if ("types" %in% names(tmpl_data)) tmpl_data$types else NULL
+            } else {
+              NULL
+            }
+          }, error = function(e) NULL)
+        }
       }
 
       # Extract section, resolve variable references and paths
