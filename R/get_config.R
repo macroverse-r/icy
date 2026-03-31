@@ -101,16 +101,13 @@ get_config <- function(package = get_package_name(),
     }
   }
 
-  # Read local config (using pre-parsed data)
-  config <- .read_yaml_config(
-    package = package,
-    type = "local",
-    section = section,
-    resolved_path = resolved_local_path,
-    case_format = case_format,
-    verbose = verbose,
+  # Extract and process the requested section
+  config <- .process_config_section(
     config_data = raw_local_data,
-    template_types = template_types
+    section = section,
+    template_types = template_types,
+    package = package,
+    source_label = "local config"
   )
 
   # Apply inheritance
@@ -120,7 +117,6 @@ get_config <- function(package = get_package_name(),
     section = section,
     inherit = inherit,
     type = "local",
-    resolved_path = resolved_local_path,
     template_types = template_types,
     package = package,
     verbose = verbose

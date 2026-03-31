@@ -18,7 +18,7 @@
 #'   - "warn": Warn about conflicts, suggest check_conflicts()
 #'   - "silent": No warnings, no interaction
 #' @param config Named list of local config values. If NULL, reads from local config
-#'   file via .read_yaml_config(). Used internally by get_config() to avoid re-reading.
+#'   file. Used internally by get_config() to avoid re-reading.
 #' @param section Character string for the section in the YAML file (default: "default").
 #' @param verbose Logical. If TRUE, shows detailed messages. Defaults to FALSE.
 #'
@@ -55,11 +55,12 @@ check_conflicts <- function(package = get_package_name(),
 
   # Get local config values (from argument or by reading)
   if (is.null(config)) {
-    config <- .read_yaml_config(
-      package = package,
-      type = "local",
-      section = section
-    )
+    local_files <- .find_config_files(package = package)
+    raw_data <- if (!is.null(local_files$fn_local)) {
+      tryCatch(yaml::read_yaml(local_files$fn_local), error = function(e) NULL)
+    }
+    config <- .process_config_section(raw_data, section = section,
+                                      source_label = "local config")
   }
 
   if (length(config) == 0) {

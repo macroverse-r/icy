@@ -111,11 +111,16 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
     note, arg_only, type, allow_custom, allow_create_dir, resolve_paths, fn_tmpl, fn_local, verbose
   )
   
-  # Read template metadata
-  template_description <- .get_template_value(params$var_name, params$package, "descriptions", fn_tmpl = params$fn_tmpl)
-  template_type <- .normalize_type(.get_template_value(params$var_name, params$package, "types", fn_tmpl = params$fn_tmpl))
-  template_options <- .get_template_value(params$var_name, params$package, "options", processor = as.character, fn_tmpl = params$fn_tmpl)
-  template_note <- .get_template_value(params$var_name, params$package, "notes", fn_tmpl = params$fn_tmpl)
+  # Read template metadata (single read for all metadata sections)
+  tmpl_data <- tryCatch(
+    get_template(package = params$package, section = NULL,
+                 fn_tmpl = params$fn_tmpl, validate = FALSE, confirm_fuzzy = FALSE),
+    error = function(e) list()
+  )
+  template_description <- tmpl_data$descriptions[[params$var_name]]
+  template_type <- .normalize_type(tmpl_data$types[[params$var_name]])
+  template_options <- if (!is.null(tmpl_data$options[[params$var_name]])) as.character(tmpl_data$options[[params$var_name]])
+  template_note <- tmpl_data$notes[[params$var_name]]
   
   # Determine final values (argument > template > none)
   final_description <- if (!is.null(params$description)) params$description else template_description

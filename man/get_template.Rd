@@ -18,7 +18,8 @@ get_template(
 \arguments{
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}.}
 
-\item{section}{Character string for the section in the YAML file (default: "default").}
+\item{section}{Character string for the section in the YAML file (default: "default").
+Use NULL to return the full parsed YAML data (all sections and metadata).}
 
 \item{fn_tmpl}{Character string with the name or path to the template YAML file.
 If NULL, uses default template for the package.}

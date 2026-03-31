@@ -18,15 +18,14 @@ NULL
 #' @param raw_data The full pre-parsed YAML data (all sections)
 #' @param section The target section name
 #' @param inherit Explicit inherit directive (NULL for auto-detect, 0 to disable)
-#' @param type "local" or "template" (passed to .read_yaml_config)
-#' @param resolved_path Path to the YAML file (for .read_yaml_config)
+#' @param type "local" or "template" (for source_label in error messages)
 #' @param template_types Pre-extracted template types
 #' @param package Package name
 #' @param verbose Logical
 #' @return Config list with inheritance applied
 #' @keywords internal
 .apply_section_inheritance <- function(config, raw_data, section, inherit,
-                                      type, resolved_path, template_types,
+                                      type, template_types,
                                       package, verbose = FALSE) {
   # Explicit disable
   if (!is.null(inherit) && (inherit == 0 || inherit == "0")) {
@@ -78,14 +77,12 @@ NULL
     # Merge from deepest ancestor to closest parent
     base_config <- list()
     for (ancestor in rev(chain)) {
-      ancestor_config <- .read_yaml_config(
-        package = package,
-        type = type,
-        section = ancestor,
-        resolved_path = resolved_path,
-        verbose = FALSE,
+      ancestor_config <- .process_config_section(
         config_data = raw_data,
-        template_types = template_types
+        section = ancestor,
+        template_types = template_types,
+        package = package,
+        source_label = type
       )
       base_config <- .apply_inheritance(ancestor_config, base_config)
     }

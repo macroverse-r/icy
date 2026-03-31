@@ -7,6 +7,7 @@
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()`.
 #' @param section Character string for the section in the YAML file (default: "default").
+#'   Use NULL to return the full parsed YAML data (all sections and metadata).
 #' @param fn_tmpl Character string with the name or path to the template YAML file.
 #'   If NULL, uses default template for the package.
 #' @param case_format Character string indicating the case format to use for
@@ -92,16 +93,18 @@ get_template <- function(package = get_package_name(),
     }
   }
 
-  # Read template config (using pre-parsed data)
-  config <- .read_yaml_config(
-    package = package,
-    type = "template",
-    section = section,
-    resolved_path = resolved_template_path,
-    case_format = case_format,
-    verbose = verbose,
+  # Return full parsed data when section is NULL
+  if (is.null(section)) {
+    return(raw_template_data)
+  }
+
+  # Extract and process the requested section
+  config <- .process_config_section(
     config_data = raw_template_data,
-    template_types = template_types
+    section = section,
+    template_types = template_types,
+    package = package,
+    source_label = "template"
   )
 
   # Apply inheritance
@@ -111,7 +114,6 @@ get_template <- function(package = get_package_name(),
     section = section,
     inherit = inherit,
     type = "template",
-    resolved_path = resolved_template_path,
     template_types = template_types,
     package = package,
     verbose = verbose

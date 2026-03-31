@@ -89,13 +89,14 @@ setup <- function(package = get_package_name(), section = "default",
   }
 
   # Get template variables
-  template_config <- .read_yaml_config(
+  template_config <- get_template(
     package = package,
-    type = "template",
     section = section,
-    resolved_path = fn_tmpl
+    fn_tmpl = fn_tmpl,
+    validate = FALSE,
+    confirm_fuzzy = FALSE
   )
-  if (is.null(template_config) || length(template_config) == 0) {
+  if (length(template_config) == 0) {
     .icy_stop(paste0("No template configuration found for package '", package, "'"))
   }
   

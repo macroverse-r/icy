@@ -10,7 +10,6 @@
   section,
   inherit,
   type,
-  resolved_path,
   template_types,
   package,
   verbose = FALSE
@@ -25,9 +24,7 @@
 
 \item{inherit}{Explicit inherit directive (NULL for auto-detect, 0 to disable)}
 
-\item{type}{"local" or "template" (passed to .read_yaml_config)}
-
-\item{resolved_path}{Path to the YAML file (for .read_yaml_config)}
+\item{type}{"local" or "template" (for source_label in error messages)}
 
 \item{template_types}{Pre-extracted template types}
 

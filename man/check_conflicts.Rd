@@ -23,7 +23,7 @@ check_conflicts(
 }}
 
 \item{config}{Named list of local config values. If NULL, reads from local config
-file via .read_yaml_config(). Used internally by get_config() to avoid re-reading.}
+file. Used internally by get_config() to avoid re-reading.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
