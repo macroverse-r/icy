@@ -7,126 +7,37 @@
 #' @keywords internal
 NULL
 
-#' Core File Finding Logic
+#' Resolve Name to Template Filename
 #'
-#' Resolves template and config file paths from package + name.
-#' The name parameter supports three forms:
-#' - Keyword (e.g., "gams_switches") -> generates deterministic filenames
-#' - Full filename (e.g., "msgm_gams_switches_config.yml") -> uses directly + swap
-#' - Full path (e.g., "/path/to/file.yml") -> uses directly + swap
+#' Converts the name parameter into a template filename string.
+#' Handles three input forms: full path, full filename, or keyword.
 #'
 #' @param package Character string with package name
 #' @param name Optional character string: keyword, filename, or path
-#' @param fuzzy Logical. If TRUE, allows fuzzy matching
-#' @param verbose Logical. If TRUE, shows detailed messages
-#' @return List with:
-#'   - fn_tmpl: Path to template file or NULL
-#'   - fn_config: Path to config file or NULL
-#'   - tmpl_fuzzy: TRUE if template was fuzzy matched
-#'   - config_fuzzy: TRUE if config was fuzzy matched
+#' @return Character string with template filename (basename only)
 #' @keywords internal
-._find_files_core <- function(package,
-                              name = NULL,
-                              fuzzy = TRUE,
-                              verbose = FALSE) {
+.resolve_template_name <- function(package, name) {
+  if (is.null(name)) return(.template_filename(package))
 
-  result <- list(
-    fn_tmpl = NULL,
-    fn_config = NULL,
-    tmpl_fuzzy = FALSE,
-    config_fuzzy = FALSE
-  )
-
-  # Resolve name into config and template filenames
-  resolved <- ._resolve_name_to_filenames(package, name)
-  config_filename <- resolved$config
-  tmpl_filename <- resolved$template
-
-  # Search for template
-  tmpl_search <- ._search_file(
-    filename = tmpl_filename,
-    package = package,
-    type = "template",
-    fuzzy = fuzzy,
-    verbose = verbose
-  )
-
-  if (!is.null(tmpl_search$path)) {
-    result$fn_tmpl <- tmpl_search$path
-    result$tmpl_fuzzy <- tmpl_search$fuzzy
-  }
-
-  # Search for config
-  config_search <- ._search_file(
-    filename = config_filename,
-    package = package,
-    type = "config",
-    fuzzy = fuzzy,
-    verbose = verbose
-  )
-
-  if (!is.null(config_search$path)) {
-    result$fn_config <- config_search$path
-    result$config_fuzzy <- config_search$fuzzy
-  }
-
-  return(result)
-}
-
-#' Resolve Name to Config and Template Filenames
-#'
-#' Interprets the name parameter and returns both config and template filenames.
-#' All config/template files must follow the naming convention:
-#' \{package\}_..._config.yml and \{package\}_..._template.yml.
-#'
-#' Detection logic:
-#' - Case 1: Full path (contains / or \\) -> use directly + swap
-#' - Case 2: Full filename (starts with \{package\}_) -> use directly + swap
-#' - Case 3: Keyword (e.g., "gams_switches") -> deterministic from package + name
-#'
-#' @param package Character string with package name
-#' @param name Optional character string: keyword, filename, or path
-#' @return List with config and template filename strings
-#' @keywords internal
-._resolve_name_to_filenames <- function(package, name) {
-  if (is.null(name)) {
-    return(list(
-      config = .config_filename(package),
-      template = .template_filename(package)
-    ))
-  }
-
-  # Normalize: add .yml if no extension
-  name <- if (grepl("\\.(ya?ml)$", name, ignore.case = TRUE)) name else paste0(name, ".yml")
-
-  # Case 1: full path (contains path separators)
+  # Full path: extract basename
   if (grepl("[/\\\\]", name)) {
-    swapped <- .swap_filename(basename(name))
-    base <- tools::file_path_sans_ext(basename(name))
-    if (grepl("_template$", base)) {
-      return(list(config = file.path(dirname(name), swapped), template = name))
-    } else {
-      return(list(config = name, template = file.path(dirname(name), swapped)))
-    }
+    name <- basename(name)
   }
 
-  # Case 2: full filename (starts with {package}_ AND ends with _config/_template)
+  # Ensure .yml extension
+  if (!grepl("\\.(ya?ml)$", name, ignore.case = TRUE)) {
+    name <- paste0(name, ".yml")
+  }
+
+  # Full filename (starts with {package}_ and has _config or _template suffix)
   base <- tools::file_path_sans_ext(name)
-  if (startsWith(name, paste0(package, "_")) && grepl("_(config|template)$", base)) {
-    swapped <- .swap_filename(name)
-    if (grepl("_template$", base)) {
-      return(list(config = swapped, template = name))
-    } else {
-      return(list(config = name, template = swapped))
-    }
+  if (startsWith(base, paste0(package, "_")) && grepl("_(config|template)$", base)) {
+    if (grepl("_config$", base)) return(.swap_filename(name))
+    return(name)
   }
 
-  # Case 3: keyword -- strip the .yml we added above
-  keyword <- tools::file_path_sans_ext(name)
-  return(list(
-    config = .config_filename(package, keyword),
-    template = .template_filename(package, keyword)
-  ))
+  # Keyword: generate template filename
+  .template_filename(package, tools::file_path_sans_ext(name))
 }
 
 #' Search for a Single File
@@ -203,7 +114,7 @@ NULL
 
   # For template searches, exclude default_config subdirectories
   if (type == "template") {
-    yaml_files <- yaml_files[!grepl("/(default_config|local_config)/", yaml_files)]
+    yaml_files <- yaml_files[!grepl("/default_config/", yaml_files)]
   }
 
   # Check for exact basename match (file may be in a subdirectory)

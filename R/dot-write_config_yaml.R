@@ -15,6 +15,8 @@
 #'   When NULL/"", var_list should contain the complete YAML structure.
 #' @param template_file Character string with path to template file for validation.
 #'   If NULL and package is provided, will look for the package's template.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   Forwarded to .find_config_files() when resolving template for validation.
 #' @param create_if_missing Logical; if TRUE (default), creates parent directories
 #'   if they don't exist. The file itself is always created/updated.
 #' @param custom_header Character vector of header lines to add to the file.
@@ -44,6 +46,7 @@
                               package = get_package_name(verbose = FALSE),
                               section = "default",
                               template_file = NULL,
+                              name = NULL,
                               create_if_missing = TRUE,
                               custom_header = NULL,
                               append_sections = TRUE,
@@ -65,7 +68,7 @@
     if (!is.null(template_file)) {
       # Specific template file provided - resolve bare filenames
       if (!file.exists(template_file)) {
-        resolved <- .find_config_files(package = package, verbose = FALSE)
+        resolved <- .find_config_files(package = package, name = name, verbose = FALSE)
         if (!is.null(resolved$fn_tmpl)) template_file <- resolved$fn_tmpl
       }
       valid_vars <- tryCatch({

@@ -10,6 +10,7 @@
   package = get_package_name(verbose = FALSE),
   section = "default",
   template_file = NULL,
+  name = NULL,
   create_if_missing = TRUE,
   custom_header = NULL,
   append_sections = TRUE,
@@ -33,6 +34,9 @@ When NULL/"", var_list should contain the complete YAML structure.}
 
 \item{template_file}{Character string with path to template file for validation.
 If NULL and package is provided, will look for the package's template.}
+
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+Forwarded to .find_config_files() when resolving template for validation.}
 
 \item{create_if_missing}{Logical; if TRUE (default), creates parent directories
 if they don't exist. The file itself is always created/updated.}

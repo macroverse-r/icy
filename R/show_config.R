@@ -53,7 +53,7 @@ show_config <- function(package = get_package_name(),
   resolved_template_path <- resolved_files$fn_tmpl
 
   # Read config (single source of truth)
-  local_config <- tryCatch(
+  config_data <- tryCatch(
     {
       get_config(package = package,
                  section = section,
@@ -97,9 +97,9 @@ show_config <- function(package = get_package_name(),
   # Determine variable names to display
   if (is.null(var_names)) {
     if (show_template && !is.null(template_raw)) {
-      var_names <- unique(c(names(template_raw), names(local_config)))
+      var_names <- unique(c(names(template_raw), names(config_data)))
     } else {
-      var_names <- names(local_config)
+      var_names <- names(config_data)
     }
   }
 
@@ -110,12 +110,12 @@ show_config <- function(package = get_package_name(),
 
   # Display results
   for (var in var_names) {
-    local_val <- local_config[[var]]
+    config_val <- config_data[[var]]
 
     colored_var <- .apply_color(var, "cyan")
 
-    if (!is.null(local_val)) {
-      colored_value <- .format_value_with_color(var, as.character(local_val))
+    if (!is.null(config_val)) {
+      colored_value <- .format_value_with_color(var, as.character(config_val))
     } else {
       colored_value <- .apply_color("(not set)", "grey")
     }
@@ -142,7 +142,7 @@ show_config <- function(package = get_package_name(),
 
         raw_str <- .format_raw_default(raw_default)
         resolved_default <- .resolve_template_path_for_display(
-          raw_default, local_config, package
+          raw_default, config_data, package
         )
 
         if (is.null(resolved_default) || raw_str == resolved_default) {
@@ -161,12 +161,12 @@ show_config <- function(package = get_package_name(),
         # --- Non-path variable: inline display ---
         raw_str <- .format_raw_default(raw_default)
 
-        if (!is.null(local_val)) {
+        if (!is.null(config_val)) {
           if (is.null(raw_default)) {
-            # Default is NULL/~, local has a value
+            # Default is NULL/~, config has a value
             match_symbol <- .apply_color(" \u2717", "red")
           } else {
-            matches <- (as.character(local_val) == as.character(raw_default))
+            matches <- (as.character(config_val) == as.character(raw_default))
             match_symbol <- if (matches) {
               .apply_color(" \u2713", "green")
             } else {
@@ -184,7 +184,7 @@ show_config <- function(package = get_package_name(),
             .apply_color(" \u2713", "green")
           )
         } else {
-          # Local not set, template has value
+          # Config not set, template has value
           default_info <- .apply_color(paste0(" [tmpl: ", raw_str, "]"), "gray")
         }
 
@@ -197,7 +197,7 @@ show_config <- function(package = get_package_name(),
   status_df <- data.frame(
     variable = var_names,
     value = vapply(var_names, function(v) {
-      val <- local_config[[v]]
+      val <- config_data[[v]]
       if (is.null(val)) "(not set)" else as.character(val)
     }, character(1)),
     stringsAsFactors = FALSE
@@ -215,11 +215,11 @@ show_config <- function(package = get_package_name(),
     }, character(1))
 
     status_df$matches_template <- vapply(var_names, function(v) {
-      local_val <- local_config[[v]]
+      config_val <- config_data[[v]]
       raw_val <- template_raw[[v]]
-      if (is.null(local_val) && is.null(raw_val)) return(TRUE)
-      if (is.null(local_val) || is.null(raw_val)) return(FALSE)
-      as.character(local_val) == as.character(raw_val)
+      if (is.null(config_val) && is.null(raw_val)) return(TRUE)
+      if (is.null(config_val) || is.null(raw_val)) return(FALSE)
+      as.character(config_val) == as.character(raw_val)
     }, logical(1))
   }
 
@@ -242,7 +242,7 @@ show_config <- function(package = get_package_name(),
 #' then resolves keywords for the display arrow.
 #'
 #' @keywords internal
-.resolve_template_path_for_display <- function(raw_value, local_config, package) {
+.resolve_template_path_for_display <- function(raw_value, config_data, package) {
   if (is.null(raw_value) || !is.character(raw_value)) return(NULL)
 
   resolved <- raw_value
@@ -264,15 +264,15 @@ show_config <- function(package = get_package_name(),
       ref_var <- substr(resolved, capture_starts[i],
                        capture_starts[i] + capture_lengths[i] - 1)
 
-      if (ref_var %in% names(local_config)) {
-        resolved <- sub(full_match, as.character(local_config[[ref_var]]),
+      if (ref_var %in% names(config_data)) {
+        resolved <- sub(full_match, as.character(config_data[[ref_var]]),
                        resolved, fixed = TRUE)
       }
     }
   }
 
   # Resolve keywords (getwd, tempdir, home, etc.)
-  resolved <- .resolve_special_path(resolved, package, local_config)
+  resolved <- .resolve_special_path(resolved, package, config_data)
 
   return(resolved)
 }

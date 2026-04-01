@@ -24,7 +24,7 @@
 #'
 #' @return Invisibly returns a list with:
 #'   \describe{
-#'     \item{conflicts}{Named list of detected conflicts (var_name -> list(local, session, from_renviron))}
+#'     \item{conflicts}{Named list of detected conflicts (var_name -> list(config, session, from_renviron))}
 #'     \item{resolved}{Logical indicating whether conflicts were resolved}
 #'   }
 #'
@@ -72,20 +72,20 @@ check_conflicts <- function(package = get_package_name(),
   for (var_name in names(config)) {
     session_value <- Sys.getenv(var_name, unset = NA)
     if (!is.na(session_value)) {
-      local_value <- config[[var_name]]
-      if (is.null(local_value)) {
+      config_value <- config[[var_name]]
+      if (is.null(config_value)) {
         # Session has a value but config is NULL/~ — conflict
         conflicts[[var_name]] <- list(
-          local = "(not set)",
+          config = "(not set)",
           session = session_value,
           from_renviron = FALSE
         )
       } else {
-        local_value <- as.character(local_value)
+        config_value <- as.character(config_value)
         # Case-insensitive comparison for booleans (e.g., "TRUE" vs "true")
-        if (tolower(session_value) != tolower(local_value)) {
+        if (tolower(session_value) != tolower(config_value)) {
           conflicts[[var_name]] <- list(
-            local = local_value,
+            config = config_value,
             session = session_value,
             from_renviron = FALSE
           )
@@ -148,7 +148,7 @@ check_conflicts <- function(package = get_package_name(),
     type_check <- .validate_variable_type(conflict$session, var_type, var_name)
 
     .icy_title(paste0("Conflict: ", var_name))
-    .icy_text(paste0("  Config value: ", .apply_color(conflict$local, color = "green")))
+    .icy_text(paste0("  Config value: ", .apply_color(conflict$config, color = "green")))
 
     # Show session value with inline type warning if invalid
     session_display <- .apply_color(conflict$session, color = "yellow")
@@ -163,7 +163,7 @@ check_conflicts <- function(package = get_package_name(),
 
     if (!type_check$valid) {
       options <- c(
-        paste0("Keep config value (", conflict$local, ")"),
+        paste0("Keep config value (", conflict$config, ")"),
         "Skip (leave conflict unresolved)"
       )
       .icy_text(.apply_color("Select which value to keep:", color = "brown"))
@@ -172,7 +172,7 @@ check_conflicts <- function(package = get_package_name(),
                        .apply_color("(1-2, or press Enter to keep config)", color = "gray")))
     } else {
       options <- c(
-        paste0("Keep config value (", conflict$local, ")"),
+        paste0("Keep config value (", conflict$config, ")"),
         paste0("Use session value (", conflict$session, ") and update config"),
         "Skip (leave conflict unresolved)"
       )
@@ -209,7 +209,7 @@ check_conflicts <- function(package = get_package_name(),
       .icy_success(paste0("Updated config: ", var_name, " = ", conflict$session))
     } else {
       # Default: keep config (choice "1" or Enter)
-      .icy_success(paste0("Keeping config value: ", var_name, " = ", conflict$local))
+      .icy_success(paste0("Keeping config value: ", var_name, " = ", conflict$config))
     }
 
     # Clean the session variable

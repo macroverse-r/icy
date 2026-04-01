@@ -27,7 +27,9 @@
 List with fn_tmpl and fn_config (paths or NULL).
 }
 \description{
-Internal function for finding paired configuration files (template and config)
-using deterministic name-based resolution with optional fuzzy matching.
+Template-first file resolution: finds the template first, then derives
+the config filename via .swap_filename(). Config is checked by direct
+file.exists() in the config directory. If no direct match, a fuzzy
+search runs for the config file.
 }
 \keyword{internal}

@@ -236,10 +236,10 @@ validate_config_file <- function(fn_tmpl = NULL,
     }
     
     if (!is.null(template_data)) {
-      local_result <- .validate_local_specific(config_data, template_data, verbose)
-      result$valid <- result$valid && local_result$valid
-      result$errors <- c(result$errors, local_result$errors)
-      result$warnings <- c(result$warnings, local_result$warnings)
+      config_result <- .validate_config_specific(config_data, template_data, verbose)
+      result$valid <- result$valid && config_result$valid
+      result$errors <- c(result$errors, config_result$errors)
+      result$warnings <- c(result$warnings, config_result$warnings)
     }
   }
   
@@ -679,10 +679,10 @@ validate_config_file <- function(fn_tmpl = NULL,
 }
 
 
-#' Validate Local-Specific Requirements
+#' Validate Config-Specific Requirements
 #' 
 #' @keywords internal
-.validate_local_specific <- function(config_data, template_data, verbose) {
+.validate_config_specific <- function(config_data, template_data, verbose) {
   result <- list(
     valid = TRUE,
     errors = character(),

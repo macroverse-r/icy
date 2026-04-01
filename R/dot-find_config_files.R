@@ -1,7 +1,9 @@
 #' Find Configuration File Pairs (Internal)
 #'
-#' Internal function for finding paired configuration files (template and config)
-#' using deterministic name-based resolution with optional fuzzy matching.
+#' Template-first file resolution: finds the template first, then derives
+#' the config filename via .swap_filename(). Config is checked by direct
+#' file.exists() in the config directory. If no direct match, a fuzzy
+#' search runs for the config file.
 #'
 #' @param package Character string with package name.
 #' @param name Optional character string for named configs (e.g., "gams_switches").
@@ -16,44 +18,40 @@
                                fuzzy = TRUE,
                                confirm_fuzzy = FALSE,
                                verbose = FALSE) {
-  # Step 1: Core file searching (non-interactive)
-  results <- ._find_files_core(
-    package = package,
-    name = name,
-    fuzzy = fuzzy,
-    verbose = verbose
+
+  # Accept a search result, optionally confirm fuzzy matches
+  accept <- function(search, file_type) {
+    if (is.null(search$path)) return(NULL)
+    if (confirm_fuzzy && search$fuzzy &&
+        !.confirm_fuzzy_match(paste0(file_type, " file"), search$path, file_type)) return(NULL)
+    search$path
+  }
+
+  # Step 1: Find template
+  tmpl_filename <- .resolve_template_name(package, name)
+  fn_tmpl <- accept(
+    ._search_file(tmpl_filename, package, type = "template", fuzzy = fuzzy, verbose = verbose),
+    "template"
   )
 
-  # Step 2: Handle fuzzy match confirmation if requested
-  if (confirm_fuzzy) {
-    if (results$tmpl_fuzzy && !is.null(results$fn_tmpl)) {
-      confirmed <- .confirm_fuzzy_match(
-        original_input = "template file",
-        fuzzy_match = results$fn_tmpl,
-        file_type = "template"
-      )
-      if (!confirmed) {
-        results$fn_tmpl <- NULL
-        results$tmpl_fuzzy <- FALSE
-      }
-    }
-
-    if (results$config_fuzzy && !is.null(results$fn_config)) {
-      confirmed <- .confirm_fuzzy_match(
-        original_input = "config file",
-        fuzzy_match = results$fn_config,
-        file_type = "config"
-      )
-      if (!confirmed) {
-        results$fn_config <- NULL
-        results$config_fuzzy <- FALSE
-      }
+  # Step 2: Derive config from template via swap (fast path, no fuzzy needed)
+  config_dir <- .get_config_dir(package, type = "config")
+  if (!is.null(fn_tmpl)) {
+    config_path <- file.path(config_dir, .swap_filename(basename(fn_tmpl)))
+    if (file.exists(config_path)) {
+      return(list(fn_tmpl = fn_tmpl, fn_config = normalizePath(config_path, winslash = "/")))
     }
   }
 
-  # Step 3: Return consistent structure
-  return(list(
-    fn_tmpl = results$fn_tmpl,
-    fn_config = results$fn_config
-  ))
+  # Step 3: Fuzzy search for config (template not found or config not at expected path)
+  config_name <- if (!is.null(fn_tmpl)) .swap_filename(basename(fn_tmpl)) else .swap_filename(tmpl_filename)
+  config_search <- ._search_file(
+    config_name, package, type = "config", fuzzy = fuzzy, verbose = verbose
+  )
+  fn_config <- accept(config_search, "config")
+  if (!is.null(fn_config) && config_search$fuzzy) {
+    .icy_warn("Config file name does not match template naming convention. Consider renaming.")
+  }
+
+  return(list(fn_tmpl = fn_tmpl, fn_config = fn_config))
 }

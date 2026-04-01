@@ -11,14 +11,15 @@
 
 ### Key Features
 
-- Single source of truth: Local config file is the only authoritative source for configuration values
-- Interactive configuration: User-friendly prompts with template integration for easy setup
-- Type-aware YAML writing: Automatic type conversion based on template specifications
-- Conflict detection: Detects and resolves conflicts when session environment variables shadow local config
-- Flexible file discovery: Support for different YAML file naming conventions (snake_case, camelCase, PascalCase, kebab-case)
-- Validation: Validate variable names against package templates
-- User-friendly utilities: Toggle debug/verbose modes, display configurations, and more
-- Smart file pairing: Intelligent auto-detection and fuzzy matching of template/local file pairs with user confirmation
+- Single source of truth: config file is the only authoritative source for configuration values
+- Interactive configuration: user-friendly prompts with template integration for easy setup
+- Type-aware YAML writing: automatic type conversion based on template specifications
+- Conflict detection: detects and resolves conflicts when session environment variables shadow config
+- Named configs: support multiple config files per package via the `name` parameter
+- Template-first file resolution: deterministic naming with fuzzy matching support
+- Validation: validate variable names and values against package templates
+- User-friendly utilities: toggle debug/verbose modes, display configurations, and more
+- Ultra-minimal dependencies: only yaml + tools (base R)
 
 ## Installation
 
@@ -39,36 +40,37 @@ devtools::install_github("macroverse-r/icy")
 ### Setup and Creation
 | Function | Description |
 |----------|-------------|
-| `create_local()` | Create local configuration file from template. Essential for `.onLoad()` - copies template to user's local config directory |
+| `create_config()` | Create config file from template. Essential for `.onLoad()` |
 | `create_template()` | Create a package template YAML file in `inst/` |
 | `update_template()` | Update an existing template with interactive builder |
 
 ### Configuration Reading
 | Function | Description |
 |----------|-------------|
-| `get_config()` | Return configuration as a named list. Reads from local config (default) or template (for inspection) |
+| `get_config()` | Return configuration as a named list from config file (single source of truth) |
+| `get_template()` | Return template configuration for inspection |
 | `get_package_name()` | Automatically detect calling package name using stack inspection |
 
 ### Configuration Writing
 | Function | Description |
 |----------|-------------|
-| `write_local()` | Write/update variables in local YAML configuration. Preserves structure, validates against template |
+| `write_config()` | Write/update variables in YAML configuration. Preserves structure, validates against template |
 | `qconfig()` | Interactive single-variable configuration. Template integration, type detection, path validation |
 | `setup()` | Interactive multi-variable setup wizard. Progress tracking, skip logic, batch operations |
 
 ### Conflict Resolution
 | Function | Description |
 |----------|-------------|
-| `check_conflicts()` | Detect and resolve conflicts between local config and session environment variables. Checks .Renviron for conflict origin |
+| `check_conflicts()` | Detect and resolve conflicts between config and session environment variables. Checks .Renviron for conflict origin |
 
 ### Utilities and Display
 | Function | Description |
 |----------|-------------|
-| `show_config()` | Display local config values with template-diff indicators showing where values differ from defaults |
+| `show_config()` | Display config values with template-diff indicators showing where values differ from defaults |
 | `validate()` | Validate variable names against package template |
 | `validate_config_file()` | Validate YAML file structure |
 | `toggle_debug()` / `toggle_verbose()` | Toggle package debug/verbose modes |
-| `edit_local()` | Open local config file in your preferred editor |
+| `edit_config()` | Open config file in your preferred editor |
 | `clean_dir_path()` | Path cleaning utility |
 
 ## Configuration System Overview
@@ -76,11 +78,11 @@ devtools::install_github("macroverse-r/icy")
 ### Architecture
 
 ```
-Template (inst/package_config_template.yml) [Blueprint - read-only]
+Template (inst/{package}_template.yml) [Blueprint - read-only]
     |
-    | (used to create initial local config via create_local())
+    | (used to create initial config via create_config())
     v
-Local Config (~/.local/share/R/package/) [SINGLE SOURCE OF TRUTH]
+Config (~/.config/R/{package}/{package}_config.yml) [SINGLE SOURCE OF TRUTH]
     |
     | get_config() reads from here
     | check_conflicts() ensures no ambiguity with session env
@@ -88,25 +90,39 @@ Local Config (~/.local/share/R/package/) [SINGLE SOURCE OF TRUTH]
 R Session (conflicts detected and resolved, not used as config source)
 ```
 
-The local config file is the only authoritative source for configuration values. Templates serve as blueprints for creating local configs and for validation. Session environment variables are not used as a configuration source -- if they conflict with local config values, `check_conflicts()` helps resolve the ambiguity.
+The config file is the only authoritative source for configuration values. Templates serve as blueprints for creating configs and for validation. Session environment variables are not used as a configuration source -- if they conflict with config values, `check_conflicts()` helps resolve the ambiguity.
+
+### File Naming Convention
+
+All files follow the deterministic pattern:
+
+```
+Template:  {package}_template.yml           (main)
+           {package}_{name}_template.yml    (named, e.g., {package}_gams_switches_template.yml)
+
+Config:    {package}_config.yml             (main)
+           {package}_{name}_config.yml      (named, e.g., {package}_gams_switches_config.yml)
+```
+
+The `name` parameter enables multiple config sets per package (e.g., "gams_switches").
 
 ### Workflow Summary
 
-1. Template Creation: Define all possible configuration variables in `inst/package_config_template.yml`
-2. Local Config: `create_local()` copies template values to the user's local config directory
-3. Reading: `get_config()` reads from the local config file
+1. Template Creation: Define all possible configuration variables in `inst/{package}_template.yml`
+2. Config Creation: `create_config()` copies template values to the user's config directory
+3. Reading: `get_config()` reads from the config file
 4. User Interface: Provide configuration functions using `qconfig()`, `setup()`, or custom wrappers
 
 <details>
-<summary><strong>Quick Start</strong></summary>
+<summary>Quick Start</summary>
 
 ```r
 # 1. Create your template (see Step 1 below for details)
-# inst/mypackage_config_template.yml
+# inst/mypackage_template.yml
 
 # 2. In your R/zzz.R:
 .onLoad <- function(libname, pkgname) {
-  icy::create_local()  # Creates user's local config from template
+  icy::create_config()  # Creates user's config from template
 }
 
 # 3. In your package functions - access config:
@@ -124,9 +140,9 @@ configure_mypackage <- function() {
 </details>
 
 <details>
-<summary><strong>Step 1: Create Your Package Template</strong></summary>
+<summary>Step 1: Create Your Package Template</summary>
 
-Define all possible configuration variables for your package. Create a template YAML file in your package's `inst/` directory (e.g., `inst/dummy_config_template.yml`):
+Define all possible configuration variables for your package. Create a template YAML file in your package's `inst/` directory (e.g., `inst/dummy_template.yml`):
 
 ```yaml
 # Template configuration for dummy package
@@ -160,16 +176,16 @@ The template serves as documentation for users AND validation for your package.
 </details>
 
 <details>
-<summary><strong>Step 2: Integrate With Your Package</strong></summary>
+<summary>Step 2: Integrate With Your Package</summary>
 
 ```r
 # In your R/zzz.R file
 .onLoad <- function(libname, pkgname) {
-  # Creates ~/.local/share/R/dummy/dummy_config_local.yml if it doesn't exist
-  icy::create_local()
+  # Creates ~/.config/R/dummy/dummy_config.yml if it doesn't exist
+  icy::create_config()
 }
 
-# In your package functions - read from local config
+# In your package functions - read from config
 get_my_api_key <- function() {
   config <- icy::get_config()
   return(config$DUMMY_API_KEY)
@@ -182,16 +198,16 @@ configure_package <- function() {
 }
 ```
 
-Local configs are always stored in the user's config directory (`~/.local/share/R/package/` on Linux, platform-appropriate directories on macOS/Windows via `tools::R_user_dir()`).
+Configs are always stored in the user's config directory (`~/.config/R/{package}/` on Linux, platform-appropriate directories on macOS/Windows via `tools::R_user_dir()`).
 
 </details>
 
 <details>
-<summary><strong>Step 3: Understanding What Happens for Users</strong></summary>
+<summary>Step 3: Understanding What Happens for Users</summary>
 
 #### First Time User Experience
 1. User installs and loads your package
-2. `icy::create_local()` copies template to their local config directory
+2. `icy::create_config()` copies template to their config directory
 3. User can now customize settings without affecting other users or projects
 
 #### Ongoing Usage
@@ -199,8 +215,8 @@ Local configs are always stored in the user's config directory (`~/.local/share/
 # User can see current settings (with template-diff indicators)
 icy::show_config(package = "dummy")
 
-# User can modify local settings (programmatic)
-icy::write_local(
+# User can modify settings (programmatic)
+icy::write_config(
   package = "dummy",
   var_list = list(DUMMY_API_KEY = "my-real-key")
 )
@@ -210,7 +226,7 @@ icy::qconfig("DUMMY_API_KEY", package = "dummy")    # Prompts with template opti
 icy::qconfig("DUMMY_VERBOSE", package = "dummy")    # Automatic TRUE/FALSE options
 
 # Open config file directly in editor
-icy::edit_local(package = "dummy")
+icy::edit_config(package = "dummy")
 ```
 
 </details>
@@ -220,7 +236,7 @@ icy::edit_local(package = "dummy")
 Click on any pattern below to expand and learn more about that use case:
 
 <details>
-<summary><strong>Pattern 1: "I want to see what's currently configured"</strong></summary>
+<summary>Pattern 1: "I want to see what's currently configured"</summary>
 
 Understanding your configuration state:
 
@@ -242,14 +258,14 @@ template_defaults <- get_template(package = "dummy")
 </details>
 
 <details>
-<summary><strong>Pattern 2: "My users need a smooth first-time setup experience"</strong></summary>
+<summary>Pattern 2: "My users need a smooth first-time setup experience"</summary>
 
 As a package developer, provide an optimal first-time user experience:
 
 ```r
 # Your package's .onLoad() (in R/zzz.R)
 .onLoad <- function(libname, pkgname) {
-  icy::create_local()  # Creates local config from template automatically
+  icy::create_config()  # Creates config from template automatically
 }
 
 # Provide a dedicated setup function for users
@@ -280,7 +296,7 @@ setup_essentials <- function() {
 </details>
 
 <details>
-<summary><strong>Pattern 3: "I need different settings for different environments"</strong></summary>
+<summary>Pattern 3: "I need different settings for different environments"</summary>
 
 Working with development, testing, and production:
 
@@ -291,8 +307,8 @@ dev_defaults <- get_template(
   section = "development"
 )
 
-# User overrides in local config
-write_local(
+# User overrides in config
+write_config(
   var_list = list(
     DUMMY_DB_HOST = "my-local-dev-db.internal",
     DUMMY_DEBUG = TRUE
@@ -300,14 +316,14 @@ write_local(
   package = "dummy"
 )
 
-# Read from a specific section of local config
+# Read from a specific section of config
 prod_config <- get_config(package = "dummy", section = "production")
 ```
 
 </details>
 
 <details>
-<summary><strong>Pattern 4: "I want to reset to template defaults"</strong></summary>
+<summary>Pattern 4: "I want to reset to template defaults"</summary>
 
 When you need to start over:
 
@@ -315,21 +331,21 @@ When you need to start over:
 # Get template defaults
 template_defaults <- get_template(package = "dummy")
 
-# Overwrite local config with template values
-write_local(var_list = template_defaults, package = "dummy")
+# Overwrite config with template values
+write_config(var_list = template_defaults, package = "dummy")
 ```
 
 </details>
 
 <details>
-<summary><strong>Pattern 5: "There are conflicting environment variables in my session"</strong></summary>
+<summary>Pattern 5: "There are conflicting environment variables in my session"</summary>
 
-When session environment variables (from .Renviron or `Sys.setenv()`) shadow your local config:
+When session environment variables (from .Renviron or `Sys.setenv()`) shadow your config:
 
 ```r
 # Detect and interactively resolve all conflicts
 check_conflicts(package = "dummy")
-# For each conflict, you choose: keep local config value or adopt session value
+# For each conflict, you choose: keep config value or adopt session value
 # Conflicting session variables are cleaned up
 # .Renviron entries can be removed if that's the source
 
@@ -346,7 +362,7 @@ config <- get_config(package = "dummy")
 </details>
 
 <details>
-<summary><strong>Pattern 6: "I'm debugging configuration issues"</strong></summary>
+<summary>Pattern 6: "I'm debugging configuration issues"</summary>
 
 When things aren't working as expected:
 
@@ -373,28 +389,30 @@ check_conflicts(package = "dummy")
 </details>
 
 <details>
-<summary><strong>Pattern 7: "I can't remember the exact config filename"</strong></summary>
+<summary>Pattern 7: "I have multiple config files per package"</summary>
 
-icy provides intelligent fuzzy matching when you're unsure of exact filenames:
+Use the `name` parameter to manage separate config sets:
 
 ```r
-# Partial filename matching
-icy::qconfig("API_KEY", fn_tmpl = "dummyRunTemplat", package = "dummy")
-# icy detects "dummyRunTemplate.yml" exists and asks:
-# "No exact match for 'dummyRunTemplat'. Found 'dummyRunTemplate.yml'. Use this instead?"
-# After confirmation, creates corresponding "dummyRunLocal.yml"
+# In your R/zzz.R -- create both main and named configs
+.onLoad <- function(libname, pkgname) {
+  icy::create_config()                           # Main config
+  icy::create_config(name = "gams_switches")     # Named config
+}
 
-# Works for both template and local files
-icy::setup(fn_local = "myConfigLocal", package = "dummy")
-# Finds "myConfigTemplate.yml" and asks for confirmation
+# Read named configs
+switches <- icy::get_config(name = "gams_switches")
+
+# The name parameter works with keywords, full filenames, or full paths
+icy::get_config(name = "gams_switches")                              # keyword
+icy::get_config(name = "mypackage_gams_switches_config.yml")         # full filename
+icy::get_config(name = "switch")                                     # fuzzy match
 ```
-
-This prevents frustrating "file not found" errors when working with multiple config files or complex naming patterns.
 
 </details>
 
 <details>
-<summary><strong>Pattern 8: "I want to expose clean configuration functions to my users"</strong></summary>
+<summary>Pattern 8: "I want to expose clean configuration functions to my users"</summary>
 
 As a package developer, provide user-friendly configuration interfaces:
 
@@ -404,7 +422,7 @@ set_api_key <- function(key = NULL) {
   if (is.null(key)) {
     icy::qconfig("MYPACKAGE_API_KEY")  # Interactive mode
   } else {
-    icy::write_local(list(MYPACKAGE_API_KEY = key))  # Programmatic mode
+    icy::write_config(list(MYPACKAGE_API_KEY = key))  # Programmatic mode
     message("API key configured successfully")
   }
 }
@@ -415,7 +433,7 @@ setup_mypackage <- function(interactive = TRUE) {
     message("Welcome to MyPackage configuration!")
     icy::setup()
   } else {
-    icy::create_local()
+    icy::create_config()
   }
 }
 
@@ -444,30 +462,16 @@ This pattern gives users simple, package-specific functions while leveraging icy
 ## Technical Reference
 
 <details>
-<summary><strong>File Naming Conventions</strong></summary>
+<summary>Sync Parameter in write_config()</summary>
 
-Using the `case_format` argument, several functions support multiple naming conventions for configuration files:
-
-- snake_case (default): `package_config_local.yml`
-- camelCase: `packageConfigLocal.yml`
-- PascalCase: `PackageConfigLocal.yml`
-- kebab-case: `package-config-local.yml`
-
-Alternatively, you can use custom names via `fn_local` and `fn_tmpl` parameters.
-
-</details>
-
-<details>
-<summary><strong>Sync Parameter in write_local()</strong></summary>
-
-`write_local()` supports an optional `sync` parameter as a convenience for writing through to the session environment. This does not make the session a configuration source -- it's purely for convenience when packages use `Sys.getenv()` internally.
+`write_config()` supports an optional `sync` parameter as a convenience for writing through to the session environment. This does not make the session a configuration source -- it's purely for convenience when packages use `Sys.getenv()` internally.
 
 ```r
-# Write to local config only (default)
-write_local(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy")
+# Write to config only (default)
+write_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy")
 
 # Also set in session for immediate effect
-write_local(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy", sync = "all")
+write_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy", sync = "all")
 ```
 
 Sync options:

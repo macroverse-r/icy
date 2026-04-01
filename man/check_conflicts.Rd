@@ -32,7 +32,7 @@ file. Used internally by get_config() to avoid re-reading.}
 \value{
 Invisibly returns a list with:
 \describe{
-\item{conflicts}{Named list of detected conflicts (var_name -> list(local, session, from_renviron))}
+\item{conflicts}{Named list of detected conflicts (var_name -> list(config, session, from_renviron))}
 \item{resolved}{Logical indicating whether conflicts were resolved}
 }
 }
