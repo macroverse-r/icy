@@ -14,18 +14,18 @@
 \arguments{
 \item{package}{Character string with package name}
 
-\item{type}{Character string specifying header type ("template", "local", "none",
+\item{type}{Character string specifying header type ("template", "config", "none",
 NULL, or custom character vector)}
 
 \item{additional_lines}{Optional character vector of additional header lines}
 
-\item{template_source}{Character string with path to template file for local configs}
+\item{template_source}{Character string with path to template file for config files}
 }
 \value{
 Character vector of header lines, or character(0) for no header
 }
 \description{
 Unified function for generating headers for configuration files.
-Supports template, local, and custom header types.
+Supports template, config, and custom header types.
 }
 \keyword{internal}

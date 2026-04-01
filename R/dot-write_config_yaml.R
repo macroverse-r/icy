@@ -1,13 +1,13 @@
 #' Write Configuration to YAML File
 #'
 #' Package-aware YAML configuration writer for the icy ecosystem that can write
-#' to both local configuration files and template files with support for custom
+#' to both configuration files and template files with support for custom
 #' headers, NULL handling, and validation.
 #'
 #' @param var_list Named list of variables to write. Names should be the
 #'   variable names and values should be the values to set.
 #' @param file_path Character string with the target file path (absolute or relative).
-#'   For local configs, use find_local() to get this path.
+#'   For configs, use .find_config_files() to resolve this path.
 #' @param package Character string with the package name. Defaults to `get_package_name()`
 #'   to detect the calling package. Used for validation against templates.
 #' @param section Character string for the section in the YAML file (default: "default").
@@ -22,7 +22,7 @@
 #' @param append_sections Logical; if FALSE (default for templates), replaces the
 #'   entire section. If TRUE (default for configs), merges with existing variables.
 #' @param strict_template Logical; if TRUE, removes any variables not defined in the
-#'   template (used for local configs). If FALSE (default), keeps all variables.
+#'   template (used for configs). If FALSE (default), keeps all variables.
 #' @param verbose Logical. If TRUE, displays informative messages. Defaults to FALSE.
 #'
 #' @return Invisibly returns the file path on success.
@@ -30,7 +30,7 @@
 #' @details
 #' This function is the core YAML writer for the icy ecosystem, designed to handle:
 #' \itemize{
-#'   \item Local configuration files (via write_local)
+#'   \item Configuration files (via write_config)
 #'   \item Template files (via create_template/update_template)
 #'   \item Any package-related YAML configuration
 #' }
@@ -65,7 +65,7 @@
     if (!is.null(template_file)) {
       # Specific template file provided - resolve bare filenames
       if (!file.exists(template_file)) {
-        resolved <- .find_config_files(package = package, fn_tmpl = template_file, verbose = FALSE)
+        resolved <- .find_config_files(package = package, verbose = FALSE)
         if (!is.null(resolved$fn_tmpl)) template_file <- resolved$fn_tmpl
       }
       valid_vars <- tryCatch({
@@ -146,8 +146,7 @@
     if (section %in% names(config_data)) {
       current_vars <- names(config_data[[section]])
       if (strict_template) {
-        # For local configs: only keep variables that are in the template
-        # This matches write_local behavior (line 157)
+        # Only keep variables that are in the template
         ordered_vars <- intersect(valid_vars, current_vars)
       } else {
         # For templates and other uses: keep all vars but order template vars first

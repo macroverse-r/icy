@@ -4,12 +4,12 @@
 \alias{.get_config_dir}
 \title{Get Configuration Directory (Internal)}
 \usage{
-.get_config_dir(package, type = "local")
+.get_config_dir(package, type = "config")
 }
 \arguments{
 \item{package}{Character string with the package name.}
 
-\item{type}{Character string: "local" (user config dir) or "template" (package template dir).}
+\item{type}{Character string: "config" (user config dir) or "template" (package template dir).}
 }
 \value{
 Character string with the absolute path to the configuration directory.

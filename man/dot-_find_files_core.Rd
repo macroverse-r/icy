@@ -4,23 +4,12 @@
 \alias{._find_files_core}
 \title{Core File Finding Logic}
 \usage{
-._find_files_core(
-  fn_tmpl = NULL,
-  fn_local = NULL,
-  package,
-  case_format = "snake_case",
-  fuzzy = TRUE,
-  verbose = FALSE
-)
+._find_files_core(package, name = NULL, fuzzy = TRUE, verbose = FALSE)
 }
 \arguments{
-\item{fn_tmpl}{Character string with template filename to search for (or NULL)}
-
-\item{fn_local}{Character string with local filename to search for (or NULL)}
-
 \item{package}{Character string with package name}
 
-\item{case_format}{Character string for default filename generation}
+\item{name}{Optional character string: keyword, filename, or path}
 
 \item{fuzzy}{Logical. If TRUE, allows fuzzy matching}
 
@@ -30,13 +19,18 @@
 List with:
 \itemize{
 \item fn_tmpl: Path to template file or NULL
-\item fn_local: Path to local file or NULL
+\item fn_config: Path to config file or NULL
 \item tmpl_fuzzy: TRUE if template was fuzzy matched
-\item local_fuzzy: TRUE if local was fuzzy matched
+\item config_fuzzy: TRUE if config was fuzzy matched
 }
 }
 \description{
-Searches for template and/or local configuration files and ensures pairing.
-Always returns both files or NULL for each.
+Resolves template and config file paths from package + name.
+The name parameter supports three forms:
+\itemize{
+\item Keyword (e.g., "gams_switches") -> generates deterministic filenames
+\item Full filename (e.g., "msgm_gams_switches_config.yml") -> uses directly + swap
+\item Full path (e.g., "/path/to/file.yml") -> uses directly + swap
+}
 }
 \keyword{internal}

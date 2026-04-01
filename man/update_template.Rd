@@ -14,9 +14,8 @@ update_template(
   note = NULL,
   options = NULL,
   sections = "default",
-  fn_tmpl = NULL,
+  name = NULL,
   backup = TRUE,
-  case_format = "snake_case",
   verbose = TRUE,
   interactive = FALSE,
   template_data = NULL
@@ -48,13 +47,10 @@ Required for "add" action. Can be character vector for batch operations.}
 Use "all" to modify all sections, "default" for default section only,
 or specific section names. Default: c("default").}
 
-\item{fn_tmpl}{Character string with path to the template file. If NULL (default),
-searches for the standard template file for the package.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main template file (\{package\}_template.yml).}
 
 \item{backup}{Logical. If TRUE (default), creates a backup file before modifications.}
-
-\item{case_format}{Character string for template file search if fn_tmpl is NULL.
-Options: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
 
 \item{verbose}{Logical. If TRUE (default), displays progress and confirmation messages.}
 

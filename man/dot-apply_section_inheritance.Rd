@@ -24,7 +24,7 @@
 
 \item{inherit}{Explicit inherit directive (NULL for auto-detect, 0 to disable)}
 
-\item{type}{"local" or "template" (for source_label in error messages)}
+\item{type}{"config" or "template" (for source_label in error messages)}
 
 \item{template_types}{Pre-extracted template types}
 

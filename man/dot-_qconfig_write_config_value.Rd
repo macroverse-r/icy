@@ -11,8 +11,7 @@
   section,
   verbose,
   type = NULL,
-  fn_tmpl = NULL,
-  fn_local = NULL
+  name = NULL
 )
 }
 \description{

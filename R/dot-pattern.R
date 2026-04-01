@@ -1,75 +1,47 @@
 
-#' Generate YAML File Search Patterns Based on Case Format
+#' Swap Config/Template Filename
 #'
-#' Creates filename patterns for YAML configuration files based on package name,
-#' case format, and file type. This function standardizes filename generation
-#' across different naming conventions to support flexible file discovery.
+#' Converts a config filename to its template counterpart or vice versa.
 #'
-#' The function supports four case formats:
-#' - `snake_case`: "package_config_local.yml" (default)
-#' - `camelCase`: "packageConfigLocal.yml" 
-#' - `PascalCase`: "PackageConfigLocal.yml"
-#' - `kebab-case`: "package-config-local.yml"
-#'
-#' Pattern structure: `{package}{prefix}config{separator}{file}{extension}`
-#' where prefix, separator, and transform rules depend on the case format.
-#'
-#' @param package Character string with the package name used as filename prefix. Defaults to `get_package_name()` to detect the calling package.
-#' @param case_format Character string specifying the case format. Options are:
-#'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
-#' @param file Character string specifying the file type suffix (e.g., "local", "template").
-#'   Defaults to "local".
-#' @param yml Logical. If TRUE, uses exact ".yml" extension. If FALSE (default),
-#'   uses regex pattern "\\.ya?ml$" to match both .yml and .yaml extensions.
-#'
-#' @return Character string containing the generated filename pattern.
-#'
+#' @param filename Character string with a config or template filename.
+#' @return Character string with the swapped filename.
 #' @keywords internal
-.pattern <- function(package = get_package_name(),
-                     case_format = "snake_case",
-                     file = "local",
-                     yml = FALSE) {
-  
-  # Define case format rules
-  case_rules <- list(
-    "snake_case" = list(prefix = "_", 
-                        separator = "_", 
-                        transform = tolower),
+.swap_filename <- function(filename) {
+  base <- tools::file_path_sans_ext(filename)
+  ext <- tools::file_ext(filename)
+  if (ext == "") ext <- "yml"
 
-    "camelCase" = list(prefix = "", 
-                       separator = "", 
-                       transform = function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))),
-
-    "PascalCase" = list(prefix = "", 
-                        separator = "", 
-                        transform = function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))),
-
-    "kebab-case" = list(prefix = "-", 
-                        separator = "-", 
-                        transform = tolower)
-  )
-  
-  # Get the appropriate rule or default to snake_case
-  rule <- if (is.null(case_rules[[case_format]])) case_rules[["snake_case"]] else case_rules[[case_format]]
-  
-  # Build the pattern
-  config_part <- rule$transform("config")
-  file_part_transformed <- rule$transform(file)
-  
-  if (yml) {
-    extension <- ".yml"
+  if (grepl("_config$", base)) {
+    paste0(sub("_config$", "_template", base), ".", ext)
+  } else if (grepl("_template$", base)) {
+    paste0(sub("_template$", "_config", base), ".", ext)
   } else {
-    extension <- "\\.ya?ml$"
+    filename
   }
+}
 
-  pattern <- paste0(
-    package,
-    rule$prefix,
-    config_part,
-    rule$separator,
-    file_part_transformed,
-    extension
-  )
-  
-  return(pattern)
+#' Generate Config Filename
+#'
+#' Generates the deterministic config filename for a package.
+#'
+#' @param package Character string with the package name.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#' @return Character string with the config filename (e.g., "mypackage_config.yml").
+#' @keywords internal
+.config_filename <- function(package, name = NULL) {
+  if (is.null(name)) paste0(package, "_config.yml")
+  else paste0(package, "_", name, "_config.yml")
+}
+
+#' Generate Template Filename
+#'
+#' Generates the deterministic template filename for a package.
+#'
+#' @param package Character string with the package name.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#' @return Character string with the template filename (e.g., "mypackage_template.yml").
+#' @keywords internal
+.template_filename <- function(package, name = NULL) {
+  if (is.null(name)) paste0(package, "_template.yml")
+  else paste0(package, "_", name, "_template.yml")
 }

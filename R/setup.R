@@ -17,12 +17,8 @@
 #'   If scalar, same note for all. If vector, must match length of variables.
 #' @param arg_only Logical scalar or vector. If TRUE, only uses provided options and ignores template options.
 #'   If scalar, applies to all. If vector, must match length of variables.
-#' @param fn_tmpl Character string with the name or path to a custom YAML template file.
-#'   If NULL (default), uses the standard template file for the package. Must be specified
-#'   together with fn_local when using custom template files.
-#' @param fn_local Character string with the name or path to a custom local YAML config file.
-#'   If NULL (default), uses the standard local config file for the package. Must be specified
-#'   together with fn_tmpl when using custom configuration files.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), uses the main config file (\{package\}_config.yml).
 #' @param verbose Logical. If TRUE, displays confirmation messages. Defaults to FALSE.
 #'
 #' @return A named list of all configured values (invisible). Values that were 
@@ -35,7 +31,7 @@
 #'   \item Progress tracking through the configuration process
 #'   \item Integration with template descriptions, options, and type detection
 #'   \item Option to skip already-configured variables
-#'   \item Writes configuration to local YAML config file
+#'   \item Writes configuration to YAML config file
 #' }
 #'
 #' @examples
@@ -65,34 +61,13 @@
 #' @export
 setup <- function(package = get_package_name(), section = "default",
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
-                  type = NULL, note = NULL, arg_only = FALSE, fn_tmpl = NULL, fn_local = NULL, verbose = FALSE) {
-  
-  # Early detection and handling of file pairing issues
-  if (!is.null(fn_tmpl) || !is.null(fn_local)) {
-    paired_files <- .find_config_files(
-      package = package,
-      fn_tmpl = fn_tmpl,
-      fn_local = fn_local,
-      fuzzy = TRUE,
-      confirm_fuzzy = TRUE,
-      verbose = verbose
-    )
-    
-    # Check if files were found
-    if (is.null(paired_files$fn_tmpl)) {
-      .icy_stop(paste0("Template file not found for package ", package))
-    }
-    
-    # Update file parameters with validated results
-    fn_tmpl <- paired_files$fn_tmpl
-    fn_local <- paired_files$fn_local
-  }
+                  type = NULL, note = NULL, arg_only = FALSE, name = NULL, verbose = FALSE) {
 
   # Get template variables
   template_config <- get_template(
     package = package,
     section = section,
-    fn_tmpl = fn_tmpl,
+    name = name,
     validate = FALSE,
     confirm_fuzzy = FALSE
   )
@@ -189,8 +164,7 @@ setup <- function(package = get_package_name(), section = "default",
         allow_skip = allow_skip_vec[i],
         verbose = verbose,
         arg_only = arg_only_vec[i],
-        fn_tmpl = fn_tmpl,
-        fn_local = fn_local
+        name = name
       )
       
       # Add optional arguments only if not NA
@@ -225,7 +199,7 @@ setup <- function(package = get_package_name(), section = "default",
   # Show current configuration status
   if (configured_count > 0) {
     .icy_text("")
-    write_location <- .find_config_files(package = package, fn_local = fn_local, case_format = "snake_case", verbose = FALSE)$fn_local
+    write_location <- .find_config_files(package = package, name = name, verbose = FALSE)$fn_config
     
     .icy_text(paste0("Settings written to: ", .apply_color(write_location, "cyan")))
     .icy_text("")
@@ -234,7 +208,7 @@ setup <- function(package = get_package_name(), section = "default",
     in_show_config <- function() {
       .icy_title("Current Configuration", auto_number = FALSE)
       # Show only the variables that were part of this setup
-      show_config(package = package, var_names = var_names, section = section, fn_tmpl = fn_tmpl, fn_local = fn_local)
+      show_config(package = package, var_names = var_names, section = section, name = name)
     }
     in_show_config()
     

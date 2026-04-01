@@ -16,7 +16,7 @@
 #' @details
 #' The function uses the provided package name (or determines it dynamically)
 #' and creates the appropriate verbose variable name (`PKGNAME_VERBOSE` where PKGNAME
-#' is the uppercase package name). It reads the configuration from the local YAML file,
+#' is the uppercase package name). It reads the configuration from the YAML config file,
 #' toggles or initializes the verbose variable, and writes the updated configuration
 #' back to the file.
 #'
@@ -58,7 +58,7 @@ toggle_verbose <- function(package = get_package_name(),
     msg <- ""
   }
 
-  write_local(
+  write_config(
     var_list = structure(list(new_value), names = verbose_var),
     package = package,
     section = section

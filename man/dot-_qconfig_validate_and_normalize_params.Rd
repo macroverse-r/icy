@@ -17,8 +17,7 @@
   allow_custom,
   allow_create_dir,
   resolve_paths,
-  fn_tmpl,
-  fn_local,
+  name,
   verbose
 )
 }

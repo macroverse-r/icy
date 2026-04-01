@@ -3,16 +3,13 @@
 #' Reads configuration from the template YAML file (read-only blueprint).
 #' Templates define the structure, defaults, types, descriptions, and options
 #' for a package's configuration. Use \code{\link{get_config}} to read the
-#' local configuration (single source of truth).
+#' configuration (single source of truth).
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()`.
 #' @param section Character string for the section in the YAML file (default: "default").
 #'   Use NULL to return the full parsed YAML data (all sections and metadata).
-#' @param fn_tmpl Character string with the name or path to the template YAML file.
-#'   If NULL, uses default template for the package.
-#' @param case_format Character string indicating the case format to use for
-#'   searching YAML files if no specific file is provided. Options are:
-#'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), uses the main template file (\{package\}_template.yml).
 #' @param inherit Character string specifying a section to inherit values from, or
 #'   0 to explicitly disable inheritance. If NULL (default), the function checks
 #'   for an "inheritances" section in the template that defines automatic inheritance
@@ -41,13 +38,12 @@
 #'                              inherit = "default")
 #' }
 #'
-#' @seealso \code{\link{get_config}} for reading local configuration.
+#' @seealso \code{\link{get_config}} for reading configuration.
 #'
 #' @export
 get_template <- function(package = get_package_name(),
                          section = "default",
-                         fn_tmpl = NULL,
-                         case_format = "snake_case",
+                         name = NULL,
                          inherit = NULL,
                          verbose = FALSE,
                          validate = TRUE,
@@ -56,10 +52,9 @@ get_template <- function(package = get_package_name(),
   # Resolve template file path
   resolved_files <- .find_config_files(
     package = package,
-    fn_tmpl = fn_tmpl,
+    name = name,
     fuzzy = TRUE,
     confirm_fuzzy = confirm_fuzzy,
-    case_format = case_format,
     verbose = verbose
   )
   resolved_template_path <- resolved_files$fn_tmpl

@@ -22,7 +22,7 @@
 variable names and values should be the values to set.}
 
 \item{file_path}{Character string with the target file path (absolute or relative).
-For local configs, use find_local() to get this path.}
+For configs, use .find_config_files() to resolve this path.}
 
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}
 to detect the calling package. Used for validation against templates.}
@@ -44,7 +44,7 @@ Each element becomes a line. If NULL, no header.}
 entire section. If TRUE (default for configs), merges with existing variables.}
 
 \item{strict_template}{Logical; if TRUE, removes any variables not defined in the
-template (used for local configs). If FALSE (default), keeps all variables.}
+template (used for configs). If FALSE (default), keeps all variables.}
 
 \item{verbose}{Logical. If TRUE, displays informative messages. Defaults to FALSE.}
 }
@@ -53,13 +53,13 @@ Invisibly returns the file path on success.
 }
 \description{
 Package-aware YAML configuration writer for the icy ecosystem that can write
-to both local configuration files and template files with support for custom
+to both configuration files and template files with support for custom
 headers, NULL handling, and validation.
 }
 \details{
 This function is the core YAML writer for the icy ecosystem, designed to handle:
 \itemize{
-\item Local configuration files (via write_local)
+\item Configuration files (via write_config)
 \item Template files (via create_template/update_template)
 \item Any package-related YAML configuration
 }

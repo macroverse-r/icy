@@ -6,8 +6,7 @@
 \usage{
 create_template(
   package = get_package_name(verbose = FALSE),
-  fn_tmpl = NULL,
-  case_format = "snake_case",
+  name = NULL,
   overwrite = NULL,
   verbose = TRUE,
   interactive = TRUE
@@ -17,11 +16,8 @@ create_template(
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}
 to detect the calling package.}
 
-\item{fn_tmpl}{Character string with custom filename for the template.
-If NULL, uses the default naming pattern based on case_format.}
-
-\item{case_format}{Character string indicating the case format to use for filenames.
-Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), creates the main template file (\{package\}_template.yml).}
 
 \item{overwrite}{Logical indicating whether to overwrite existing template file.
 If NULL (default), prompts user when file exists.}
@@ -61,8 +57,8 @@ create_template()
 # Create template for specific package
 create_template(package = "mypackage")
 
-# Create with custom filename
-create_template(fn_tmpl = "custom_config_template.yml")
+# Create a named template
+create_template(name = "gams_switches")
 
 # Create empty template without interaction
 create_template(interactive = FALSE)

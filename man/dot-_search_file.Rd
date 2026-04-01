@@ -17,7 +17,7 @@
 
 \item{package}{Character string with package name}
 
-\item{type}{Character string: "template" or "local"}
+\item{type}{Character string: "template" or "config"}
 
 \item{fuzzy}{Logical. If TRUE, allows fuzzy matching}
 

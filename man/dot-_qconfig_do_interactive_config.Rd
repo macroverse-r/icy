@@ -17,8 +17,7 @@
   allow_custom,
   allow_create_dir,
   resolve_paths,
-  fn_tmpl = NULL,
-  fn_local = NULL
+  name = NULL
 )
 }
 \description{

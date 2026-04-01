@@ -1,8 +1,7 @@
 #' File Finding Helper Functions
 #'
-#' Internal functions supporting .find_config_files with a clean, simple structure.
-#' These functions handle the core logic of searching, matching, and pairing
-#' configuration files.
+#' Internal functions supporting .find_config_files with deterministic
+#' name-based file resolution.
 #'
 #' @name file-finding-helpers
 #' @keywords internal
@@ -10,99 +9,124 @@ NULL
 
 #' Core File Finding Logic
 #'
-#' Searches for template and/or local configuration files and ensures pairing.
-#' Always returns both files or NULL for each.
+#' Resolves template and config file paths from package + name.
+#' The name parameter supports three forms:
+#' - Keyword (e.g., "gams_switches") -> generates deterministic filenames
+#' - Full filename (e.g., "msgm_gams_switches_config.yml") -> uses directly + swap
+#' - Full path (e.g., "/path/to/file.yml") -> uses directly + swap
 #'
-#' @param fn_tmpl Character string with template filename to search for (or NULL)
-#' @param fn_local Character string with local filename to search for (or NULL)
 #' @param package Character string with package name
-#' @param case_format Character string for default filename generation
+#' @param name Optional character string: keyword, filename, or path
 #' @param fuzzy Logical. If TRUE, allows fuzzy matching
 #' @param verbose Logical. If TRUE, shows detailed messages
 #' @return List with:
 #'   - fn_tmpl: Path to template file or NULL
-#'   - fn_local: Path to local file or NULL
+#'   - fn_config: Path to config file or NULL
 #'   - tmpl_fuzzy: TRUE if template was fuzzy matched
-#'   - local_fuzzy: TRUE if local was fuzzy matched
+#'   - config_fuzzy: TRUE if config was fuzzy matched
 #' @keywords internal
-._find_files_core <- function(fn_tmpl = NULL,
-                              fn_local = NULL,
-                              package,
-                              case_format = "snake_case",
+._find_files_core <- function(package,
+                              name = NULL,
                               fuzzy = TRUE,
                               verbose = FALSE) {
-  
-  # Initialize result
+
   result <- list(
     fn_tmpl = NULL,
-    fn_local = NULL,
+    fn_config = NULL,
     tmpl_fuzzy = FALSE,
-    local_fuzzy = FALSE
+    config_fuzzy = FALSE
   )
-  
-  # If neither provided, use default patterns
-  if (is.null(fn_tmpl) && is.null(fn_local)) {
-    fn_tmpl <- .pattern(package = package, case_format = case_format, file = "template", yml = TRUE)
-    fn_local <- .pattern(package = package, case_format = case_format, file = "local", yml = TRUE)
-  }
-  
+
+  # Resolve name into config and template filenames
+  resolved <- ._resolve_name_to_filenames(package, name)
+  config_filename <- resolved$config
+  tmpl_filename <- resolved$template
+
   # Search for template
-  if (!is.null(fn_tmpl)) {
-    tmpl_search <- ._search_file(
-      filename = fn_tmpl,
-      package = package,
-      type = "template",
-      fuzzy = fuzzy,
-      verbose = verbose
-    )
-    
-    if (!is.null(tmpl_search$path)) {
-      result$fn_tmpl <- tmpl_search$path
-      result$tmpl_fuzzy <- tmpl_search$fuzzy
-      
-      # If no local was requested, generate paired name
-      if (is.null(fn_local)) {
-        fn_local <- .generate_corresponding_file(basename(tmpl_search$path), "local")
-      }
-    }
+  tmpl_search <- ._search_file(
+    filename = tmpl_filename,
+    package = package,
+    type = "template",
+    fuzzy = fuzzy,
+    verbose = verbose
+  )
+
+  if (!is.null(tmpl_search$path)) {
+    result$fn_tmpl <- tmpl_search$path
+    result$tmpl_fuzzy <- tmpl_search$fuzzy
   }
-  
-  # Search for local
-  if (!is.null(fn_local)) {
-    local_search <- ._search_file(
-      filename = fn_local,
-      package = package,
-      type = "local",
-      fuzzy = fuzzy,
-      verbose = verbose
-    )
-    
-    if (!is.null(local_search$path)) {
-      result$fn_local <- local_search$path
-      result$local_fuzzy <- local_search$fuzzy
-      
-      # If no template was requested, generate paired name
-      if (is.null(fn_tmpl) && is.null(result$fn_tmpl)) {
-        fn_tmpl <- .generate_corresponding_file(basename(local_search$path), "template")
-        
-        # Try to find the paired template
-        tmpl_search <- ._search_file(
-          filename = fn_tmpl,
-          package = package,
-          type = "template",
-          fuzzy = fuzzy,
-          verbose = FALSE  # Don't be verbose for auto-pairing
-        )
-        
-        if (!is.null(tmpl_search$path)) {
-          result$fn_tmpl <- tmpl_search$path
-          result$tmpl_fuzzy <- tmpl_search$fuzzy
-        }
-      }
-    }
+
+  # Search for config
+  config_search <- ._search_file(
+    filename = config_filename,
+    package = package,
+    type = "config",
+    fuzzy = fuzzy,
+    verbose = verbose
+  )
+
+  if (!is.null(config_search$path)) {
+    result$fn_config <- config_search$path
+    result$config_fuzzy <- config_search$fuzzy
   }
-  
+
   return(result)
+}
+
+#' Resolve Name to Config and Template Filenames
+#'
+#' Interprets the name parameter and returns both config and template filenames.
+#' All config/template files must follow the naming convention:
+#' \{package\}_..._config.yml and \{package\}_..._template.yml.
+#'
+#' Detection logic:
+#' - Case 1: Full path (contains / or \\) -> use directly + swap
+#' - Case 2: Full filename (starts with \{package\}_) -> use directly + swap
+#' - Case 3: Keyword (e.g., "gams_switches") -> deterministic from package + name
+#'
+#' @param package Character string with package name
+#' @param name Optional character string: keyword, filename, or path
+#' @return List with config and template filename strings
+#' @keywords internal
+._resolve_name_to_filenames <- function(package, name) {
+  if (is.null(name)) {
+    return(list(
+      config = .config_filename(package),
+      template = .template_filename(package)
+    ))
+  }
+
+  # Normalize: add .yml if no extension
+  name <- if (grepl("\\.(ya?ml)$", name, ignore.case = TRUE)) name else paste0(name, ".yml")
+
+  # Case 1: full path (contains path separators)
+  if (grepl("[/\\\\]", name)) {
+    swapped <- .swap_filename(basename(name))
+    base <- tools::file_path_sans_ext(basename(name))
+    if (grepl("_template$", base)) {
+      return(list(config = file.path(dirname(name), swapped), template = name))
+    } else {
+      return(list(config = name, template = file.path(dirname(name), swapped)))
+    }
+  }
+
+  # Case 2: full filename (starts with {package}_ AND ends with _config/_template)
+  base <- tools::file_path_sans_ext(name)
+  if (startsWith(name, paste0(package, "_")) && grepl("_(config|template)$", base)) {
+    swapped <- .swap_filename(name)
+    if (grepl("_template$", base)) {
+      return(list(config = swapped, template = name))
+    } else {
+      return(list(config = name, template = swapped))
+    }
+  }
+
+  # Case 3: keyword -- strip the .yml we added above
+  keyword <- tools::file_path_sans_ext(name)
+  return(list(
+    config = .config_filename(package, keyword),
+    template = .template_filename(package, keyword)
+  ))
 }
 
 #' Search for a Single File
@@ -111,7 +135,7 @@ NULL
 #'
 #' @param filename Character string with file path/name to search
 #' @param package Character string with package name
-#' @param type Character string: "template" or "local"
+#' @param type Character string: "template" or "config"
 #' @param fuzzy Logical. If TRUE, allows fuzzy matching
 #' @param verbose Logical. If TRUE, shows detailed messages
 #' @return List with:
@@ -148,7 +172,7 @@ NULL
   package_dir <- if (is_dev_pkg) file.path(getwd(), "inst") else .get_config_dir(package = package, type = type)
 
   # Fast path: direct file.exists() before list.files()
-  # Skip for dev packages — already checked in the inst/ loop above
+  # Skip for dev packages -- already checked in the inst/ loop above
   if (!is_dev_pkg) {
     direct_path <- file.path(package_dir, filename)
     if (file.exists(direct_path) && !dir.exists(direct_path)) {
@@ -177,9 +201,9 @@ NULL
   # Filter out directories
   yaml_files <- yaml_files[!dir.exists(yaml_files)]
 
-  # For template searches, exclude local_config subdirectories
+  # For template searches, exclude default_config subdirectories
   if (type == "template") {
-    yaml_files <- yaml_files[!grepl("/local_config/", yaml_files)]
+    yaml_files <- yaml_files[!grepl("/(default_config|local_config)/", yaml_files)]
   }
 
   # Check for exact basename match (file may be in a subdirectory)
@@ -229,81 +253,6 @@ NULL
   return(list(path = NULL, fuzzy = FALSE))
 }
 
-#' Handle Fuzzy Match Confirmation
-#'
-#' Handles user confirmation for fuzzy matched files and ensures proper pairing
-#' after confirmation.
-#'
-#' @param results List from ._find_files_core()
-#' @param package Character string with package name
-#' @param verbose Logical. If TRUE, shows detailed messages
-#' @return Updated results list with user confirmations applied
-#' @keywords internal
-._handle_fuzzy_confirmation <- function(results, package, verbose = FALSE) {
-  
-  # Handle template fuzzy match confirmation
-  if (results$tmpl_fuzzy && !is.null(results$fn_tmpl)) {
-    confirmed <- .confirm_fuzzy_match(
-      original_input = "template file",
-      fuzzy_match = results$fn_tmpl,
-      file_type = "template"
-    )
-    
-    if (!confirmed) {
-      results$fn_tmpl <- NULL
-      results$tmpl_fuzzy <- FALSE
-    } else {
-      # After confirming template, ensure we have its pair
-      if (is.null(results$fn_local)) {
-        local_name <- .generate_corresponding_file(basename(results$fn_tmpl), "local")
-        local_search <- ._search_file(
-          filename = local_name,
-          package = package,
-          type = "local",
-          fuzzy = FALSE,  # Use exact matching for auto-pairing
-          verbose = FALSE
-        )
-        if (!is.null(local_search$path)) {
-          results$fn_local <- local_search$path
-          results$local_fuzzy <- FALSE
-        }
-      }
-    }
-  }
-  
-  # Handle local fuzzy match confirmation
-  if (results$local_fuzzy && !is.null(results$fn_local)) {
-    confirmed <- .confirm_fuzzy_match(
-      original_input = "local file",
-      fuzzy_match = results$fn_local,
-      file_type = "local"
-    )
-    
-    if (!confirmed) {
-      results$fn_local <- NULL
-      results$local_fuzzy <- FALSE
-    } else {
-      # After confirming local, ensure we have its pair
-      if (is.null(results$fn_tmpl)) {
-        tmpl_name <- .generate_corresponding_file(basename(results$fn_local), "template")
-        tmpl_search <- ._search_file(
-          filename = tmpl_name,
-          package = package,
-          type = "template",
-          fuzzy = FALSE,  # Use exact matching for auto-pairing
-          verbose = FALSE
-        )
-        if (!is.null(tmpl_search$path)) {
-          results$fn_tmpl <- tmpl_search$path
-          results$tmpl_fuzzy <- FALSE
-        }
-      }
-    }
-  }
-  
-  return(results)
-}
-
 #' Boost Similarity Scores
 #'
 #' Applies discrimination boosting to similarity scores to improve fuzzy matching.
@@ -314,7 +263,7 @@ NULL
 #' @keywords internal
 ._boost_similarities <- function(similarities, yaml_files) {
   boosted <- similarities
-  
+
   if (length(similarities) > 1) {
     for (i in seq_along(yaml_files)) {
       this_score <- similarities[i]
@@ -323,7 +272,7 @@ NULL
         if (length(other_scores) > 0) {
           next_best <- max(other_scores)
           avg_others <- mean(other_scores[other_scores > 0])
-          
+
           if (next_best > 0) {
             discrimination_ratio <- this_score / next_best
             if (discrimination_ratio > 1) {
@@ -340,7 +289,7 @@ NULL
       }
     }
   }
-  
+
   return(boosted)
 }
 
@@ -357,31 +306,31 @@ NULL
   # Work with basenames only
   pattern_base <- basename(pattern)
   candidate_base <- basename(candidate)
-  
+
   # Remove extensions for comparison
   pattern_no_ext <- sub("\\.(ya?ml)$", "", pattern_base, ignore.case = TRUE)
   candidate_no_ext <- sub("\\.(ya?ml)$", "", candidate_base, ignore.case = TRUE)
-  
+
   # Case-insensitive comparison
   pattern_lower <- tolower(pattern_no_ext)
   candidate_lower <- tolower(candidate_no_ext)
-  
+
   # Perfect match
   if (pattern_lower == candidate_lower) {
     return(1.0)
   }
-  
+
   # Calculate full string similarity
   edit_dist_full <- utils::adist(pattern_lower, candidate_lower)[1, 1]
   max_len_full <- max(nchar(pattern_lower), nchar(candidate_lower))
   similarity_full <- if (max_len_full > 0) 1 - (edit_dist_full / max_len_full) else 0
-  
+
   # Generic terms to remove for content similarity
-  generic_terms <- c("template", "tmpl", "local", "config", "cfg", "conf")
+  generic_terms <- c("template", "tmpl", "config", "cfg", "conf")
   if (!is.null(package) && nchar(package) > 0) {
     generic_terms <- c(generic_terms, tolower(package))
   }
-  
+
   # Remove generic terms
   remove_generic <- function(str) {
     parts <- unlist(strsplit(str, "[_.-]"))
@@ -392,10 +341,10 @@ NULL
       ""
     }
   }
-  
+
   pattern_stripped <- remove_generic(pattern_lower)
   candidate_stripped <- remove_generic(candidate_lower)
-  
+
   # Calculate content similarity
   if (pattern_stripped == "" && candidate_stripped == "") {
     similarity_stripped <- similarity_full
@@ -408,66 +357,9 @@ NULL
     max_len_stripped <- max(nchar(pattern_stripped), nchar(candidate_stripped))
     similarity_stripped <- if (max_len_stripped > 0) 1 - (edit_dist_stripped / max_len_stripped) else 0
   }
-  
+
   # Return mean of both similarities
   return((similarity_full + similarity_stripped) / 2)
-}
-
-#' Generate Corresponding Filename
-#'
-#' Takes a filename and generates the corresponding paired filename.
-#'
-#' @param filename Character string with original filename
-#' @param target_type Character string, either "template" or "local"
-#' @return Character string with corresponding filename
-#' @keywords internal
-.generate_corresponding_file <- function(filename, target_type) {
-  
-  base_name <- tools::file_path_sans_ext(filename)
-  extension <- tools::file_ext(filename)
-  if (length(extension) == 0 || extension == "") extension <- "yml"
-  
-  if (target_type == "local") {
-    # Replace template indicators with local
-    new_base <- base_name
-    if (grepl("Template", new_base)) {
-      new_base <- gsub("Template", "Local", new_base)
-    } else if (grepl("TEMPLATE", new_base)) {
-      new_base <- gsub("TEMPLATE", "LOCAL", new_base)
-    } else if (grepl("Tmpl", new_base)) {
-      new_base <- gsub("Tmpl", "Local", new_base)
-    } else if (grepl("TMPL", new_base)) {
-      new_base <- gsub("TMPL", "LOCAL", new_base)
-    } else if (grepl("template", new_base, ignore.case = TRUE)) {
-      new_base <- gsub("template", "local", new_base, ignore.case = TRUE)
-    } else if (grepl("tmpl", new_base, ignore.case = TRUE)) {
-      new_base <- gsub("tmpl", "local", new_base, ignore.case = TRUE)
-    } else {
-      # No template indicator found, append _local
-      new_base <- paste0(base_name, "_local")
-    }
-  } else if (target_type == "template") {
-    # Replace local/config indicators with template
-    new_base <- base_name
-    if (grepl("Local", new_base)) {
-      new_base <- gsub("Local", "Template", new_base)
-    } else if (grepl("LOCAL", new_base)) {
-      new_base <- gsub("LOCAL", "TEMPLATE", new_base)
-    } else if (grepl("Config", new_base)) {
-      new_base <- gsub("Config", "Template", new_base)
-    } else if (grepl("CONFIG", new_base)) {
-      new_base <- gsub("CONFIG", "TEMPLATE", new_base)
-    } else if (grepl("local", new_base, ignore.case = TRUE)) {
-      new_base <- gsub("local", "template", new_base, ignore.case = TRUE)
-    } else if (grepl("config", new_base, ignore.case = TRUE)) {
-      new_base <- gsub("config", "template", new_base, ignore.case = TRUE)
-    } else {
-      # No indicator found, append _template
-      new_base <- paste0(base_name, "_template")
-    }
-  }
-  
-  return(paste0(new_base, ".", extension))
 }
 
 #' Confirm Fuzzy Match
@@ -476,19 +368,19 @@ NULL
 #'
 #' @param original_input Character string with the user's original input
 #' @param fuzzy_match Character string with the fuzzy-matched filename
-#' @param file_type Character string, "template" or "local"
+#' @param file_type Character string, "template" or "config"
 #' @return Logical TRUE if user confirms, FALSE otherwise
 #' @keywords internal
 .confirm_fuzzy_match <- function(original_input, fuzzy_match, file_type) {
-  
+
   fuzzy_basename <- basename(fuzzy_match)
-  
+
   .icy_alert(paste0("No exact match for '", original_input, "'. Found '", fuzzy_basename, "'. Use this instead?"))
-  
+
   # Interactive confirmation prompt
   confirm_prompt <- "Continue with fuzzy match? (Y/n): "
   user_input <- readline(confirm_prompt)
-  
+
   if (tolower(trimws(user_input)) %in% c("", "y", "yes")) {
     .icy_success(paste0("Using '", fuzzy_match, "'"))
     return(TRUE)

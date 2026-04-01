@@ -9,7 +9,7 @@
 #' @param template_types Named list of variable types from the template.
 #'   Used to identify path-type variables for resolution. Can be NULL.
 #' @param package Character string with the package name. Used for path resolution.
-#' @param source_label Label for error messages (e.g., "local config", "template").
+#' @param source_label Label for error messages (e.g., "config", "template").
 #'
 #' @return Named list of configuration values from the requested section.
 #' @keywords internal

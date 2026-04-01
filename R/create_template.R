@@ -7,10 +7,8 @@
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()`
 #'   to detect the calling package.
-#' @param fn_tmpl Character string with custom filename for the template.
-#'   If NULL, uses the default naming pattern based on case_format.
-#' @param case_format Character string indicating the case format to use for filenames.
-#'   Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), creates the main template file (\{package\}_template.yml).
 #' @param overwrite Logical indicating whether to overwrite existing template file.
 #'   If NULL (default), prompts user when file exists.
 #' @param verbose Logical. If TRUE (default), displays progress and confirmation messages.
@@ -40,8 +38,8 @@
 #' # Create template for specific package
 #' create_template(package = "mypackage")
 #'
-#' # Create with custom filename
-#' create_template(fn_tmpl = "custom_config_template.yml")
+#' # Create a named template
+#' create_template(name = "gams_switches")
 #'
 #' # Create empty template without interaction
 #' create_template(interactive = FALSE)
@@ -53,14 +51,13 @@
 #'
 #' @export
 create_template <- function(package = get_package_name(verbose = FALSE),
-                           fn_tmpl = NULL,
-                           case_format = "snake_case",
+                           name = NULL,
                            overwrite = NULL,
                            verbose = TRUE,
                            interactive = TRUE) {
-  
+
   # Step 1: Determine template file path
-  template_path <- .determine_template_path(package, fn_tmpl, case_format)
+  template_path <- file.path("inst", .template_filename(package, name))
   
   # Step 2: Welcome message
   if (verbose) {
@@ -147,45 +144,4 @@ create_template <- function(package = get_package_name(verbose = FALSE),
 }
 
 
-#' Determine Template File Path
-#'
-#' Constructs the path where a template file should be created based on package 
-#' and naming conventions. Used by template creation functions.
-#'
-#' @param package Package name
-#' @param fn_tmpl Custom filename (optional)
-#' @param case_format Case format for auto-generated names
-#' @param base_dir Base directory (default: "inst")
-#' @return Character string with file path for template creation
-#' @keywords internal
-.determine_template_path <- function(package, 
-                                    fn_tmpl = NULL,
-                                    case_format = "snake_case",
-                                    base_dir = "inst") {
-  
-  if (!is.null(fn_tmpl)) {
-    # Use custom filename
-    if (!grepl("\\.ya?ml$", fn_tmpl, ignore.case = TRUE)) {
-      fn_tmpl <- paste0(fn_tmpl, ".yml")
-    }
-    
-    # Check if absolute path
-    if (grepl("^(/|~|[A-Za-z]:)", fn_tmpl)) {
-      return(fn_tmpl)
-    } else {
-      return(file.path(base_dir, fn_tmpl))
-    }
-  }
-  
-  # Generate standard filename based on case format
-  base_name <- switch(case_format,
-    "snake_case" = paste0(package, "_config_template"),
-    "camelCase" = paste0(package, "ConfigTemplate"),
-    "PascalCase" = paste0(tools::toTitleCase(package), "ConfigTemplate"),
-    "kebab-case" = paste0(package, "-config-template"),
-    paste0(package, "_config_template")  # fallback
-  )
-  
-  return(file.path(base_dir, paste0(base_name, ".yml")))
-}
 

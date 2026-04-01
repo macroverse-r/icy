@@ -32,11 +32,9 @@
 #' @param sections Character vector specifying which sections to modify. 
 #'   Use "all" to modify all sections, "default" for default section only,
 #'   or specific section names. Default: c("default").
-#' @param fn_tmpl Character string with path to the template file. If NULL (default),
-#'   searches for the standard template file for the package.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), uses the main template file (\{package\}_template.yml).
 #' @param backup Logical. If TRUE (default), creates a backup file before modifications.
-#' @param case_format Character string for template file search if fn_tmpl is NULL.
-#'   Options: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
 #' @param verbose Logical. If TRUE (default), displays progress and confirmation messages.
 #' @param interactive Logical. If TRUE, runs in interactive mode. If FALSE (default),
 #'   uses provided parameters without user prompts.
@@ -98,15 +96,14 @@ update_template <- function(action = NULL,
                            note = NULL,
                            options = NULL,
                            sections = "default",
-                           fn_tmpl = NULL,
+                           name = NULL,
                            backup = TRUE,
-                           case_format = "snake_case",
                            verbose = TRUE,
                            interactive = FALSE,
                            template_data = NULL) {
-  
+
   # Find template file first (needed for both modes)
-  template_path <- .find_config_files(package = package, fn_tmpl = fn_tmpl, case_format = case_format)$fn_tmpl
+  template_path <- .find_config_files(package = package, name = name)$fn_tmpl
   
   if (is.null(template_path)) {
     .icy_stop(paste0("No template configuration file found for package ", package))
@@ -162,9 +159,8 @@ update_template <- function(action = NULL,
     # Recursively call with interactive = TRUE
     return(update_template(
       package = package,
-      fn_tmpl = fn_tmpl,
+      name = name,
       backup = backup,
-      case_format = case_format,
       verbose = verbose,
       interactive = TRUE,
       template_data = template_data

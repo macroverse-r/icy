@@ -1,6 +1,6 @@
 #' Show Configuration Status
 #'
-#' Displays the current configuration values from the local config file
+#' Displays the current configuration values from the config file
 #' (single source of truth). When `show_template = TRUE`, shows template default
 #' values alongside current values for comparison.
 #'
@@ -13,10 +13,8 @@
 #'   second line showing both the raw template keyword and its resolved path.
 #'   Defaults to FALSE for clean output.
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param fn_tmpl Character string with the name or path to a custom YAML template file.
-#'   If NULL (default), uses the standard template file for the package.
-#' @param fn_local Character string with the name or path to a custom local YAML config file.
-#'   If NULL (default), uses the standard local config file for the package.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), shows the main config file (\{package\}_config.yml).
 #' @param confirm_fuzzy Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.
 #'
 #' @return Invisibly returns a data frame with variable names and values.
@@ -40,29 +38,26 @@ show_config <- function(package = get_package_name(),
                         var_names = NULL,
                         show_template = FALSE,
                         section = "default",
-                        fn_tmpl = NULL,
-                        fn_local = NULL,
+                        name = NULL,
                         confirm_fuzzy = TRUE) {
 
   # Resolve file paths once
   resolved_files <- .find_config_files(
     package = package,
-    fn_local = fn_local,
-    fn_tmpl = fn_tmpl,
+    name = name,
     fuzzy = TRUE,
     confirm_fuzzy = confirm_fuzzy,
     verbose = FALSE
   )
-  resolved_local_path <- resolved_files$fn_local
+  resolved_config_path <- resolved_files$fn_config
   resolved_template_path <- resolved_files$fn_tmpl
 
-  # Read local config (single source of truth)
+  # Read config (single source of truth)
   local_config <- tryCatch(
     {
       get_config(package = package,
                  section = section,
-                 fn_tmpl = if (!is.null(resolved_template_path)) basename(resolved_template_path) else fn_tmpl,
-                 fn_local = if (!is.null(resolved_local_path)) basename(resolved_local_path) else fn_local,
+                 name = name,
                  confirm_fuzzy = FALSE)
     },
     error = function(e) list()
@@ -78,8 +73,7 @@ show_config <- function(package = get_package_name(),
       # Try finding the template directly
       tmpl_files <- .find_config_files(
         package = package,
-        fn_tmpl = fn_tmpl,
-        case_format = "snake_case",
+        name = name,
         confirm_fuzzy = FALSE,
         verbose = FALSE
       )
@@ -244,7 +238,7 @@ show_config <- function(package = get_package_name(),
 
 #' Resolve template path for display illustration
 #'
-#' Substitutes variable references using LOCAL config values,
+#' Substitutes variable references using config values,
 #' then resolves keywords for the display arrow.
 #'
 #' @keywords internal
@@ -253,7 +247,7 @@ show_config <- function(package = get_package_name(),
 
   resolved <- raw_value
 
-  # Substitute ${VAR_NAME} references using LOCAL config values
+  # Substitute ${VAR_NAME} references using config values
   pattern <- "\\$\\{([A-Z_][A-Z0-9_]*)\\}"
   matches <- gregexpr(pattern, resolved, perl = TRUE)
 

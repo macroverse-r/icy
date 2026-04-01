@@ -3,16 +3,16 @@
 #' Returns the directory path where configuration files are stored for a package.
 #'
 #' @param package Character string with the package name.
-#' @param type Character string: "local" (user config dir) or "template" (package template dir).
+#' @param type Character string: "config" (user config dir) or "template" (package template dir).
 #'
 #' @return Character string with the absolute path to the configuration directory.
 #' @keywords internal
-.get_config_dir <- function(package, type = "local") {
-  if (!type %in% c("local", "template")) {
-    .icy_stop("Parameter 'type' must be either 'local' or 'template'")
+.get_config_dir <- function(package, type = "config") {
+  if (!type %in% c("config", "template")) {
+    .icy_stop("Parameter 'type' must be either 'config' or 'template'")
   }
 
-  if (type == "local") {
+  if (type == "config") {
     # Single source of truth: always user config directory
     return(tools::R_user_dir(package = package, which = "config"))
   }

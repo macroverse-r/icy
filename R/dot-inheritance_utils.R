@@ -18,7 +18,7 @@ NULL
 #' @param raw_data The full pre-parsed YAML data (all sections)
 #' @param section The target section name
 #' @param inherit Explicit inherit directive (NULL for auto-detect, 0 to disable)
-#' @param type "local" or "template" (for source_label in error messages)
+#' @param type "config" or "template" (for source_label in error messages)
 #' @param template_types Pre-extracted template types
 #' @param package Package name
 #' @param verbose Logical

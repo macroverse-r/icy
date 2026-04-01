@@ -22,7 +22,7 @@ Used to identify path-type variables for resolution. Can be NULL.}
 
 \item{package}{Character string with the package name. Used for path resolution.}
 
-\item{source_label}{Label for error messages (e.g., "local config", "template").}
+\item{source_label}{Label for error messages (e.g., "config", "template").}
 }
 \value{
 Named list of configuration values from the requested section.

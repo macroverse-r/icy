@@ -7,7 +7,7 @@
 .resolve_template_path_for_display(raw_value, local_config, package)
 }
 \description{
-Substitutes variable references using LOCAL config values,
+Substitutes variable references using config values,
 then resolves keywords for the display arrow.
 }
 \keyword{internal}

@@ -17,8 +17,7 @@ qconfig(
   allow_custom = NULL,
   allow_create_dir = TRUE,
   resolve_paths = "ask",
-  fn_tmpl = NULL,
-  fn_local = NULL,
+  name = NULL,
   verbose = FALSE
 )
 }
@@ -62,13 +61,8 @@ Options: "ask" (default, prompt user for static vs dynamic), "static" (resolve i
 "dynamic" (store keywords for runtime resolution). Users can also use suffix notation:
 "8s" for static, "8d" for dynamic, "8" to ask (when resolve_paths="ask").}
 
-\item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
-If NULL (default), uses the standard template file for the package. Must be specified
-together with fn_local when using custom template files.}
-
-\item{fn_local}{Character string with the name or path to a custom local YAML config file.
-If NULL (default), uses the standard local config file for the package. Must be specified
-together with fn_tmpl when using custom configuration files.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main config file (\{package\}_config.yml).}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }
@@ -99,13 +93,13 @@ Priority for options: argument options + template options (argument first), or a
 }
 \examples{
 \dontrun{
-# Basic usage with template integration (writes to local config)
+# Basic usage with template integration (writes to config)
 api_key <- qconfig("DUMMY_API_KEY", package = "dummy")
-# Uses template description and options, writes to local YAML config
+# Uses template description and options, writes to YAML config
 
 # Add custom options to template options
 timeout <- qconfig("DUMMY_TIMEOUT", options = c("30", "60", "120"))
-# Shows custom options first, then template options, writes to local config
+# Shows custom options first, then template options, writes to config
 
 # Skip functionality - no writing occurs
 optional_var <- qconfig("DUMMY_OPTIONAL", allow_skip = TRUE)

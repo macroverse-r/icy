@@ -13,8 +13,7 @@ setup(
   type = NULL,
   note = NULL,
   arg_only = FALSE,
-  fn_tmpl = NULL,
-  fn_local = NULL,
+  name = NULL,
   verbose = FALSE
 )
 }
@@ -41,13 +40,8 @@ If scalar, same note for all. If vector, must match length of variables.}
 \item{arg_only}{Logical scalar or vector. If TRUE, only uses provided options and ignores template options.
 If scalar, applies to all. If vector, must match length of variables.}
 
-\item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
-If NULL (default), uses the standard template file for the package. Must be specified
-together with fn_local when using custom template files.}
-
-\item{fn_local}{Character string with the name or path to a custom local YAML config file.
-If NULL (default), uses the standard local config file for the package. Must be specified
-together with fn_tmpl when using custom configuration files.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main config file (\{package\}_config.yml).}
 
 \item{verbose}{Logical. If TRUE, displays confirmation messages. Defaults to FALSE.}
 }
@@ -66,7 +60,7 @@ for interactive configuration using qconfig(). It provides:
 \item Progress tracking through the configuration process
 \item Integration with template descriptions, options, and type detection
 \item Option to skip already-configured variables
-\item Writes configuration to local YAML config file
+\item Writes configuration to YAML config file
 }
 }
 \examples{

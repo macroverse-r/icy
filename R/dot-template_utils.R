@@ -14,7 +14,7 @@
   
   .icy_text("1. Add to your package's .onLoad() function:")
   .icy_text("   .onLoad <- function(libname, pkgname) {")
-  .icy_text(paste0("     ", .apply_color("icy::create_local", "cyan"), "()"))
+  .icy_text(paste0("     ", .apply_color("icy::create_config", "cyan"), "()"))
   .icy_text("   }")
   
   .icy_text("")

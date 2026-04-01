@@ -9,8 +9,7 @@ show_config(
   var_names = NULL,
   show_template = FALSE,
   section = "default",
-  fn_tmpl = NULL,
-  fn_local = NULL,
+  name = NULL,
   confirm_fuzzy = TRUE
 )
 }
@@ -28,11 +27,8 @@ Defaults to FALSE for clean output.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
-\item{fn_tmpl}{Character string with the name or path to a custom YAML template file.
-If NULL (default), uses the standard template file for the package.}
-
-\item{fn_local}{Character string with the name or path to a custom local YAML config file.
-If NULL (default), uses the standard local config file for the package.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), shows the main config file (\{package\}_config.yml).}
 
 \item{confirm_fuzzy}{Logical. If TRUE (default), asks user to confirm fuzzy matches interactively.}
 }
@@ -42,7 +38,7 @@ When \code{show_template = TRUE}, also includes \code{template_raw}, \code{type}
 \code{matches_template} columns.
 }
 \description{
-Displays the current configuration values from the local config file
+Displays the current configuration values from the config file
 (single source of truth). When \code{show_template = TRUE}, shows template default
 values alongside current values for comparison.
 }
