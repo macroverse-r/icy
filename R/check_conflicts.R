@@ -67,29 +67,29 @@ check_conflicts <- function(package = get_package_name(),
     return(invisible(list(conflicts = list(), resolved = FALSE)))
   }
 
-  # Detect conflicts: compare config values with session env
+  # Detect conflicts: vectorized lookup, loop only over overlapping vars
+  cfg_names <- names(config)
+  session_vals <- Sys.getenv(cfg_names, unset = NA_character_)
+  present <- cfg_names[!is.na(session_vals)]
+
   conflicts <- list()
-  for (var_name in names(config)) {
-    session_value <- Sys.getenv(var_name, unset = NA)
-    if (!is.na(session_value)) {
-      config_value <- config[[var_name]]
-      if (is.null(config_value)) {
-        # Session has a value but config is NULL/~ — conflict
+  for (var_name in present) {
+    config_value <- config[[var_name]]
+    session_value <- session_vals[[var_name]]
+    if (is.null(config_value)) {
+      conflicts[[var_name]] <- list(
+        config = "(not set)",
+        session = session_value,
+        from_renviron = FALSE
+      )
+    } else {
+      config_value <- as.character(config_value)
+      if (tolower(session_value) != tolower(config_value)) {
         conflicts[[var_name]] <- list(
-          config = "(not set)",
+          config = config_value,
           session = session_value,
           from_renviron = FALSE
         )
-      } else {
-        config_value <- as.character(config_value)
-        # Case-insensitive comparison for booleans (e.g., "TRUE" vs "true")
-        if (tolower(session_value) != tolower(config_value)) {
-          conflicts[[var_name]] <- list(
-            config = config_value,
-            session = session_value,
-            from_renviron = FALSE
-          )
-        }
       }
     }
   }
@@ -99,14 +99,6 @@ check_conflicts <- function(package = get_package_name(),
       .icy_success("No conflicts detected between config and session environment")
     }
     return(invisible(list(conflicts = list(), resolved = FALSE)))
-  }
-
-  # Check which conflicts originate from .Renviron
-  renviron_vars <- .parse_renviron_vars()
-  for (var_name in names(conflicts)) {
-    if (var_name %in% names(renviron_vars) && renviron_vars[[var_name]] == conflicts[[var_name]]$session) {
-      conflicts[[var_name]]$from_renviron <- TRUE
-    }
   }
 
   # Handle conflicts based on mode
@@ -124,6 +116,14 @@ check_conflicts <- function(package = get_package_name(),
       ". Run check_conflicts() to resolve interactively."
     ))
     return(invisible(list(conflicts = conflicts, resolved = FALSE)))
+  }
+
+  # Check which conflicts originate from .Renviron (only needed for resolve mode)
+  renviron_vars <- .parse_renviron_vars()
+  for (var_name in names(conflicts)) {
+    if (var_name %in% names(renviron_vars) && renviron_vars[[var_name]] == conflicts[[var_name]]$session) {
+      conflicts[[var_name]]$from_renviron <- TRUE
+    }
   }
 
   # mode == "resolve": Interactive resolution
