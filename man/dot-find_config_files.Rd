@@ -32,4 +32,8 @@ the config filename via .swap_filename(). Config is checked by direct
 file.exists() in the config directory. If no direct match, a fuzzy
 search runs for the config file.
 }
+\details{
+Directory resolution happens once via ._get_config_dirs(), then
+._search_file() receives the resolved directories.
+}
 \keyword{internal}

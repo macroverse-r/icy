@@ -88,7 +88,7 @@ create_config <- function(package = get_package_name(verbose = FALSE),
 
   # Determine the full path for config file
   config_filename <- .config_filename(package, name)
-  config_dir <- .get_config_dir(package = package, type = "config")
+  config_dir <- tools::R_user_dir(package = package, which = "config")
   if (!dir.exists(config_dir)) {
     success <- dir.create(config_dir, recursive = TRUE)
     if (success && verbose) {

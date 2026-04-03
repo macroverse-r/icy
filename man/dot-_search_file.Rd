@@ -2,24 +2,24 @@
 % Please edit documentation in R/dot-file_finding_helpers.R
 \name{._search_file}
 \alias{._search_file}
-\title{Search for a Single File}
+\title{Search for a Single File in a Directory}
 \usage{
 ._search_file(
   filename,
-  package,
-  type = "template",
+  search_dir,
   fuzzy = TRUE,
+  package = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{filename}{Character string with file path/name to search}
+\item{filename}{Character string with filename to search for}
 
-\item{package}{Character string with package name}
-
-\item{type}{Character string: "template" or "config"}
+\item{search_dir}{Character string with directory to search in}
 
 \item{fuzzy}{Logical. If TRUE, allows fuzzy matching}
+
+\item{package}{Character string with package name (only for fuzzy scoring)}
 
 \item{verbose}{Logical. If TRUE, shows detailed messages}
 }
@@ -31,6 +31,8 @@ List with:
 }
 }
 \description{
-Searches for a file using exact matching first, then fuzzy matching if enabled.
+Pure file search: looks for a filename in a given directory using exact
+matching first, then fuzzy matching if enabled. Does not resolve directories
+-- the caller provides the search directory.
 }
 \keyword{internal}
