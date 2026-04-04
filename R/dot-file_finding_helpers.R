@@ -78,7 +78,7 @@ NULL
     if (verbose) {
       .icy_text(paste0("Found ", basename(filename), " in: ", dirname(exact_matches[1])))
     }
-    return(list(path = exact_matches[1], fuzzy = FALSE))
+    return(list(path = normalizePath(exact_matches[1], winslash = "/"), fuzzy = FALSE))
   }
 
   # Fuzzy matching (interactive sessions only)
@@ -100,7 +100,7 @@ NULL
     if (verbose) {
       .icy_alert(paste0("No exact match for '", filename, "'. Found fuzzy match: ", basename(good_matches[1])))
     }
-    return(list(path = good_matches[1], fuzzy = TRUE))
+    return(list(path = normalizePath(good_matches[1], winslash = "/"), fuzzy = TRUE))
   }
 
   if (verbose) {

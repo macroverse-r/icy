@@ -65,14 +65,13 @@ clean_dir_path <- function(path,
                             create_if_missing = FALSE) {
   # Use R built-in functions for comprehensive path cleaning
   expanded_path <- path.expand(path)                                    # Handle ~
-  normalized_path <- normalizePath(expanded_path, mustWork = FALSE)     # Handle relatives, separators  
+  normalized_path <- normalizePath(expanded_path, winslash = "/", mustWork = FALSE)     # Handle relatives, separators  
   
-  # Remove trailing slashes using regex (more reliable for this specific task)
-  # Special handling for root directory to prevent empty string
-  if (normalized_path == "/") {
-    clean_path <- "/"
-  } else {
-    clean_path <- sub("/*$", "", normalized_path)
+  # Remove trailing path separators (defensive: handles both / and \)
+  # Preserve root paths: "/" on Unix, "C:/" on Windows
+  clean_path <- sub("[/\\\\]+$", "", normalized_path)
+  if (clean_path == "" || grepl("^[A-Za-z]:$", clean_path)) {
+    clean_path <- normalized_path
   }
   
   # Check if directory exists if requested

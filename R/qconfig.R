@@ -663,9 +663,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
         resolved <- .resolve_special_path(option_value, package, current_config)
         
         # Also resolve relative paths to absolute paths for display
-        absolute_path <- tryCatch({
-          normalizePath(resolved, mustWork = FALSE)
-        }, error = function(e) resolved)
+        absolute_path <- normalizePath(resolved, winslash = "/", mustWork = FALSE)
         
         # Show absolute path with original in parentheses if they differ
         if (absolute_path != option_value) {
@@ -709,9 +707,7 @@ qconfig <- function(var_name, package = get_package_name(), section = "default",
         example_resolved <- .resolve_special_path(example_keyword, package, current_config)
         
         # Make resolved path absolute for display
-        example_absolute <- tryCatch({
-          normalizePath(example_resolved, mustWork = FALSE)
-        }, error = function(e) example_resolved)
+        example_absolute <- normalizePath(example_resolved, winslash = "/", mustWork = FALSE)
         
         .icy_text("")
         .icy_text(.apply_color("Tip: Add 's' for static or 'd' for dynamic resolution:", "gray"))
