@@ -275,7 +275,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   }
   
   # Get data sections (non-metadata)
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(config_data), metadata_sections)
   
   # Check inheritance relationships
@@ -369,7 +369,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   }
   
   # Get all sections (excluding metadata sections)
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check that all inheritance targets exist
@@ -470,7 +470,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   )
   
   # Check for at least one data section
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   result$sections <- data_sections
   
@@ -537,7 +537,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   )
   
   # Get all variables from data sections
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   all_data_vars <- character()
@@ -616,7 +616,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   }
   
   types_map <- template_data$types
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   # Check each typed variable across all sections
@@ -711,7 +711,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   }
   
   # Check each section in config
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(config_data), c(metadata_sections, "inheritances"))
   
   for (section in data_sections) {

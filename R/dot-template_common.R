@@ -285,7 +285,7 @@ NULL
     
     tryCatch({
       # Get existing variables for validation
-      metadata_sections <- .get_metadata_sections()
+      metadata_sections <- .read_metadata()$metadata_sections
       existing_vars <- unique(unlist(lapply(
         current_template_data[!names(current_template_data) %in% metadata_sections],
         names
@@ -406,7 +406,7 @@ NULL
     # Update in specified sections
     if ("all" %in% sections) {
       # Return all data sections (exclude metadata)
-      metadata_sections <- .get_metadata_sections()
+      metadata_sections <- .read_metadata()$metadata_sections
       target_sections <- setdiff(names(template_data), metadata_sections)
     } else {
       target_sections <- sections

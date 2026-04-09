@@ -242,28 +242,28 @@ update_template <- function(package = get_package_name(verbose = FALSE),
 #' @keywords internal
 .remove_template_variables <- function(template_data, var_names, sections, verbose) {
   
+  metadata_sections <- .read_metadata()$metadata_sections
+
   for (var_name in var_names) {
     removed_from_sections <- character(0)
-    
+
     # Remove from specified sections
     if ("all" %in% sections) {
       # Remove from all data sections (not metadata)
-      metadata_sections <- .get_metadata_sections()
       data_sections <- setdiff(names(template_data), metadata_sections)
       target_sections <- data_sections
     } else {
       target_sections <- sections
     }
-    
+
     for (section in target_sections) {
       if (section %in% names(template_data) && var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL
         removed_from_sections <- c(removed_from_sections, section)
       }
     }
-    
+
     # Remove from metadata sections
-    metadata_sections <- .get_metadata_sections()
     for (section in metadata_sections) {
       if (section %in% names(template_data) && var_name %in% names(template_data[[section]])) {
         template_data[[section]][[var_name]] <- NULL

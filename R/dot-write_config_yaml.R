@@ -267,10 +267,11 @@
   yaml_lines <- character(0)
   
   # Define the standard order: data sections first, then metadata in specific order
-  metadata_sections <- .get_metadata_sections()
-  
+  metadata <- .read_metadata()
+  metadata_sections <- metadata$metadata_sections
+
   # Get section descriptions early for use in both data and metadata sections
-  section_descriptions <- .get_metadata_definitions()
+  section_descriptions <- metadata$definitions
   
   # Separate data sections from metadata sections
   all_sections <- names(config_data)
@@ -375,7 +376,7 @@
 #' @return Logical indicating if this is a template structure
 #' @keywords internal
 .is_template_structure <- function(config_data) {
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   metadata_present <- intersect(names(config_data), metadata_sections)
   
   # Consider it a template if it has at least 2 metadata sections or

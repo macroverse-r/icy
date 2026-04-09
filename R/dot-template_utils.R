@@ -51,7 +51,7 @@
   .icy_title("Template Overview", level_adjust = -3)
   
   # Separate data sections from metadata sections
-  metadata_section_names <- .get_metadata_sections()
+  metadata_section_names <- .read_metadata()$metadata_sections
   sections <- list(
     data = template_data[!names(template_data) %in% metadata_section_names],
     metadata = template_data[names(template_data) %in% metadata_section_names]

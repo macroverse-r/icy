@@ -83,7 +83,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
                                          verbose = TRUE, debug = FALSE) {
   
   # Check if template is empty (new template)
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   all_vars <- unique(unlist(lapply(
     template_data[!names(template_data) %in% metadata_sections],
     names
@@ -187,7 +187,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   .icy_title("Adding New Variable", level_adjust = -3)
   
   # Get existing variables
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   existing_vars <- unique(unlist(lapply(
     template_data[!names(template_data) %in% metadata_sections],
     names
@@ -217,7 +217,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   .icy_title("Updating Variable", level_adjust = -3)
   
   # Get all variables
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   all_vars <- unique(unlist(lapply(
     template_data[!names(template_data) %in% metadata_sections],
     names
@@ -330,7 +330,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   .icy_title("Removing Variable", level_adjust = -3)
   
   # Get all variables
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   all_vars <- unique(unlist(lapply(
     template_data[!names(template_data) %in% metadata_sections],
     names
@@ -373,7 +373,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   removed_from <- character(0)
   
   # Remove from data sections
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   for (section in names(template_data)) {
     if (!section %in% metadata_sections) {
       if (var_name %in% names(template_data[[section]])) {
@@ -412,7 +412,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   .icy_title("Managing Sections", level_adjust = -3)
   
   # Show current sections
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   .icy_text("Current sections:")
@@ -490,7 +490,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
   }
   
   # Ask about inheritance
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   other_sections <- setdiff(names(template_data), c(section_name, metadata_sections))
   
   if (length(other_sections) > 0) {
@@ -546,7 +546,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
 #' @keywords internal
 ._update_template_copy_to_section_interactive <- function(template_data, verbose = TRUE) {
   # Get all available sections
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   if (length(data_sections) == 0) {
@@ -626,7 +626,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
 #' @keywords internal
 ._update_template_remove_section_interactive <- function(template_data, verbose = TRUE) {
   data_sections <- setdiff(names(template_data),
-                          c("default", .get_metadata_sections()))
+                          c("default", .read_metadata()$metadata_sections))
   
   if (length(data_sections) == 0) {
     .icy_alert("No sections to remove (cannot remove default or metadata)")
@@ -694,7 +694,7 @@ update_template_interactive <- function(package = get_package_name(verbose = FAL
 #' @keywords internal
 ._update_template_configure_inheritance_interactive <- function(template_data, verbose = TRUE) {
   # Get data sections (exclude metadata)
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   data_sections <- setdiff(names(template_data), metadata_sections)
   
   if (length(data_sections) <= 1) {

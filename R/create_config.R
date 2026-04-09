@@ -109,7 +109,7 @@ create_config <- function(package = get_package_name(verbose = FALSE),
   custom_header <- .generate_header(package, type = header, template_source = tmpl_path)
 
   # Extract data sections and inheritances from template (exclude other metadata)
-  metadata_sections <- .get_metadata_sections()
+  metadata_sections <- .read_metadata()$metadata_sections
   # Keep inheritances alongside data sections -- configs need it for section inheritance
   kept_sections <- setdiff(names(tmpl_config), setdiff(metadata_sections, "inheritances"))
 
