@@ -7,9 +7,7 @@
 get_config(
   package = get_package_name(),
   section = "default",
-  fn_tmpl = NULL,
-  fn_local = NULL,
-  case_format = "snake_case",
+  name = NULL,
   inherit = NULL,
   verbose = FALSE,
   validate = TRUE,
@@ -21,15 +19,8 @@ get_config(
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
 
-\item{fn_tmpl}{Character string with the name or path to the template YAML file.
-If NULL, uses default template for the package. Used for validation and type resolution.}
-
-\item{fn_local}{Character string with the name or path to the local YAML file.
-If NULL, uses default local config for the package.}
-
-\item{case_format}{Character string indicating the case format to use for
-searching YAML files if no specific files are provided. Options are:
-"snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main config file (\{package\}_config.yml).}
 
 \item{inherit}{Character string specifying a section to inherit values from, or
 0 to explicitly disable inheritance. If NULL (default), the function checks
@@ -52,14 +43,17 @@ matches are used in file searching. Set to FALSE for non-interactive use.}
 Named list of configuration values.
 }
 \description{
-Reads configuration from the local YAML file (single source of truth).
-The local config file is the authoritative source for all configuration values.
+Reads configuration from the YAML config file (single source of truth).
+The config file is the authoritative source for all configuration values.
 Use \code{\link{get_template}} to read the template file (blueprint).
 }
 \examples{
 \dontrun{
 # Get configuration from local file (single source of truth)
 config <- get_config(package = "mypackage")
+
+# Get a named config (e.g., gams_switches)
+switches <- get_config(package = "mypackage", name = "gams_switches")
 
 # Get production config with defaults inherited from default section
 prod_config <- get_config(package = "mypackage", section = "production",

@@ -22,7 +22,7 @@ check_conflicts(
 \item "silent": No warnings, no interaction
 }}
 
-\item{config}{Named list of local config values. If NULL, reads from local config
+\item{config}{Named list of config values. If NULL, reads from config
 file. Used internally by get_config() to avoid re-reading.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
@@ -32,13 +32,13 @@ file. Used internally by get_config() to avoid re-reading.}
 \value{
 Invisibly returns a list with:
 \describe{
-\item{conflicts}{Named list of detected conflicts (var_name -> list(local, session, from_renviron))}
+\item{conflicts}{Named list of detected conflicts (var_name -> list(config, session, from_renviron))}
 \item{resolved}{Logical indicating whether conflicts were resolved}
 }
 }
 \description{
-Detects conflicts between local configuration values and R session environment
-variables. When a variable exists in both the local config and the session
+Detects conflicts between configuration values and R session environment
+variables. When a variable exists in both the config and the session
 environment with different values, this indicates ambiguity about the true
 configuration state.
 }
@@ -46,7 +46,7 @@ configuration state.
 In "resolve" mode (default when called directly), the function interactively
 walks the user through each conflict, asking them to choose which value to
 keep. If the session value has an invalid type (e.g., "hello" for a boolean),
-the conflict is auto-resolved by keeping the local config value.
+the conflict is auto-resolved by keeping the config value.
 The session variable is always cleaned up, and if the conflict originates
 from ~/.Renviron, the user is offered to remove it there too.
 }

@@ -4,10 +4,12 @@
 \alias{.icy_bullets}
 \title{Bulleted list output}
 \usage{
-.icy_bullets(items, ...)
+.icy_bullets(items, bullet = NULL, ...)
 }
 \arguments{
 \item{items}{Named vector of items to display}
+
+\item{bullet}{Bullet type: NULL/"dot" for bullet points, "1:"/"1." for numbered}
 
 \item{...}{Additional arguments passed to underlying functions}
 }

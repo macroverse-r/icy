@@ -1,14 +1,14 @@
 #' Check for Configuration Conflicts
 #'
-#' Detects conflicts between local configuration values and R session environment
-#' variables. When a variable exists in both the local config and the session
+#' Detects conflicts between configuration values and R session environment
+#' variables. When a variable exists in both the config and the session
 #' environment with different values, this indicates ambiguity about the true
 #' configuration state.
 #'
 #' In "resolve" mode (default when called directly), the function interactively
 #' walks the user through each conflict, asking them to choose which value to
 #' keep. If the session value has an invalid type (e.g., "hello" for a boolean),
-#' the conflict is auto-resolved by keeping the local config value.
+#' the conflict is auto-resolved by keeping the config value.
 #' The session variable is always cleaned up, and if the conflict originates
 #' from ~/.Renviron, the user is offered to remove it there too.
 #'
@@ -17,14 +17,14 @@
 #'   - "resolve" (default): Interactive resolution of each conflict
 #'   - "warn": Warn about conflicts, suggest check_conflicts()
 #'   - "silent": No warnings, no interaction
-#' @param config Named list of local config values. If NULL, reads from local config
+#' @param config Named list of config values. If NULL, reads from config
 #'   file. Used internally by get_config() to avoid re-reading.
 #' @param section Character string for the section in the YAML file (default: "default").
 #' @param verbose Logical. If TRUE, shows detailed messages. Defaults to FALSE.
 #'
 #' @return Invisibly returns a list with:
 #'   \describe{
-#'     \item{conflicts}{Named list of detected conflicts (var_name -> list(local, session, from_renviron))}
+#'     \item{conflicts}{Named list of detected conflicts (var_name -> list(config, session, from_renviron))}
 #'     \item{resolved}{Logical indicating whether conflicts were resolved}
 #'   }
 #'
@@ -53,60 +53,52 @@ check_conflicts <- function(package = get_package_name(),
     ))
   }
 
-  # Get local config values (from argument or by reading)
+  # Get config values (from argument or by reading)
   if (is.null(config)) {
-    local_files <- .find_config_files(package = package)
-    raw_data <- if (!is.null(local_files$fn_local)) {
-      tryCatch(yaml::read_yaml(local_files$fn_local), error = function(e) NULL)
+    config_files <- .find_config_files(package = package)
+    raw_data <- if (!is.null(config_files$fn_config)) {
+      tryCatch(yaml::read_yaml(config_files$fn_config), error = function(e) NULL)
     }
     config <- .process_config_section(raw_data, section = section,
-                                      source_label = "local config")
+                                      source_label = "config")
   }
 
   if (length(config) == 0) {
     return(invisible(list(conflicts = list(), resolved = FALSE)))
   }
 
-  # Detect conflicts: compare local config values with session env
+  # Detect conflicts: vectorized lookup, loop only over overlapping vars
+  cfg_names <- names(config)
+  session_vals <- Sys.getenv(cfg_names, unset = NA_character_)
+  present <- cfg_names[!is.na(session_vals)]
+
   conflicts <- list()
-  for (var_name in names(config)) {
-    session_value <- Sys.getenv(var_name, unset = NA)
-    if (!is.na(session_value)) {
-      local_value <- config[[var_name]]
-      if (is.null(local_value)) {
-        # Session has a value but local config is NULL/~ — conflict
+  for (var_name in present) {
+    config_value <- config[[var_name]]
+    session_value <- session_vals[[var_name]]
+    if (is.null(config_value)) {
+      conflicts[[var_name]] <- list(
+        config = "(not set)",
+        session = session_value,
+        from_renviron = FALSE
+      )
+    } else {
+      config_value <- as.character(config_value)
+      if (tolower(session_value) != tolower(config_value)) {
         conflicts[[var_name]] <- list(
-          local = "(not set)",
+          config = config_value,
           session = session_value,
           from_renviron = FALSE
         )
-      } else {
-        local_value <- as.character(local_value)
-        # Case-insensitive comparison for booleans (e.g., "TRUE" vs "true")
-        if (tolower(session_value) != tolower(local_value)) {
-          conflicts[[var_name]] <- list(
-            local = local_value,
-            session = session_value,
-            from_renviron = FALSE
-          )
-        }
       }
     }
   }
 
   if (length(conflicts) == 0) {
     if (verbose) {
-      .icy_success("No conflicts detected between local config and session environment")
+      .icy_success("No conflicts detected between config and session environment")
     }
     return(invisible(list(conflicts = list(), resolved = FALSE)))
-  }
-
-  # Check which conflicts originate from .Renviron
-  renviron_vars <- .parse_renviron_vars()
-  for (var_name in names(conflicts)) {
-    if (var_name %in% names(renviron_vars) && renviron_vars[[var_name]] == conflicts[[var_name]]$session) {
-      conflicts[[var_name]]$from_renviron <- TRUE
-    }
   }
 
   # Handle conflicts based on mode
@@ -119,11 +111,19 @@ check_conflicts <- function(package = get_package_name(),
     .icy_warn(paste0(
       "Found ", length(conflicts), " conflict",
       if (length(conflicts) > 1) "s" else "",
-      " between local config and session environment: ",
+      " between config and session environment: ",
       paste(conflict_names, collapse = ", "),
       ". Run check_conflicts() to resolve interactively."
     ))
     return(invisible(list(conflicts = conflicts, resolved = FALSE)))
+  }
+
+  # Check which conflicts originate from .Renviron (only needed for resolve mode)
+  renviron_vars <- .parse_renviron_vars()
+  for (var_name in names(conflicts)) {
+    if (var_name %in% names(renviron_vars) && renviron_vars[[var_name]] == conflicts[[var_name]]$session) {
+      conflicts[[var_name]]$from_renviron <- TRUE
+    }
   }
 
   # mode == "resolve": Interactive resolution
@@ -148,7 +148,7 @@ check_conflicts <- function(package = get_package_name(),
     type_check <- .validate_variable_type(conflict$session, var_type, var_name)
 
     .icy_title(paste0("Conflict: ", var_name))
-    .icy_text(paste0("  Local config value: ", .apply_color(conflict$local, color = "green")))
+    .icy_text(paste0("  Config value: ", .apply_color(conflict$config, color = "green")))
 
     # Show session value with inline type warning if invalid
     session_display <- .apply_color(conflict$session, color = "yellow")
@@ -163,23 +163,23 @@ check_conflicts <- function(package = get_package_name(),
 
     if (!type_check$valid) {
       options <- c(
-        paste0("Keep local config value (", conflict$local, ")"),
+        paste0("Keep config value (", conflict$config, ")"),
         "Skip (leave conflict unresolved)"
       )
       .icy_text(.apply_color("Select which value to keep:", color = "brown"))
       .icy_bullets(options, bullet = "1:")
       .icy_text(paste0("Enter your choice: ",
-                       .apply_color("(1-2, or press Enter to keep local)", color = "gray")))
+                       .apply_color("(1-2, or press Enter to keep config)", color = "gray")))
     } else {
       options <- c(
-        paste0("Keep local config value (", conflict$local, ")"),
-        paste0("Use session value (", conflict$session, ") and update local config"),
+        paste0("Keep config value (", conflict$config, ")"),
+        paste0("Use session value (", conflict$session, ") and update config"),
         "Skip (leave conflict unresolved)"
       )
       .icy_text(.apply_color("Select which value to keep:", color = "brown"))
       .icy_bullets(options, bullet = "1:")
       .icy_text(paste0("Enter your choice: ",
-                       .apply_color("(1-3, or press Enter to keep local)", color = "gray")))
+                       .apply_color("(1-3, or press Enter to keep config)", color = "gray")))
     }
 
     choice <- readline()
@@ -197,19 +197,19 @@ check_conflicts <- function(package = get_package_name(),
     }
 
     if (!is.null(use_session_num) && choice == use_session_num) {
-      # Use session value: update local config
+      # Use session value: update config
       var_list <- structure(list(conflict$session), names = var_name)
-      write_local(
+      update_config(
         var_list = var_list,
         package = package,
         section = section,
         sync = "none",
         verbose = FALSE
       )
-      .icy_success(paste0("Updated local config: ", var_name, " = ", conflict$session))
+      .icy_success(paste0("Updated config: ", var_name, " = ", conflict$session))
     } else {
-      # Default: keep local (choice "1" or Enter)
-      .icy_success(paste0("Keeping local config value: ", var_name, " = ", conflict$local))
+      # Default: keep config (choice "1" or Enter)
+      .icy_success(paste0("Keeping config value: ", var_name, " = ", conflict$config))
     }
 
     # Clean the session variable

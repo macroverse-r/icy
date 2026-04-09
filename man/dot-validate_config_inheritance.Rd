@@ -7,7 +7,7 @@
 .validate_config_inheritance(config_data)
 }
 \description{
-Simple inheritance validation for local configs.
+Simple inheritance validation for config files.
 Checks basic structure and circular dependencies.
 }
 \keyword{internal}

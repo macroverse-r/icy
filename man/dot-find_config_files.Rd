@@ -6,34 +6,34 @@
 \usage{
 .find_config_files(
   package,
-  fn_tmpl = NULL,
-  fn_local = NULL,
+  name = NULL,
   fuzzy = TRUE,
   confirm_fuzzy = FALSE,
-  case_format = "snake_case",
   verbose = FALSE
 )
 }
 \arguments{
 \item{package}{Character string with package name.}
 
-\item{fn_tmpl}{Character string with template filename to search for.}
-
-\item{fn_local}{Character string with local filename to search for.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").}
 
 \item{fuzzy}{Logical. If TRUE (default), allows fuzzy matching.}
 
 \item{confirm_fuzzy}{Logical. If TRUE, prompts for user confirmation for fuzzy matches.}
 
-\item{case_format}{Character string for default filename generation.}
-
 \item{verbose}{Logical. If TRUE, shows detailed messages.}
 }
 \value{
-List with fn_tmpl and fn_local (paths or NULL).
+List with fn_tmpl and fn_config (paths or NULL).
 }
 \description{
-Internal function for finding paired configuration files (template and local) with
-optional fuzzy matching.
+Template-first file resolution: finds the template first, then derives
+the config filename via .swap_filename(). Config is checked by direct
+file.exists() in the config directory. If no direct match, a fuzzy
+search runs for the config file.
+}
+\details{
+Directory resolution happens once via ._get_config_dirs(), then
+._search_file() receives the resolved directories.
 }
 \keyword{internal}

@@ -14,7 +14,7 @@
   
   .icy_text("1. Add to your package's .onLoad() function:")
   .icy_text("   .onLoad <- function(libname, pkgname) {")
-  .icy_text(paste0("     ", .apply_color("icy::create_local", "cyan"), "()"))
+  .icy_text(paste0("     ", .apply_color("icy::create_config", "cyan"), "()"))
   .icy_text("   }")
   
   .icy_text("")
@@ -25,7 +25,7 @@
   .icy_text("")
   .icy_text("3. Provide user configuration functions:")
   .icy_text(paste0("   ", .apply_color(paste0("configure_", package), "green"), " <- function() {"))
-  .icy_text(paste0("     ", .apply_color("icy::setup", "cyan"), "(package = \"", package, "\")"))
+  .icy_text(paste0("     ", .apply_color("icy::setup_config", "cyan"), "(package = \"", package, "\")"))
   .icy_text("   }")
   
   if (!is.null(template_path)) {

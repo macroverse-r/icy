@@ -4,10 +4,10 @@
 \alias{.resolve_template_path_for_display}
 \title{Resolve template path for display illustration}
 \usage{
-.resolve_template_path_for_display(raw_value, local_config, package)
+.resolve_template_path_for_display(raw_value, config_data, package)
 }
 \description{
-Substitutes variable references using LOCAL config values,
+Substitutes variable references using config values,
 then resolves keywords for the display arrow.
 }
 \keyword{internal}

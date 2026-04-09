@@ -6,8 +6,8 @@
 \usage{
 validate_config_file(
   fn_tmpl = NULL,
-  fn_local = NULL,
-  type = c("template", "local"),
+  fn_config = NULL,
+  type = c("template", "config"),
   package = NULL,
   verbose = FALSE,
   .config_data = NULL,
@@ -17,12 +17,12 @@ validate_config_file(
 \arguments{
 \item{fn_tmpl}{Path to template configuration file. If NULL, will attempt to
 find using package name. Used for validation when type="template" or as
-reference when type="local".}
+reference when type="config".}
 
-\item{fn_local}{Path to local configuration file. If NULL, will attempt to
-find using package name. Used for validation when type="local".}
+\item{fn_config}{Path to configuration file. If NULL, will attempt to
+find using package name. Used for validation when type="config".}
 
-\item{type}{Type of configuration file to validate: "template" or "local"}
+\item{type}{Type of configuration file to validate: "template" or "config"}
 
 \item{package}{Package name for context. If NULL, attempts to detect.}
 
@@ -45,8 +45,8 @@ List with validation results containing:
 }
 }
 \description{
-Validates a configuration file (template or local) according to its type.
-Both template and local files must have an inheritances section, but
+Validates a configuration file (template or config) according to its type.
+Both template and config files must have an inheritances section, but
 different validation rules apply to each type.
 }
 \details{
@@ -60,7 +60,7 @@ Template validation checks:
 \item Checks for orphaned metadata
 }
 
-Local validation checks:
+Config validation checks:
 \itemize{
 \item Must have inheritances section (can be empty)
 \item Validates values against template's types
@@ -74,17 +74,17 @@ Local validation checks:
 # Validate a template file  
 result <- validate_config_file(type = "template")
 
-# Validate a local config file
-result <- validate_config_file(type = "local")
+# Validate a config file
+result <- validate_config_file(type = "config")
 
 # Validate specific files
-result <- validate_config_file(fn_tmpl = "inst/mypackage_config_template.yml",
+result <- validate_config_file(fn_tmpl = "inst/mypackage_template.yml",
                                type = "template")
 
-# Validate local with specific template for comparison
-result <- validate_config_file(fn_local = "~/.config/R/mypackage/config.yml",
-                               fn_tmpl = "inst/mypackage_config_template.yml", 
-                               type = "local")
+# Validate config with specific template for comparison
+result <- validate_config_file(fn_config = "~/.config/R/mypackage/mypackage_config.yml",
+                               fn_tmpl = "inst/mypackage_template.yml",
+                               type = "config")
 }
 
 }

@@ -1,12 +1,12 @@
-#' Edit Local Configuration File
+#' Edit Configuration File
 #'
-#' Opens the local YAML configuration file for editing in your preferred editor.
+#' Opens the YAML configuration file for editing in your preferred editor.
 #' This provides a better experience than just manually opening the file by
 #' offering editor selection and YAML validation.
 #'
 #' @param package Character string with the package name. Defaults to \code{get_package_name()} to detect the calling package.
-#' @param fn_local Character string with custom filename for the local config.
-#'   If NULL, uses the fuzzy finder to locate the standard local config file.
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), opens the main config file (\{package\}_config.yml).
 #' @param editor Character string specifying which editor to use:
 #'   \itemize{
 #'     \item "auto" (default): Use R's default \code{file.edit()}
@@ -24,54 +24,54 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Open local config in default editor
-#' edit_local("mypackage")
+#' # Open config in default editor
+#' edit_config("mypackage")
 #'
 #' # Open in VS Code
-#' edit_local("mypackage", editor = "vscode")
+#' edit_config("mypackage", editor = "vscode")
 #'
-#' # Edit specific config file without validation
-#' edit_local("mypackage", fn_local = "custom_config.yml", validate = FALSE)
+#' # Edit a named config
+#' edit_config("mypackage", name = "gams_switches")
 #' }
 #'
-#' @seealso \code{\link{create_local}} for creating new config files,
+#' @seealso \code{\link{create_config}} for creating new config files,
 #'   \code{\link{get_config}} for reading config values
 #'
 #' @export
-edit_local <- function(package = get_package_name(),
-                      fn_local = NULL,
-                      editor = "auto",
-                      validate = TRUE,
-                      verbose = TRUE) {
+edit_config <- function(package = get_package_name(),
+                        name = NULL,
+                        editor = "auto",
+                        validate = TRUE,
+                        verbose = TRUE) {
 
-  # Find the local config file
-  local_path <- .find_config_files(
+  # Find the config file
+  config_path <- .find_config_files(
     package = package,
-    fn_local = fn_local,
+    name = name,
     verbose = FALSE
-  )$fn_local
+  )$fn_config
 
   # Error if file not found
-  if (is.null(local_path)) {
+  if (is.null(config_path)) {
     .icy_stop(c(
-      "No local configuration file found.",
-      "i" = paste0("Run create_local(\"", package, "\") to create one first.")
+      "No configuration file found.",
+      "i" = paste0("Run create_config(\"", package, "\") to create one first.")
     ))
   }
 
   if (verbose) {
-    .icy_text(paste0("Opening local config: ", local_path))
+    .icy_text(paste0("Opening config: ", config_path))
   }
 
   # Open in specified editor
-  .open_in_editor(local_path, editor, verbose)
+  .open_in_editor(config_path, editor, verbose)
 
   # Validate YAML syntax after editing
   if (validate) {
-    .validate_yaml_syntax(local_path, verbose)
+    .validate_yaml_syntax(config_path, verbose)
   }
 
-  return(invisible(local_path))
+  return(invisible(config_path))
 }
 
 #' Open File in Specified Editor

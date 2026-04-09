@@ -11,7 +11,7 @@
 
 \item{fuzzy_match}{Character string with the fuzzy-matched filename}
 
-\item{file_type}{Character string, "template" or "local"}
+\item{file_type}{Character string, "template" or "config"}
 }
 \value{
 Logical TRUE if user confirms, FALSE otherwise

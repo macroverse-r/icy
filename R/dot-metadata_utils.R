@@ -50,13 +50,13 @@
 #' Generate Header
 #'
 #' Unified function for generating headers for configuration files.
-#' Supports template, local, and custom header types.
+#' Supports template, config, and custom header types.
 #'
 #' @param package Character string with package name
-#' @param type Character string specifying header type ("template", "local", "none", 
+#' @param type Character string specifying header type ("template", "config", "none", 
 #'   NULL, or custom character vector)
 #' @param additional_lines Optional character vector of additional header lines
-#' @param template_source Character string with path to template file for local configs
+#' @param template_source Character string with path to template file for config files
 #' @return Character vector of header lines, or character(0) for no header
 #' @keywords internal
 .generate_header <- function(package, type = "template", additional_lines = NULL, template_source = NULL) {
@@ -108,7 +108,7 @@
     description_lines <- sapply(header_template$description, function(line) {
       line <- gsub("\\{PACKAGE\\}", toupper(package), line)
       line <- gsub("\\{DATE\\}", as.character(Sys.Date()), line)
-      # Handle template source for local configs
+      # Handle template source for config files
       if (!is.null(template_source)) {
         line <- gsub("\\{TEMPLATE_SOURCE\\}", basename(template_source), line)
       }

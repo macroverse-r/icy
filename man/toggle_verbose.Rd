@@ -32,7 +32,7 @@ If the variable doesn't exist, it will be created with the specified initial val
 \details{
 The function uses the provided package name (or determines it dynamically)
 and creates the appropriate verbose variable name (\code{PKGNAME_VERBOSE} where PKGNAME
-is the uppercase package name). It reads the configuration from the local YAML file,
+is the uppercase package name). It reads the configuration from the YAML config file,
 toggles or initializes the verbose variable, and writes the updated configuration
 back to the file.
 }

@@ -16,7 +16,7 @@
 #' @details
 #' The function uses the provided package name (or determines it dynamically)
 #' and creates the appropriate debug variable name (`PKGNAME_DEBUG` where PKGNAME
-#' is the uppercase package name). It reads the configuration from the local YAML file,
+#' is the uppercase package name). It reads the configuration from the YAML config file,
 #' toggles or initializes the debug variable, and writes the updated configuration
 #' back to the file.
 #'
@@ -55,7 +55,7 @@ toggle_debug <- function(package = get_package_name(),
     msg <- ""
   }
 
-  write_local(
+  update_config(
     var_list = structure(list(new_value), names = debug_var),
     package = package,
     section = section

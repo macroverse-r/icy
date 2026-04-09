@@ -1,15 +1,15 @@
 #' Validate Configuration File
 #'
-#' Validates a configuration file (template or local) according to its type.
-#' Both template and local files must have an inheritances section, but
+#' Validates a configuration file (template or config) according to its type.
+#' Both template and config files must have an inheritances section, but
 #' different validation rules apply to each type.
 #'
 #' @param fn_tmpl Path to template configuration file. If NULL, will attempt to
 #'   find using package name. Used for validation when type="template" or as
-#'   reference when type="local".
-#' @param fn_local Path to local configuration file. If NULL, will attempt to
-#'   find using package name. Used for validation when type="local".
-#' @param type Type of configuration file to validate: "template" or "local"
+#'   reference when type="config".
+#' @param fn_config Path to configuration file. If NULL, will attempt to
+#'   find using package name. Used for validation when type="config".
+#' @param type Type of configuration file to validate: "template" or "config"
 #' @param package Package name for context. If NULL, attempts to detect.
 #' @param verbose Logical. If TRUE, shows detailed validation messages
 #' @param .config_data Pre-parsed YAML data. Skips reading from disk when provided.
@@ -37,7 +37,7 @@
 #'   \item Checks for orphaned metadata
 #' }
 #'
-#' Local validation checks:
+#' Config validation checks:
 #' \itemize{
 #'   \item Must have inheritances section (can be empty)
 #'   \item Validates values against template's types
@@ -51,23 +51,23 @@
 #' # Validate a template file  
 #' result <- validate_config_file(type = "template")
 #' 
-#' # Validate a local config file
-#' result <- validate_config_file(type = "local")
-#' 
+#' # Validate a config file
+#' result <- validate_config_file(type = "config")
+#'
 #' # Validate specific files
-#' result <- validate_config_file(fn_tmpl = "inst/mypackage_config_template.yml",
+#' result <- validate_config_file(fn_tmpl = "inst/mypackage_template.yml",
 #'                                type = "template")
-#' 
-#' # Validate local with specific template for comparison
-#' result <- validate_config_file(fn_local = "~/.config/R/mypackage/config.yml",
-#'                                fn_tmpl = "inst/mypackage_config_template.yml", 
-#'                                type = "local")
+#'
+#' # Validate config with specific template for comparison
+#' result <- validate_config_file(fn_config = "~/.config/R/mypackage/mypackage_config.yml",
+#'                                fn_tmpl = "inst/mypackage_template.yml",
+#'                                type = "config")
 #' }
 #'
 #' @export
 validate_config_file <- function(fn_tmpl = NULL,
-                                fn_local = NULL,
-                                type = c("template", "local"),
+                                fn_config = NULL,
+                                type = c("template", "config"),
                                 package = NULL,
                                 verbose = FALSE,
                                 .config_data = NULL,
@@ -76,7 +76,7 @@ validate_config_file <- function(fn_tmpl = NULL,
   type <- match.arg(type)
   
   # Find config files if not provided
-  if (is.null(fn_tmpl) || is.null(fn_local)) {
+  if (is.null(fn_tmpl) || is.null(fn_config)) {
     if (is.null(package)) {
       package <- get_package_name(verbose = FALSE)
     }
@@ -87,13 +87,13 @@ validate_config_file <- function(fn_tmpl = NULL,
       fn_tmpl <- files$fn_tmpl
     }
     
-    if (is.null(fn_local)) {
-      fn_local <- files$fn_local
+    if (is.null(fn_config)) {
+      fn_config <- files$fn_config
     }
   }
   
   # Determine which file to validate based on type
-  file_to_validate <- if (type == "template") fn_tmpl else fn_local
+  file_to_validate <- if (type == "template") fn_tmpl else fn_config
   
   # Initialize result structure based on type
   if (type == "template") {
@@ -206,10 +206,10 @@ validate_config_file <- function(fn_tmpl = NULL,
       result$warnings <- c(result$warnings, types_result$warnings)
     }
     
-  } else if (type == "local") {
-    # Local validation - first validate inheritance, then specific checks
+  } else if (type == "config") {
+    # Config validation - first validate inheritance, then specific checks
     
-    # Validate inheritances structure (simpler version for local)
+    # Validate inheritances structure (simpler version for config)
     inheritance_result <- .validate_config_inheritance(config_data)
     if (!inheritance_result$valid) {
       result$valid <- FALSE
@@ -217,7 +217,7 @@ validate_config_file <- function(fn_tmpl = NULL,
     }
     result$warnings <- c(result$warnings, inheritance_result$warnings)
     
-    # Local-specific validation requires template for comparison
+    # Config-specific validation requires template for comparison
     if (is.null(fn_tmpl)) {
       result$warnings <- c(result$warnings, 
                          "Cannot validate against template: template file not found")
@@ -236,10 +236,10 @@ validate_config_file <- function(fn_tmpl = NULL,
     }
     
     if (!is.null(template_data)) {
-      local_result <- .validate_local_specific(config_data, template_data, verbose)
-      result$valid <- result$valid && local_result$valid
-      result$errors <- c(result$errors, local_result$errors)
-      result$warnings <- c(result$warnings, local_result$warnings)
+      config_result <- .validate_config_specific(config_data, template_data, verbose)
+      result$valid <- result$valid && config_result$valid
+      result$errors <- c(result$errors, config_result$errors)
+      result$warnings <- c(result$warnings, config_result$warnings)
     }
   }
   
@@ -249,7 +249,7 @@ validate_config_file <- function(fn_tmpl = NULL,
 
 #' Validate Configuration Inheritance (Simple)
 #' 
-#' Simple inheritance validation for local configs.
+#' Simple inheritance validation for config files.
 #' Checks basic structure and circular dependencies.
 #' 
 #' @keywords internal
@@ -679,10 +679,10 @@ validate_config_file <- function(fn_tmpl = NULL,
 }
 
 
-#' Validate Local-Specific Requirements
+#' Validate Config-Specific Requirements
 #' 
 #' @keywords internal
-.validate_local_specific <- function(config_data, template_data, verbose) {
+.validate_config_specific <- function(config_data, template_data, verbose) {
   result <- list(
     valid = TRUE,
     errors = character(),
@@ -710,7 +710,7 @@ validate_config_file <- function(fn_tmpl = NULL,
     character()
   }
   
-  # Check each section in local config
+  # Check each section in config
   metadata_sections <- .get_metadata_sections()
   data_sections <- setdiff(names(config_data), c(metadata_sections, "inheritances"))
   

@@ -7,8 +7,7 @@
 get_template(
   package = get_package_name(),
   section = "default",
-  fn_tmpl = NULL,
-  case_format = "snake_case",
+  name = NULL,
   inherit = NULL,
   verbose = FALSE,
   validate = TRUE,
@@ -21,12 +20,8 @@ get_template(
 \item{section}{Character string for the section in the YAML file (default: "default").
 Use NULL to return the full parsed YAML data (all sections and metadata).}
 
-\item{fn_tmpl}{Character string with the name or path to the template YAML file.
-If NULL, uses default template for the package.}
-
-\item{case_format}{Character string indicating the case format to use for
-searching YAML files if no specific file is provided. Options are:
-"snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main template file (\{package\}_template.yml).}
 
 \item{inherit}{Character string specifying a section to inherit values from, or
 0 to explicitly disable inheritance. If NULL (default), the function checks
@@ -51,7 +46,7 @@ Named list of configuration values from the template.
 Reads configuration from the template YAML file (read-only blueprint).
 Templates define the structure, defaults, types, descriptions, and options
 for a package's configuration. Use \code{\link{get_config}} to read the
-local configuration (single source of truth).
+configuration (single source of truth).
 }
 \examples{
 \dontrun{
@@ -68,5 +63,5 @@ child_config <- get_template(package = "mypackage", section = "child",
 
 }
 \seealso{
-\code{\link{get_config}} for reading local configuration.
+\code{\link{get_config}} for reading configuration.
 }

@@ -5,31 +5,29 @@
 \title{Update Package Configuration Template}
 \usage{
 update_template(
+  package = get_package_name(verbose = FALSE),
   action = NULL,
   var_name = NULL,
-  package = get_package_name(verbose = FALSE),
   default_value = NULL,
   description = NULL,
   type = NULL,
   note = NULL,
   options = NULL,
   sections = "default",
-  fn_tmpl = NULL,
+  name = NULL,
   backup = TRUE,
-  case_format = "snake_case",
   verbose = TRUE,
-  interactive = FALSE,
   template_data = NULL
 )
 }
 \arguments{
+\item{package}{Character string with the package name. Defaults to \code{get_package_name()}
+to detect the calling package.}
+
 \item{action}{Character string specifying the operation: "add", "update", or "remove".}
 
 \item{var_name}{Character string with the variable name to modify. For batch operations,
 use a character vector of variable names.}
-
-\item{package}{Character string with the package name. Defaults to \code{get_package_name()}
-to detect the calling package.}
 
 \item{default_value}{Default value for the variable (required for "add" and "update").
 Can be a single value or list of values matching var_name length.}
@@ -48,18 +46,12 @@ Required for "add" action. Can be character vector for batch operations.}
 Use "all" to modify all sections, "default" for default section only,
 or specific section names. Default: c("default").}
 
-\item{fn_tmpl}{Character string with path to the template file. If NULL (default),
-searches for the standard template file for the package.}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), uses the main template file (\{package\}_template.yml).}
 
 \item{backup}{Logical. If TRUE (default), creates a backup file before modifications.}
 
-\item{case_format}{Character string for template file search if fn_tmpl is NULL.
-Options: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
-
 \item{verbose}{Logical. If TRUE (default), displays progress and confirmation messages.}
-
-\item{interactive}{Logical. If TRUE, runs in interactive mode. If FALSE (default),
-uses provided parameters without user prompts.}
 
 \item{template_data}{Optional pre-loaded template data. If provided, uses this instead
 of reading from file. Primarily for internal use.}
@@ -127,4 +119,7 @@ update_template(
 )
 }
 
+}
+\seealso{
+\code{\link{update_template_interactive}} for guided interactive mode
 }

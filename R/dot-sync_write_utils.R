@@ -1,7 +1,7 @@
 #' Sync Utility Functions for Write Operations
 #'
 #' @description
-#' Shared helper functions for consistent sync behavior in write_local().
+#' Shared helper functions for consistent sync behavior in update_config().
 #'
 #' @name sync_write_utils
 NULL

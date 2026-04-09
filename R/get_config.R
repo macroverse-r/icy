@@ -1,18 +1,13 @@
 #' Get Configuration
 #'
-#' Reads configuration from the local YAML file (single source of truth).
-#' The local config file is the authoritative source for all configuration values.
+#' Reads configuration from the YAML config file (single source of truth).
+#' The config file is the authoritative source for all configuration values.
 #' Use \code{\link{get_template}} to read the template file (blueprint).
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param fn_tmpl Character string with the name or path to the template YAML file.
-#'   If NULL, uses default template for the package. Used for validation and type resolution.
-#' @param fn_local Character string with the name or path to the local YAML file.
-#'   If NULL, uses default local config for the package.
-#' @param case_format Character string indicating the case format to use for
-#'   searching YAML files if no specific files are provided. Options are:
-#'   "snake_case" (default), "camelCase", "PascalCase", "kebab-case".
+#' @param name Optional character string for named configs (e.g., "gams_switches").
+#'   If NULL (default), uses the main config file (\{package\}_config.yml).
 #' @param inherit Character string specifying a section to inherit values from, or
 #'   0 to explicitly disable inheritance. If NULL (default), the function checks
 #'   for an "inheritances" section in the config that defines automatic inheritance
@@ -34,6 +29,9 @@
 #' # Get configuration from local file (single source of truth)
 #' config <- get_config(package = "mypackage")
 #'
+#' # Get a named config (e.g., gams_switches)
+#' switches <- get_config(package = "mypackage", name = "gams_switches")
+#'
 #' # Get production config with defaults inherited from default section
 #' prod_config <- get_config(package = "mypackage", section = "production",
 #'                          inherit = "default")
@@ -44,9 +42,7 @@
 #' @export
 get_config <- function(package = get_package_name(),
                        section = "default",
-                       fn_tmpl = NULL,
-                       fn_local = NULL,
-                       case_format = "snake_case",
+                       name = NULL,
                        inherit = NULL,
                        verbose = FALSE,
                        validate = TRUE,
@@ -55,20 +51,18 @@ get_config <- function(package = get_package_name(),
   # Resolve file paths
   resolved_files <- .find_config_files(
     package = package,
-    fn_local = fn_local,
-    fn_tmpl = fn_tmpl,
+    name = name,
     fuzzy = TRUE,
     confirm_fuzzy = confirm_fuzzy,
-    case_format = case_format,
     verbose = verbose
   )
 
-  resolved_local_path <- resolved_files$fn_local
+  resolved_config_path <- resolved_files$fn_config
   resolved_template_path <- resolved_files$fn_tmpl
 
   # Read YAML files once
-  raw_local_data <- if (!is.null(resolved_local_path) && file.exists(resolved_local_path)) {
-    yaml::read_yaml(resolved_local_path)
+  raw_config_data <- if (!is.null(resolved_config_path) && file.exists(resolved_config_path)) {
+    yaml::read_yaml(resolved_config_path)
   }
 
   raw_template_data <- if (!is.null(resolved_template_path) && file.exists(resolved_template_path)) {
@@ -80,21 +74,21 @@ get_config <- function(package = get_package_name(),
     raw_template_data$types
   }
 
-  # Validate local configuration file (using pre-parsed data)
-  if (validate && !is.null(resolved_local_path) && !is.null(raw_local_data)) {
+  # Validate configuration file (using pre-parsed data)
+  if (validate && !is.null(resolved_config_path) && !is.null(raw_config_data)) {
     validation <- validate_config_file(
-      fn_local = resolved_local_path,
       fn_tmpl = resolved_template_path,
-      type = "local",
+      fn_config = resolved_config_path,
+      type = "config",
       package = package,
       verbose = FALSE,
-      .config_data = raw_local_data,
+      .config_data = raw_config_data,
       .template_data = raw_template_data
     )
 
     if (!validation$valid && length(validation$errors) > 0) {
       .icy_stop(c(
-        "Local config validation failed",
+        "Config validation failed",
         "x" = validation$errors[1],
         "i" = "Use validate = FALSE to skip validation"
       ))
@@ -103,20 +97,20 @@ get_config <- function(package = get_package_name(),
 
   # Extract and process the requested section
   config <- .process_config_section(
-    config_data = raw_local_data,
+    config_data = raw_config_data,
     section = section,
     template_types = template_types,
     package = package,
-    source_label = "local config"
+    source_label = "config"
   )
 
   # Apply inheritance
   config <- .apply_section_inheritance(
     config = config,
-    raw_data = raw_local_data,
+    raw_data = raw_config_data,
     section = section,
     inherit = inherit,
-    type = "local",
+    type = "config",
     template_types = template_types,
     package = package,
     verbose = verbose

@@ -6,8 +6,7 @@
 \usage{
 create_template(
   package = get_package_name(verbose = FALSE),
-  fn_tmpl = NULL,
-  case_format = "snake_case",
+  name = NULL,
   overwrite = NULL,
   verbose = TRUE,
   interactive = TRUE
@@ -17,11 +16,8 @@ create_template(
 \item{package}{Character string with the package name. Defaults to \code{get_package_name()}
 to detect the calling package.}
 
-\item{fn_tmpl}{Character string with custom filename for the template.
-If NULL, uses the default naming pattern based on case_format.}
-
-\item{case_format}{Character string indicating the case format to use for filenames.
-Options are: "snake_case" (default), "camelCase", "PascalCase", "kebab-case".}
+\item{name}{Optional character string for named configs (e.g., "gams_switches").
+If NULL (default), creates the main template file (\{package\}_template.yml).}
 
 \item{overwrite}{Logical indicating whether to overwrite existing template file.
 If NULL (default), prompts user when file exists.}
@@ -38,14 +34,14 @@ Character string with the full path to the created template file (invisible).
 Creates a new YAML configuration template file for a package through a
 streamlined, interactive process. This function acts as a coordinator,
 setting up the template structure and delegating content creation to
-\code{update_template()} in interactive mode.
+\code{update_template_interactive()}.
 }
 \details{
 This function has been refactored to follow a coordinator pattern:
 \itemize{
 \item Sets up the template file path and handles overwrite logic
 \item Creates the basic template structure with headers
-\item Delegates variable configuration to \code{update_template(interactive = TRUE)}
+\item Delegates variable configuration to \code{update_template_interactive()}
 \item Provides helpful next steps for package developers
 }
 
@@ -61,8 +57,8 @@ create_template()
 # Create template for specific package
 create_template(package = "mypackage")
 
-# Create with custom filename
-create_template(fn_tmpl = "custom_config_template.yml")
+# Create a named template
+create_template(name = "gams_switches")
 
 # Create empty template without interaction
 create_template(interactive = FALSE)
@@ -70,6 +66,6 @@ create_template(interactive = FALSE)
 
 }
 \seealso{
-\code{\link{update_template}} for modifying existing templates
-\code{\link{setup}} for interactive configuration of packages
+\code{\link{update_template}}, \code{\link{update_template_interactive}} for modifying existing templates
+\code{\link{setup_config}} for interactive configuration of packages
 }
