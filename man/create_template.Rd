@@ -34,14 +34,14 @@ Character string with the full path to the created template file (invisible).
 Creates a new YAML configuration template file for a package through a
 streamlined, interactive process. This function acts as a coordinator,
 setting up the template structure and delegating content creation to
-\code{update_template()} in interactive mode.
+\code{update_template_interactive()}.
 }
 \details{
 This function has been refactored to follow a coordinator pattern:
 \itemize{
 \item Sets up the template file path and handles overwrite logic
 \item Creates the basic template structure with headers
-\item Delegates variable configuration to \code{update_template(interactive = TRUE)}
+\item Delegates variable configuration to \code{update_template_interactive()}
 \item Provides helpful next steps for package developers
 }
 
@@ -66,6 +66,6 @@ create_template(interactive = FALSE)
 
 }
 \seealso{
-\code{\link{update_template}} for modifying existing templates
-\code{\link{setup}} for interactive configuration of packages
+\code{\link{update_template}}, \code{\link{update_template_interactive}} for modifying existing templates
+\code{\link{setup_config}} for interactive configuration of packages
 }

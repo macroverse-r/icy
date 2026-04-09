@@ -58,7 +58,7 @@ toggle_verbose <- function(package = get_package_name(),
     msg <- ""
   }
 
-  write_config(
+  update_config(
     var_list = structure(list(new_value), names = verbose_var),
     package = package,
     section = section

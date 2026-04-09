@@ -63,9 +63,7 @@ create_config <- function(package = get_package_name(verbose = FALSE),
   # Check if config already exists
   if (!is.null(existing) && !overwrite) {
     if (verbose) {
-      .icy_warn(c(paste0("Config YAML file already exists: ", existing),
-        "i" = "Use overwrite = TRUE to overwrite."
-      ))
+      .icy_inform(paste0("Config already exists: ", existing, ". Use overwrite = TRUE to replace."))
     }
     return(invisible(existing))
   } else if (verbose && !is.null(existing) && overwrite) {

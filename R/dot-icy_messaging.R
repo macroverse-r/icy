@@ -97,21 +97,28 @@ NULL
 #' Falls back to simple bullet points with basic formatting.
 #'
 #' @param items Named vector of items to display
+#' @param bullet Bullet type: NULL/"dot" for bullet points, "1:"/"1." for numbered
 #' @param ... Additional arguments passed to underlying functions
-.icy_bullets <- function(items, ...) {
+.icy_bullets <- function(items, bullet = NULL, ...) {
   if (requireNamespace("contextual", quietly = TRUE)) {
-    contextual::cx_bullets(items, ...)
+    contextual::cx_bullets(items, bullet = bullet, ...)
   } else {
     if (length(items) == 0) return(invisible())
-    
+
+    numbered <- !is.null(bullet) && bullet %in% c("1:", "1.")
+    suffix <- if (numbered) substring(bullet, 2) else NULL
+    symbol <- if (is.null(bullet) || bullet == "dot") "\u2022"
+              else if (!numbered) bullet else NULL
+
     for (i in seq_along(items)) {
+      b <- if (numbered) paste0(i, suffix) else symbol
       name <- names(items)[i]
       value <- items[i]
-      
+
       if (is.null(name) || name == "") {
-        cat("\u2022 ", value, "\n", sep = "")
+        cat(b, " ", value, "\n", sep = "")
       } else {
-        cat("\u2022 ", name, ": ", value, "\n", sep = "")
+        cat(b, " ", name, ": ", value, "\n", sep = "")
       }
     }
   }

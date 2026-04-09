@@ -54,9 +54,9 @@ devtools::install_github("macroverse-r/icy")
 ### Configuration Writing
 | Function | Description |
 |----------|-------------|
-| `write_config()` | Write/update variables in YAML configuration. Preserves structure, validates against template |
-| `qconfig()` | Interactive single-variable configuration. Template integration, type detection, path validation |
-| `setup()` | Interactive multi-variable setup wizard. Progress tracking, skip logic, batch operations |
+| `update_config()` | Write/update variables in YAML configuration. Preserves structure, validates against template |
+| `update_config_interactive()` | Interactive single-variable configuration. Template integration, type detection, path validation |
+| `setup_config()` | Interactive multi-variable setup wizard. Progress tracking, skip logic, batch operations |
 
 ### Conflict Resolution
 | Function | Description |
@@ -111,7 +111,7 @@ The `name` parameter enables multiple config sets per package (e.g., "gams_switc
 1. Template Creation: Define all possible configuration variables in `inst/{package}_template.yml`
 2. Config Creation: `create_config()` copies template values to the user's config directory
 3. Reading: `get_config()` reads from the config file
-4. User Interface: Provide configuration functions using `qconfig()`, `setup()`, or custom wrappers
+4. User Interface: Provide configuration functions using `update_config_interactive()`, `setup_config()`, or custom wrappers
 
 <details>
 <summary>Quick Start</summary>
@@ -133,7 +133,7 @@ get_api_key <- function() {
 
 # 4. Expose configuration to users:
 configure_mypackage <- function() {
-  icy::setup()  # Interactive configuration for all variables
+  icy::setup_config()  # Interactive configuration for all variables
 }
 ```
 
@@ -193,8 +193,8 @@ get_my_api_key <- function() {
 
 # Interactive configuration for users
 configure_package <- function() {
-  icy::qconfig("DUMMY_API_KEY")      # Interactive with template integration
-  icy::qconfig("DUMMY_VERBOSE")      # Automatic boolean detection (TRUE/FALSE options)
+  icy::update_config_interactive("DUMMY_API_KEY")      # Interactive with template integration
+  icy::update_config_interactive("DUMMY_VERBOSE")      # Automatic boolean detection (TRUE/FALSE options)
 }
 ```
 
@@ -216,14 +216,14 @@ Configs are always stored in the user's config directory (`~/.config/R/{package}
 icy::show_config(package = "dummy")
 
 # User can modify settings (programmatic)
-icy::write_config(
+icy::update_config(
   package = "dummy",
   var_list = list(DUMMY_API_KEY = "my-real-key")
 )
 
 # Or use interactive configuration (user-friendly)
-icy::qconfig("DUMMY_API_KEY", package = "dummy")    # Prompts with template options
-icy::qconfig("DUMMY_VERBOSE", package = "dummy")    # Automatic TRUE/FALSE options
+icy::update_config_interactive("DUMMY_API_KEY", package = "dummy")    # Prompts with template options
+icy::update_config_interactive("DUMMY_VERBOSE", package = "dummy")    # Automatic TRUE/FALSE options
 
 # Open config file directly in editor
 icy::edit_config(package = "dummy")
@@ -271,22 +271,22 @@ As a package developer, provide an optimal first-time user experience:
 # Provide a dedicated setup function for users
 setup_dummy <- function() {
   message("Welcome to dummy package configuration!")
-  icy::setup()  # Interactive setup walks through all variables
+  icy::setup_config()  # Interactive setup walks through all variables
   message("\nConfiguration complete! Your settings are saved locally.")
 }
 
 # Individual configuration functions for specific needs
 configure_api_key <- function() {
-  icy::qconfig("DUMMY_API_KEY")  # Interactive with validation
+  icy::update_config_interactive("DUMMY_API_KEY")  # Interactive with validation
 }
 
 configure_directories <- function() {
-  icy::qconfig("DUMMY_DATA_DIR", type = "path")  # With directory creation
+  icy::update_config_interactive("DUMMY_DATA_DIR", type = "path")  # With directory creation
 }
 
 # Advanced: Targeted setup for critical variables
 setup_essentials <- function() {
-  icy::setup(
+  icy::setup_config(
     vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST"),
     allow_skip = c(FALSE, TRUE)  # API key required, DB host optional
   )
@@ -308,7 +308,7 @@ dev_defaults <- get_template(
 )
 
 # User overrides in config
-write_config(
+update_config(
   var_list = list(
     DUMMY_DB_HOST = "my-local-dev-db.internal",
     DUMMY_DEBUG = TRUE
@@ -332,7 +332,7 @@ When you need to start over:
 template_defaults <- get_template(package = "dummy")
 
 # Overwrite config with template values
-write_config(var_list = template_defaults, package = "dummy")
+update_config(var_list = template_defaults, package = "dummy")
 ```
 
 </details>
@@ -420,9 +420,9 @@ As a package developer, provide user-friendly configuration interfaces:
 # Create simple wrappers for common configuration tasks
 set_api_key <- function(key = NULL) {
   if (is.null(key)) {
-    icy::qconfig("MYPACKAGE_API_KEY")  # Interactive mode
+    icy::update_config_interactive("MYPACKAGE_API_KEY")  # Interactive mode
   } else {
-    icy::write_config(list(MYPACKAGE_API_KEY = key))  # Programmatic mode
+    icy::update_config(list(MYPACKAGE_API_KEY = key))  # Programmatic mode
     message("API key configured successfully")
   }
 }
@@ -431,7 +431,7 @@ set_api_key <- function(key = NULL) {
 setup_mypackage <- function(interactive = TRUE) {
   if (interactive) {
     message("Welcome to MyPackage configuration!")
-    icy::setup()
+    icy::setup_config()
   } else {
     icy::create_config()
   }
@@ -462,16 +462,16 @@ This pattern gives users simple, package-specific functions while leveraging icy
 ## Technical Reference
 
 <details>
-<summary>Sync Parameter in write_config()</summary>
+<summary>Sync Parameter in update_config()</summary>
 
-`write_config()` supports an optional `sync` parameter as a convenience for writing through to the session environment. This does not make the session a configuration source -- it's purely for convenience when packages use `Sys.getenv()` internally.
+`update_config()` supports an optional `sync` parameter as a convenience for writing through to the session environment. This does not make the session a configuration source -- it's purely for convenience when packages use `Sys.getenv()` internally.
 
 ```r
 # Write to config only (default)
-write_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy")
+update_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy")
 
 # Also set in session for immediate effect
-write_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy", sync = "all")
+update_config(var_list = list(DUMMY_TIMEOUT = 60), package = "dummy", sync = "all")
 ```
 
 Sync options:

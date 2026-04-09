@@ -3,7 +3,7 @@
 #' Creates a new YAML configuration template file for a package through a
 #' streamlined, interactive process. This function acts as a coordinator,
 #' setting up the template structure and delegating content creation to
-#' `update_template()` in interactive mode.
+#' `update_template_interactive()`.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()`
 #'   to detect the calling package.
@@ -22,7 +22,7 @@
 #' \itemize{
 #'   \item Sets up the template file path and handles overwrite logic
 #'   \item Creates the basic template structure with headers
-#'   \item Delegates variable configuration to `update_template(interactive = TRUE)`
+#'   \item Delegates variable configuration to `update_template_interactive()`
 #'   \item Provides helpful next steps for package developers
 #' }
 #'
@@ -46,8 +46,8 @@
 #' }
 #'
 #' @seealso 
-#' \code{\link{update_template}} for modifying existing templates
-#' \code{\link{setup}} for interactive configuration of packages
+#' \code{\link{update_template}}, \code{\link{update_template_interactive}} for modifying existing templates
+#' \code{\link{setup_config}} for interactive configuration of packages
 #'
 #' @export
 create_template <- function(package = get_package_name(verbose = FALSE),

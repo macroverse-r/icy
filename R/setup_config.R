@@ -1,18 +1,18 @@
-#' Interactive Package Setup
+#' Interactive Package Setup Configuration
 #'
 #' Walks through all variables defined in the package template for interactive 
 #' configuration. Provides a guided setup experience for first-time package users.
 #'
 #' @param package Character string with the package name. Defaults to `get_package_name()` to detect the calling package.
 #' @param section Character string for the section in the YAML file (default: "default").
-#' @param skip_configured Logical. If TRUE (default), skips variables that already have
-#'   non-default values configured. Set to FALSE to reconfigure all variables.
+#' @param skip_configured Logical. If TRUE, skips variables that already have
+#'   non-default values configured. Defaults to FALSE.
 #' @param vars Character vector of variable names to configure. If NULL (default), 
 #'   configures all variables from template. Also controls the order of configuration.
 #' @param allow_skip Logical scalar or vector. Controls whether users can skip individual variables.
 #'   If scalar, applies to all variables. If vector, must match length of variables to configure.
 #' @param type Character scalar or vector. Specifies expected type for variables.
-#'   If scalar, applies to all. If vector, must match length of variables. See `qconfig()` for valid types.
+#'   If scalar, applies to all. If vector, must match length of variables. See `update_config_interactive()` for valid types.
 #' @param note Character scalar or vector. Additional notes to display for each variable.
 #'   If scalar, same note for all. If vector, must match length of variables.
 #' @param arg_only Logical scalar or vector. If TRUE, only uses provided options and ignores template options.
@@ -26,7 +26,7 @@
 #'
 #' @details
 #' This function reads all variables from the package template and presents them
-#' for interactive configuration using qconfig(). It provides:
+#' for interactive configuration using update_config_interactive(). It provides:
 #' \itemize{
 #'   \item Progress tracking through the configuration process
 #'   \item Integration with template descriptions, options, and type detection
@@ -37,29 +37,29 @@
 #' @examples
 #' \dontrun{
 #' # Full package setup
-#' setup()
+#' setup_config()
 #'
 #' # Setup specific variables in custom order
-#' setup(vars = c("DUMMY_API_KEY", "DUMMY_VERBOSE", "DUMMY_TIMEOUT"))
+#' setup_config(vars = c("DUMMY_API_KEY", "DUMMY_VERBOSE", "DUMMY_TIMEOUT"))
 #'
 #' # Reconfigure all variables including those already set
-#' setup(skip_configured = FALSE)
+#' setup_config(skip_configured = FALSE)
 #'
 #' # Don't allow skipping for critical variables
-#' setup(vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST", "DUMMY_VERBOSE"),
+#' setup_config(vars = c("DUMMY_API_KEY", "DUMMY_DB_HOST", "DUMMY_VERBOSE"),
 #'       allow_skip = c(FALSE, FALSE, TRUE))
 #'
 #' # Add custom notes for specific variables
-#' setup(vars = c("DUMMY_API_KEY", "DUMMY_TIMEOUT"),
+#' setup_config(vars = c("DUMMY_API_KEY", "DUMMY_TIMEOUT"),
 #'       note = c("Contact admin@example.com for API key", "Default is 30 seconds"))
 #'
 #' # Force specific types
-#' setup(vars = c("DUMMY_PORT", "DUMMY_VERBOSE"),
+#' setup_config(vars = c("DUMMY_PORT", "DUMMY_VERBOSE"),
 #'       type = c("integer", "logical"))
 #' }
 #'
 #' @export
-setup <- function(package = get_package_name(), section = "default",
+setup_config <- function(package = get_package_name(), section = "default",
                   skip_configured = FALSE, vars = NULL, allow_skip = TRUE,
                   type = NULL, note = NULL, arg_only = FALSE, name = NULL, verbose = FALSE) {
 
@@ -137,26 +137,46 @@ setup <- function(package = get_package_name(), section = "default",
   # Display numbered list of variables to configure
   .icy_bullets(var_names, bullet = "1.")
   
-  # Check if user wants to skip everything
-  skip_info <- .apply_color("(or type 'skip'/'s' to skip the setup)", color = "gray")
+  # Check if user wants to skip, select a specific variable, or start all
+  skip_info <- .apply_color(paste0("(enter a number to configure that variable, or 'skip'/'s' to skip)"), color = "gray")
   user_input <- readline(paste0("Press Enter to start configuration:\n", skip_info, "\n"))
-  if (tolower(trimws(user_input)) %in% c("skip", "s")) {
+  trimmed_input <- trimws(user_input)
+  if (tolower(trimmed_input) %in% c("skip", "s")) {
     .icy_inform("Setup skipped")
     return(invisible(NULL))
   }
-  
+
+  # If user entered a number, configure only that variable
+  selected_idx <- suppressWarnings(as.integer(trimmed_input))
+  original_total <- n_vars
+  if (!is.na(selected_idx) && selected_idx >= 1 && selected_idx <= n_vars) {
+    var_names <- var_names[selected_idx]
+    allow_skip_vec <- allow_skip_vec[selected_idx]
+    type_vec <- type_vec[selected_idx]
+    note_vec <- note_vec[selected_idx]
+    arg_only_vec <- arg_only_vec[selected_idx]
+    n_vars <- 1L
+  } else if (trimmed_input != "") {
+    .icy_alert(paste0("Invalid input '", trimmed_input, "'. Starting full setup."))
+  }
+
   # Configure each variable
   results <- list()
   for (i in seq_along(var_names)) {
     var_name <- var_names[i]
-    
+
     # Progress indicator
     .icy_text("")
-    .icy_title(paste0(var_name, " (", i, "/", length(var_names), ")"), auto_number = FALSE)
+    progress <- if (n_vars < original_total) {
+      paste0(selected_idx, "/", original_total)
+    } else {
+      paste0(i, "/", n_vars)
+    }
+    .icy_title(paste0(var_name, " (", progress, ")"), auto_number = FALSE)
     
     # Configure variable with appropriate arguments
     result <- tryCatch({
-      # Build qconfig arguments
+      # Build update_config_interactive arguments
       args <- list(
         var_name = var_name,
         package = package,
@@ -171,8 +191,8 @@ setup <- function(package = get_package_name(), section = "default",
       if (!is.na(type_vec[i])) args$type <- type_vec[i]
       if (!is.na(note_vec[i])) args$note <- note_vec[i]
       
-      # Call qconfig with prepared arguments
-      do.call(qconfig, args)
+      # Call update_config_interactive with prepared arguments
+      do.call(update_config_interactive, args)
     }, error = function(e) {
       .icy_warn(paste0("Failed to configure ", var_name, ": ", e$message))
       NULL
@@ -220,8 +240,8 @@ setup <- function(package = get_package_name(), section = "default",
       .icy_text("You can:")
       .icy_bullets(c(
                      paste0("View all settings: ", .apply_color(paste0("show_config(package = \"", package, "\")"), "yellow")),
-                     paste0("Modify a setting: ", .apply_color(paste0("qconfig(\"VARIABLE_NAME\", package = \"", package, "\")"), "yellow")),
-                     paste0("Run setup again: ", .apply_color(paste0("setup(package = \"", package, "\")"), "yellow"))
+                     paste0("Modify a setting: ", .apply_color(paste0("update_config_interactive(package = \"", package, "\", var_name = \"VARIABLE_NAME\")"), "yellow")),
+                     paste0("Run setup again: ", .apply_color(paste0("setup_config(package = \"", package, "\")"), "yellow"))
                      ), bullet = "dot")
     }
     in_show_next()

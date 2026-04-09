@@ -199,7 +199,7 @@ check_conflicts <- function(package = get_package_name(),
     if (!is.null(use_session_num) && choice == use_session_num) {
       # Use session value: update config
       var_list <- structure(list(conflict$session), names = var_name)
-      write_config(
+      update_config(
         var_list = var_list,
         package = package,
         section = section,

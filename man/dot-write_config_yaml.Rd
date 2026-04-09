@@ -63,7 +63,7 @@ headers, NULL handling, and validation.
 \details{
 This function is the core YAML writer for the icy ecosystem, designed to handle:
 \itemize{
-\item Configuration files (via write_config)
+\item Configuration files (via update_config)
 \item Template files (via create_template/update_template)
 \item Any package-related YAML configuration
 }

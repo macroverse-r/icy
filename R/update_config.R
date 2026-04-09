@@ -1,13 +1,13 @@
-#' Write Variables to Configuration
+#' Update Variables in Configuration
 #'
 #' Writes or updates variables in the configuration YAML file.
 #' Only variables defined in the template are kept; any other variables
 #' are removed to ensure consistency with the template.
 #'
-#' @param var_list Named list of variables to write. Names should be the
-#'   variable names and values should be the values to set.
 #' @param package Character string with the package name. Defaults to `get_package_name()`
 #'   to detect the calling package.
+#' @param var_list Named list of variables to write. Names should be the
+#'   variable names and values should be the values to set.
 #' @param section Character string for the section in the YAML file (default: "default").
 #' @param name Optional character string for named configs (e.g., "gams_switches").
 #'   If NULL (default), writes to the main config file (\{package\}_config.yml).
@@ -35,7 +35,7 @@
 #' @examples
 #' \dontrun{
 #' # Write variables to config
-#' write_config(
+#' update_config(
 #'   var_list = list(
 #'     API_KEY = "my-secret-key",
 #'     DB_HOST = "localhost",
@@ -45,7 +45,7 @@
 #' )
 #'
 #' # Write to a specific section
-#' write_config(
+#' update_config(
 #'   var_list = list(API_URL = "https://prod.api.com"),
 #'   package = "mypackage",
 #'   section = "production"
@@ -53,8 +53,8 @@
 #' }
 #'
 #' @export
-write_config <- function(var_list,
-                         package = get_package_name(),
+update_config <- function(package = get_package_name(),
+                         var_list,
                          section = "default",
                          name = NULL,
                          create_if_missing = TRUE,
@@ -62,6 +62,13 @@ write_config <- function(var_list,
                          sync = "conservative") {
 
   # Input validation
+  if (is.character(var_list)) {
+    .icy_stop(paste0(
+      "var_list must be a named list, not a character string. ",
+      "Example: update_config(package = \"", var_list[1], "\", var_list = list(VAR = \"value\"))"
+    ))
+  }
+
   if (!is.list(var_list) || length(var_list) == 0) {
     .icy_stop("var_list must be a non-empty named list")
   }
