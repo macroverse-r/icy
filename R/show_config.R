@@ -41,24 +41,13 @@ show_config <- function(package = get_package_name(),
                         name = NULL,
                         confirm_fuzzy = TRUE) {
 
-  # Resolve file paths once
-  resolved_files <- .find_config_files(
-    package = package,
-    name = name,
-    fuzzy = TRUE,
-    confirm_fuzzy = confirm_fuzzy,
-    verbose = FALSE
-  )
-  resolved_config_path <- resolved_files$fn_config
-  resolved_template_path <- resolved_files$fn_tmpl
-
   # Read config (single source of truth)
   config_data <- tryCatch(
     {
       get_config(package = package,
                  section = section,
                  name = name,
-                 confirm_fuzzy = FALSE)
+                 confirm_fuzzy = confirm_fuzzy)
     },
     error = function(e) list()
   )
@@ -68,28 +57,18 @@ show_config <- function(package = get_package_name(),
   template_types <- NULL
 
   if (show_template) {
-    template_path <- resolved_template_path
-    if (is.null(template_path)) {
-      # Try finding the template directly
-      tmpl_files <- .find_config_files(
-        package = package,
-        name = name,
-        confirm_fuzzy = FALSE,
-        verbose = FALSE
-      )
-      template_path <- tmpl_files$fn_tmpl
-    }
+    template_data <- tryCatch(
+      get_template(package = package, section = NULL, name = name,
+                   validate = FALSE, confirm_fuzzy = FALSE),
+      error = function(e) NULL
+    )
 
-    if (!is.null(template_path) && file.exists(template_path)) {
-      template_data <- tryCatch(yaml::read_yaml(template_path), error = function(e) NULL)
-
-      if (!is.null(template_data)) {
-        if (section %in% names(template_data)) {
-          template_raw <- template_data[[section]]
-        }
-        if ("types" %in% names(template_data)) {
-          template_types <- template_data$types
-        }
+    if (!is.null(template_data)) {
+      if (section %in% names(template_data)) {
+        template_raw <- template_data[[section]]
+      }
+      if ("types" %in% names(template_data)) {
+        template_types <- template_data$types
       }
     }
   }

@@ -9,6 +9,7 @@ check_conflicts(
   mode = "resolve",
   config = NULL,
   section = "default",
+  template_types = NULL,
   verbose = FALSE
 )
 }
@@ -26,6 +27,9 @@ check_conflicts(
 file. Used internally by get_config() to avoid re-reading.}
 
 \item{section}{Character string for the section in the YAML file (default: "default").}
+
+\item{template_types}{Named list of template type definitions. If NULL (default),
+reads from template file. Used internally to avoid re-reading the template.}
 
 \item{verbose}{Logical. If TRUE, shows detailed messages. Defaults to FALSE.}
 }

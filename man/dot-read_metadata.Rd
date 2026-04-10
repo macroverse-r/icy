@@ -12,5 +12,6 @@ Parsed YAML list from icy_metadata_sections.yml
 \description{
 Reads and returns the icy metadata YAML file. This is the single
 source of truth for metadata section names, definitions, and header templates.
+Result is cached after first read since the data never changes at runtime.
 }
 \keyword{internal}

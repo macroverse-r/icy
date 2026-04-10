@@ -20,6 +20,8 @@
 #' @param config Named list of config values. If NULL, reads from config
 #'   file. Used internally by get_config() to avoid re-reading.
 #' @param section Character string for the section in the YAML file (default: "default").
+#' @param template_types Named list of template type definitions. If NULL (default),
+#'   reads from template file. Used internally to avoid re-reading the template.
 #' @param verbose Logical. If TRUE, shows detailed messages. Defaults to FALSE.
 #'
 #' @return Invisibly returns a list with:
@@ -42,6 +44,7 @@ check_conflicts <- function(package = get_package_name(),
                             mode = "resolve",
                             config = NULL,
                             section = "default",
+                            template_types = NULL,
                             verbose = FALSE) {
 
   # Validate mode
@@ -127,14 +130,14 @@ check_conflicts <- function(package = get_package_name(),
   }
 
   # mode == "resolve": Interactive resolution
-  # Read template types for validation
-  template_types <- tryCatch({
-    tmpl_files <- .find_config_files(package = package, verbose = FALSE)
-    if (!is.null(tmpl_files$fn_tmpl)) {
-      tmpl_data <- yaml::read_yaml(tmpl_files$fn_tmpl)
+  # Read template types for validation (skip if caller already provided them)
+  if (is.null(template_types)) {
+    template_types <- tryCatch({
+      tmpl_data <- get_template(package = package, section = NULL,
+                                validate = FALSE, confirm_fuzzy = FALSE)
       if ("types" %in% names(tmpl_data)) tmpl_data$types else list()
-    } else list()
-  }, error = function(e) list())
+    }, error = function(e) list())
+  }
 
   .icy_inform(paste0("Found ", length(conflicts), " configuration conflict",
                      if (length(conflicts) > 1) "s" else ""))
